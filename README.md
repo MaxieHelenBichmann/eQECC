@@ -204,7 +204,7 @@ The thesis benchmarks (`benchmarks.thesis.thesis_prototypes`, `benchmarks.thesis
 For example, running a random prototype benchmark from the repository root:
 
 ```bash
-python3 -m benchmarks.thesis.thesis_prototypes \
+uv run python -m benchmarks.thesis.thesis_prototypes \
   --algorithm pm_css_sat --nmin 5 --nmax 8 \
   --timeout 200 --memory-limit 4GiB \
   --nr-seeds 10 --output results/pm_css_sat_random.csv
