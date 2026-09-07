@@ -36,7 +36,7 @@ def _gap_package_root() -> Path:
             return gap_root
 
     for parent in module_path.parents:
-        if any((parent / marker).exists() for marker in (".git", "pytest.ini")):
+        if any((parent / marker).exists() for marker in (".git", "pyproject.toml")):
             return parent / ".gap"
 
     return Path.cwd() / ".gap"

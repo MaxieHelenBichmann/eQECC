@@ -1,0 +1,46 @@
+[project]
+name = "bm_qecc"
+version = "0.1.0"
+description = "Equivalence checking for quantum error correction codes: algorithms, benchmarks and paper replication package"
+requires-python = ">=3.13"
+dependencies = [
+    "numpy==2.4.6",
+    "ldpc==2.4.1",
+    "stim==1.16.0",
+    "matplotlib==3.11.1",
+    "pynauty==2.8.8.1",
+    "z3-solver==4.16.0.0",
+    "pyzx==0.10.6",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "mypy==2.1.0",
+    "ruff==0.16.6",
+    "py-spy==0.4.2",
+]
+
+# Not a distributable package: `uv sync` only creates the environment, and the
+# top-level `src`, `benchmarks`, `paper` and `tests` packages are imported from
+# the repository root.
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+pythonpath = ["."]
+addopts = "-ra"
+
+[tool.mypy]
+python_version = "3.13"
+ignore_missing_imports = true
+no_site_packages = true
+
+[tool.ruff]
+extend-exclude = ["data", "playground", ".gap"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "B", "UP"]
+ignore = ["B905"]

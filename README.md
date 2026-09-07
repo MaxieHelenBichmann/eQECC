@@ -191,13 +191,15 @@ Requires Linux or macOS with a C compiler and Python 3.13 or newer; Python 3.13
 is the tested version in CI and for the paper replication package. The
 compiler is needed because `pynauty` is built from source on these versions;
 Windows is not supported by `pynauty` and by the benchmark supervision.
-Install the local runtime dependencies first:
+The project is managed with [uv](https://docs.astral.sh/uv/). Create the
+environment with the exact locked dependencies first:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -r requirements.txt
+uv sync
 ```
+
+This creates `.venv` from `uv.lock`. Every command below runs inside that
+environment, either with `uv run <command>` or after `source .venv/bin/activate`.
 
 The benchmark infrastructure has four layers:
 
@@ -279,7 +281,14 @@ entry points; this cleanup only changes the Python benchmark infrastructure.
 The test suite is located in `tests/`. They include unit, regression and randomized tests. Some algorithm sections do not yet have comprehensive coverage.
 
 ```bash
-python3 -m pytest
+uv run pytest
+```
+
+The linter and the type checker for the replication package run the same way:
+
+```bash
+uv run ruff check
+uv run mypy paper/
 ```
 
 For reference, the complete suite took 527 seconds (8 minutes 47 seconds) in
@@ -289,7 +298,7 @@ that wall time is spent in the exhaustive LC-CSS/KLS coverage.
 
 ### Dependencies
 
-Apart from the dependencies in `requirements.txt`, the automorphism-group algorithm uses [GAP and Guava](https://docs.gap-system.org/pkg/guava/doc/manual.pdf), so a GAP executable and Guava's dependencies are required. Place the Guava dependencies in `bm_qecc/.gap` and set the path to the GAP executable before running this algorithm:
+Apart from the Python dependencies declared in `pyproject.toml` and locked in `uv.lock`, the automorphism-group algorithm uses [GAP and Guava](https://docs.gap-system.org/pkg/guava/doc/manual.pdf), so a GAP executable and Guava's dependencies are required. Place the Guava dependencies in `bm_qecc/.gap` and set the path to the GAP executable before running this algorithm:
 
 ```bash
 export GAP_EXECUTABLE=/path/to/gap

@@ -25,8 +25,8 @@ The artifacts of this pipeline are not the exact same figures used in the paper,
 
 Replication requires Linux or macOS with a C compiler (`pynauty` is built from
 source on Python 3.13; Windows is not supported).
-`requirements.txt` pins every direct Python dependency. For the exact resolved
-transitive environment, install `requirements.lock.txt` instead.
+`pyproject.toml` pins every direct Python dependency and `uv.lock` records the
+exact resolved transitive environment; `uv sync` installs it.
 
 ---
 
