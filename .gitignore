@@ -1,36 +1,32 @@
+# Python environments and caches
 .venv/
 venv/
 __pycache__/
 *.py[cod]
-.gap/
 
-results/*
-!results/.gitkeep
-!results/*.py
-
+# Editor and OS files
 .vscode/
+.DS_Store
 
+# Local-only: GAP/Guava installation, playground, scratch files, logs
+.gap/
+playground/
 *sandbox*
+*tmp*
+*.log
 
+# Thesis benchmarks: the named codes in data/<code>/ are tracked; generated
+# inputs, helper scripts and everything in results/ are not
+data/*.py
 data/random*.txt
 data/*/random*.txt
 data/*/non_lcc_css*.txt
-*/*/*.log
-data/*.py
-results/conversion.py
-results/extraction.py
-results/visual*.py
+results/*
+!results/.gitkeep
 
-.DS_Store
-
-*tmp*
-
-playground/
-paper/*
-!paper/.gitignore
-!paper/*.md
-!paper/*.py
-!paper/benchmarks/
-!paper/experiments/
-!paper/hybrids/
-!paper/visualizations/
+# Paper replication package: the collected measurement CSVs are tracked;
+# their logs and backups and the extracted results are not
+paper/results/
+paper/data/collected/**
+!paper/data/collected/**/
+!paper/data/collected/**/*.csv
