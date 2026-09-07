@@ -33,13 +33,15 @@ from src.core.stabilizer_code import StabilizerCode
 def _gf4_values(matrix: np.ndarray) -> np.ndarray:
     return np.array([[entry.value for entry in row] for row in matrix], dtype=np.uint8)
 
+
 def _run_carbon_peq(seed: int, out: mp.Queue) -> None:
     code1 = StabilizerCode.from_file("data/carbon")
     code2 = permutation_equivalent_code(code1, seed=seed)
     out.put(are_peq_stab_classical(code1, code2))
 
+
 def assert_not_false_within_timeout(seed: int, timeout: float = 30.0) -> None:
-    out : mp.Queue = mp.Queue()
+    out: mp.Queue = mp.Queue()
     proc = mp.Process(target=_run_carbon_peq, args=(seed, out))
     proc.start()
     proc.join(timeout)
@@ -59,9 +61,11 @@ def assert_not_false_within_timeout(seed: int, timeout: float = 30.0) -> None:
 
     assert result is True
 
+
 # ----------------------------------------------------------------------------------------------------
 # GF4
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_gf4_arithmetic() -> None:
     elements = [ZERO, ONE, W, W_BAR]
@@ -104,9 +108,11 @@ def test_gf4_arithmetic() -> None:
     with pytest.raises(ValueError):
         GF4(4)
 
+
 # ----------------------------------------------------------------------------------------------------
 # _symplectic_to_gf4
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_symplectic_to_gf4() -> None:
     tableau = np.array(
@@ -130,9 +136,11 @@ def test_symplectic_to_gf4() -> None:
         ),
     )
 
+
 # ----------------------------------------------------------------------------------------------------
 # _gf4_rref
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_gf4_rref() -> None:
     matrix = np.array(
@@ -169,9 +177,11 @@ def test_gf4_trace_inner_product_matches_symplectic_commutation() -> None:
     assert _gf4_trace_inner_product(commuting1, commuting2) == ZERO
     assert _gf4_trace_inner_product(commuting1, anticommuting) == ONE
 
+
 # ----------------------------------------------------------------------------------------------------
 # _compute_signatures
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_compute_signatures() -> None:
     generator_matrix = np.array(
@@ -189,9 +199,11 @@ def test_compute_signatures() -> None:
 
     assert permuted_signatures == [signatures[i] for i in permutation]
 
+
 # ----------------------------------------------------------------------------------------------------
 # _compute_canonical_form
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_compute_canonical_form_stable_under_gf2_row_operations() -> None:
     generator_matrix = np.array(
@@ -231,18 +243,22 @@ def test_compute_canonical_form_manual() -> None:
 
     assert np.array_equal(canonical, permuted_canonical)
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_peq_stab_classical
 # ----------------------------------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in [1193, 1074]])
 def test_are_peq_stab_classical_failing_bm(seed: int) -> None:
     code1, code2 = random_non_permuted_stabilizer_pair(13, 3, seed=seed)
     assert are_peq_stab_classical(code1, code2) is False
 
+
 def test_are_peq_stab_classical_failing_bm2() -> None:
     code1, code2 = random_permuted_stabilizer_pair(n=8, k=3, seed=111)
     assert are_peq_stab_classical(code1, code2) is True
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in [89, 654, 438]])
 def test_are_peq_stab_classical_failing_bm3(seed: int) -> None:
@@ -250,9 +266,11 @@ def test_are_peq_stab_classical_failing_bm3(seed: int) -> None:
     code2 = permutation_equivalent_code(code1, seed=seed)
     assert are_peq_stab_classical(code1, code2) is True
 
+
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in [89, 773, 654, 438, 433, 858, 85]])
 def test_are_peq_stab_classical_failing_bm4(seed: int) -> None:
     assert_not_false_within_timeout(seed, timeout=5.0)
+
 
 def test_are_peq_stab_classical_random_smoke() -> None:
     for n in range(3, 6):
@@ -262,6 +280,7 @@ def test_are_peq_stab_classical_random_smoke() -> None:
                 assert isinstance(are_peq_stab_classical(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 def _shape(seed: int) -> tuple[int, int]:
     n = 2 + (5 * seed + 1) % 8

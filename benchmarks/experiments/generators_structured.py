@@ -74,11 +74,7 @@ NAMED_CODE_SPECS: dict[str, tuple[str | None, bool]] = {
 
 def named_code_names(*, css_only: bool = False) -> tuple[str, ...]:
     """Return the accepted structured-code names in registry order."""
-    return tuple(
-        name
-        for name, (_, is_css) in NAMED_CODE_SPECS.items()
-        if is_css or not css_only
-    )
+    return tuple(name for name, (_, is_css) in NAMED_CODE_SPECS.items() if is_css or not css_only)
 
 
 def load_named_code(name: str) -> StabilizerCode:
@@ -113,9 +109,7 @@ class PEqCodePairGenerator:
     """Generator for permutation-equivalent pairs from named codes."""
 
     @staticmethod
-    def stabilizer_codes_permuted(
-        name: str, seed: int | None = None
-    ) -> tuple[StabilizerCode, StabilizerCode]:
+    def stabilizer_codes_permuted(name: str, seed: int | None = None) -> tuple[StabilizerCode, StabilizerCode]:
         """Return a named code and a physical-qubit permutation of it.
 
         Sampling bias: the source is one fixed named code and the generator rows
@@ -129,9 +123,7 @@ class PEqCodePairGenerator:
         return code, _permute_stabilizer_code(code, permutation)
 
     @staticmethod
-    def stabilizer_codes_basis_changed(
-        name: str, seed: int | None = None
-    ) -> tuple[StabilizerCode, StabilizerCode]:
+    def stabilizer_codes_basis_changed(name: str, seed: int | None = None) -> tuple[StabilizerCode, StabilizerCode]:
         """Return a named code and a permuted, basis-changed copy.
 
         Sampling bias: every seed remains in the permutation orbit of one fixed
@@ -143,9 +135,7 @@ class PEqCodePairGenerator:
         return code, permutation_equivalent_code(code, seed=seed)
 
     @staticmethod
-    def stabilizer_codes_with_logicals(
-        name: str, seed: int | None = None
-    ) -> tuple[StabilizerCode, StabilizerCode]:
+    def stabilizer_codes_with_logicals(name: str, seed: int | None = None) -> tuple[StabilizerCode, StabilizerCode]:
         """Return a named pair with its logical frame transported exactly.
 
         Sampling bias: the code and logical frame are tied to one named source,
@@ -163,9 +153,7 @@ class PEqCodePairGenerator:
         )
 
     @staticmethod
-    def css_codes_permuted(
-        name: str, seed: int | None = None
-    ) -> tuple[CSSCode, CSSCode]:
+    def css_codes_permuted(name: str, seed: int | None = None) -> tuple[CSSCode, CSSCode]:
         """Return a named CSS code and a physical-qubit permutation of it.
 
         Sampling bias: the source structure is fixed and the check rows retain
@@ -184,9 +172,7 @@ class PEqCodePairGenerator:
         )
 
     @staticmethod
-    def css_codes_basis_changed(
-        name: str, seed: int | None = None
-    ) -> tuple[CSSCode, CSSCode]:
+    def css_codes_basis_changed(name: str, seed: int | None = None) -> tuple[CSSCode, CSSCode]:
         """Return a named CSS code and a permuted, basis-changed copy.
 
         Sampling bias: seeds vary only the presentation of one fixed named CSS
@@ -213,9 +199,7 @@ class NonPEqCodePairGenerator:
         X+Z-rank certificate; those outcomes are fixed by construction.
         """
         code = load_named_code(name)
-        partner = non_permutation_equivalent_stabilizer_code(
-            code, seed=seed, max_attempts=max_attempts
-        )
+        partner = non_permutation_equivalent_stabilizer_code(code, seed=seed, max_attempts=max_attempts)
         return code, partner
 
     @staticmethod
@@ -245,9 +229,7 @@ class NonPEqCodePairGenerator:
         family or the projection-rank certificate's natural rate is measured.
         """
         code = load_named_code(name)
-        partner = non_permutation_equivalent_stabilizer_code_independent(
-            code, seed=seed, max_attempts=max_attempts
-        )
+        partner = non_permutation_equivalent_stabilizer_code_independent(code, seed=seed, max_attempts=max_attempts)
         return code, partner
 
     @staticmethod
@@ -262,14 +244,10 @@ class NonPEqCodePairGenerator:
         negative label are required; certify inequivalence with an exact backend.
         """
         code = load_named_code(name)
-        return code, _perturbed_stabilizer_code(
-            code, seed=seed, gate_steps=gate_steps
-        )
+        return code, _perturbed_stabilizer_code(code, seed=seed, gate_steps=gate_steps)
 
     @staticmethod
-    def css_codes_cnot_candidate(
-        name: str, seed: int | None = None, *, gate_steps: int = 2
-    ) -> tuple[CSSCode, CSSCode]:
+    def css_codes_cnot_candidate(name: str, seed: int | None = None, *, gate_steps: int = 2) -> tuple[CSSCode, CSSCode]:
         """Return a named CSS code and an uncertified short-CNOT perturbation.
 
         The partner applies ``gate_steps`` physical CNOTs to the named code,
@@ -285,15 +263,11 @@ class NonPEqCodePairGenerator:
         if gate_steps < 0:
             raise ValueError("gate_steps must be non-negative.")
         code = _load_css_code(name)
-        hx, hz = _random_css_cnot_candidate_matrices(
-            code, rng=np.random.default_rng(seed), gate_steps=gate_steps
-        )
+        hx, hz = _random_css_cnot_candidate_matrices(code, rng=np.random.default_rng(seed), gate_steps=gate_steps)
         return code, _css_like(code, hx, hz)
 
     @staticmethod
-    def css_codes_cascaded(
-        name: str, seed: int | None = None
-    ) -> tuple[CSSCode, CSSCode]:
+    def css_codes_cascaded(name: str, seed: int | None = None) -> tuple[CSSCode, CSSCode]:
         """Return a named CSS code and the first available certified negative.
 
         Sampling bias: the method is a structure-dependent mixture of CNOT,
@@ -305,9 +279,7 @@ class NonPEqCodePairGenerator:
         return code, non_permutation_equivalent_css_code(code, seed=seed)
 
     @staticmethod
-    def css_codes_cnot(
-        name: str, seed: int | None = None, *, max_attempts: int = 110
-    ) -> tuple[CSSCode, CSSCode]:
+    def css_codes_cnot(name: str, seed: int | None = None, *, max_attempts: int = 110) -> tuple[CSSCode, CSSCode]:
         """Return a named CSS code and a CNOT-derived certified negative.
 
         Sampling bias: the partner retains much of the named source's density
@@ -316,15 +288,11 @@ class NonPEqCodePairGenerator:
         unconditioned rejection rate are required.
         """
         code = _load_css_code(name)
-        partner = non_permutation_equivalent_css_code_cnot(
-            code, seed=seed, max_attempts=max_attempts
-        )
+        partner = non_permutation_equivalent_css_code_cnot(code, seed=seed, max_attempts=max_attempts)
         return code, partner
 
     @staticmethod
-    def css_codes_decoupled(
-        name: str, seed: int | None = None, *, max_attempts: int = 500
-    ) -> tuple[CSSCode, CSSCode]:
+    def css_codes_decoupled(name: str, seed: int | None = None, *, max_attempts: int = 500) -> tuple[CSSCode, CSSCode]:
         """Return a named CSS code with independently permuted X/Z sectors.
 
         Sampling bias: both sector column multisets are fixed to those of the
@@ -333,9 +301,7 @@ class NonPEqCodePairGenerator:
         coupled certificate's natural rejection rate is measured.
         """
         code = _load_css_code(name)
-        partner = non_permutation_equivalent_css_code_decoupled(
-            code, seed=seed, max_attempts=max_attempts
-        )
+        partner = non_permutation_equivalent_css_code_decoupled(code, seed=seed, max_attempts=max_attempts)
         return code, partner
 
     @staticmethod
@@ -383,9 +349,7 @@ class LCEqCodePairGenerator:
         compatibility is part of the measured difficulty.
         """
         code = load_named_code(name)
-        return code, lc_equivalent_code_and_log_ops(
-            code, seed=seed, row_steps=row_steps
-        )
+        return code, lc_equivalent_code_and_log_ops(code, seed=seed, row_steps=row_steps)
 
 
 class NonLCEqCodePairGenerator:
@@ -403,9 +367,7 @@ class NonLCEqCodePairGenerator:
         support-rank certificate's natural rejection rate is measured.
         """
         code = load_named_code(name)
-        return code, non_lc_equivalent_code(
-            code, seed=seed, max_attempts=max_attempts
-        )
+        return code, non_lc_equivalent_code(code, seed=seed, max_attempts=max_attempts)
 
 
 class LCEqCodeGenerator:

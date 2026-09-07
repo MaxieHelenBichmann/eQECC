@@ -15,14 +15,14 @@ from src.core.stabilizer_code import StabilizerCode
 
 def _adjacency_as_sets(graph: Graph) -> dict[int, set[int]]:
     return {
-        int(vertex): {int(neighbor) for neighbor in neighbors}
-        for vertex, neighbors in graph.adjacency_dict.items()
+        int(vertex): {int(neighbor) for neighbor in neighbors} for vertex, neighbors in graph.adjacency_dict.items()
     }
 
 
 # ----------------------------------------------------------------------------------------------------
 # _graph_from_code
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_graph_from_trivial_code() -> None:
     graph = _graph_from_code(StabilizerCode.get_trivial_code(3))
@@ -49,6 +49,7 @@ def test_graph_from_code_splits_pauli_vertices() -> None:
 # ----------------------------------------------------------------------------------------------------
 # are_lceq_graph_iso
 # ----------------------------------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize(
     ("code1", "code2", "expected"),
@@ -112,6 +113,7 @@ def test_are_lceq_graph_iso_random_positive(seed: int) -> None:
     code2 = lc_equivalent_code(code1, seed=2000 + seed)
 
     assert are_lceq_graph_iso(code1, code2) is True
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(2, 6)])
 def test_are_lceq_graph_iso_random_negative(seed: int) -> None:

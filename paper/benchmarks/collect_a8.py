@@ -36,8 +36,16 @@ from paper.hybrids.lc_stb import are_lceq
 from paper.hybrids.pm_css import are_peq_css
 from paper.hybrids.pm_stb import are_peq_stab
 from paper.benchmarks.common import (
-    CERTIFIERS, COLLECTED_DIR, GATE_STEPS, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS,
-    append_row, css_certifier, execution_status, read_rows,
+    CERTIFIERS,
+    COLLECTED_DIR,
+    GATE_STEPS,
+    MASTER_SEED,
+    MEMORY_LIMIT_BYTES,
+    TIMEOUT_SECONDS,
+    append_row,
+    css_certifier,
+    execution_status,
+    read_rows,
 )
 from src.core.css_code import CSSCode
 from src.core.pauli import StabilizerTableau
@@ -46,9 +54,24 @@ from src.core.stabilizer_code import StabilizerCode
 OUTPUT_DIRECTORY = COLLECTED_DIR / "hybrids"
 
 CODES = (
-    "bell", "3q_rep", "5q_prf", "steane", "shor", "carbon", "hamming_15",
-    "15q_optimal", "tetrahedral", "golay", "rot_surf_d5", "hamming_31",
-    "coco_488", "coco_666", "bb_72", "bb_90", "bb_108", "bb_144",
+    "bell",
+    "3q_rep",
+    "5q_prf",
+    "steane",
+    "shor",
+    "carbon",
+    "hamming_15",
+    "15q_optimal",
+    "tetrahedral",
+    "golay",
+    "rot_surf_d5",
+    "hamming_31",
+    "coco_488",
+    "coco_666",
+    "bb_72",
+    "bb_90",
+    "bb_108",
+    "bb_144",
 )
 NON_CSS_CODES = frozenset({"5q_prf", "15q_optimal"})
 HYBRIDS = {
@@ -72,12 +95,21 @@ DECIDED_MARKER = "#decided_by "
 KEY_FIELDS = ("code", "positive", "seed")
 INSTANCE_FIELDS = (*KEY_FIELDS, "n", "k", "status", "left", "right", "error")
 RAW_FIELDS = (
-    "problem", *KEY_FIELDS, "n", "k", "status", "runtime_seconds",
-    "decided_by", "stuck_at", "timeout_seconds", "error",
+    "problem",
+    *KEY_FIELDS,
+    "n",
+    "k",
+    "status",
+    "runtime_seconds",
+    "decided_by",
+    "stuck_at",
+    "timeout_seconds",
+    "error",
 )
 
 
 # CSV persistence -------------------------------------------------------------------------------
+
 
 def row_key(row) -> tuple[str, ...]:
     return tuple(str(row[field]) for field in KEY_FIELDS)
@@ -107,6 +139,7 @@ def decode_code(text: str, n: int) -> StabilizerCode:
 
 # Instance generation ---------------------------------------------------------------------------
 
+
 def certified_inequivalent(problem: str, left: StabilizerCode, right: StabilizerCode) -> bool:
     if problem == "pm_css":
         certifier = css_certifier(left.n, left.k)
@@ -117,8 +150,7 @@ def certified_inequivalent(problem: str, left: StabilizerCode, right: Stabilizer
     return not certifier(left, right)
 
 
-def generate_pair(problem: str, code_name: str, positive: bool,
-                  seed: int) -> tuple[StabilizerCode, StabilizerCode]:
+def generate_pair(problem: str, code_name: str, positive: bool, seed: int) -> tuple[StabilizerCode, StabilizerCode]:
     if positive:
         if problem == "lc_stb":
             return LCEqCodePairGenerator.stabilizer_codes_local_clifford(code_name, seed)
@@ -145,12 +177,20 @@ def generate_pair(problem: str, code_name: str, positive: bool,
 def generate_instance(problem: str, code_name: str, positive: bool, seed: int) -> dict:
     left, right = generate_pair(problem, code_name, positive, seed)
     return {
-        "code": code_name, "positive": positive, "seed": seed, "n": left.n, "k": left.k,
-        "status": "success", "left": encode_code(left), "right": encode_code(right), "error": "",
+        "code": code_name,
+        "positive": positive,
+        "seed": seed,
+        "n": left.n,
+        "k": left.k,
+        "status": "success",
+        "left": encode_code(left),
+        "right": encode_code(right),
+        "error": "",
     }
 
 
 # Supervised hybrid execution -------------------------------------------------------------------
+
 
 @dataclass(frozen=True)
 class TracedHybrid:
@@ -174,7 +214,7 @@ def read_trace(log_path: Path) -> tuple[list[str], str]:
         if line in STAGES:
             trace.append(line)
         elif line.startswith(DECIDED_MARKER):
-            decided_by = line[len(DECIDED_MARKER):]
+            decided_by = line[len(DECIDED_MARKER) :]
     return trace, decided_by
 
 
@@ -183,28 +223,47 @@ def run_instance(problem: str, instance, log_path: Path, *, timeout: float, memo
     left, right = decode_code(instance["left"], n), decode_code(instance["right"], n)
     positive = instance["positive"] == "True"
     log_path.write_text("", encoding="utf-8")
-    result = run(TracedHybrid(HYBRIDS[problem], str(log_path)), (left, right), positive,
-                 timeout=timeout, max_memory_bytes=memory_limit_bytes)
+    result = run(
+        TracedHybrid(HYBRIDS[problem], str(log_path)),
+        (left, right),
+        positive,
+        timeout=timeout,
+        max_memory_bytes=memory_limit_bytes,
+    )
     status = execution_status(result)
     if status == "success" and not result.result_is_expected:
         status = "unexpected"
     trace, decided_by = read_trace(log_path)
     killed = status in {"timeout", "memory_limited"}
     return {
-        "problem": problem, "code": instance["code"], "positive": positive,
-        "seed": instance["seed"], "n": n, "k": instance["k"], "status": status,
-        "runtime_seconds": f"{result.runtime:.9f}", "decided_by": decided_by,
+        "problem": problem,
+        "code": instance["code"],
+        "positive": positive,
+        "seed": instance["seed"],
+        "n": n,
+        "k": instance["k"],
+        "status": status,
+        "runtime_seconds": f"{result.runtime:.9f}",
+        "decided_by": decided_by,
         "stuck_at": (trace[-1] if trace else UNREACHED) if killed else "",
-        "timeout_seconds": timeout, "error": result.error or "",
+        "timeout_seconds": timeout,
+        "error": result.error or "",
     }
 
 
 # Collection ------------------------------------------------------------------------------------
 
+
 def collect(
-    problems=tuple(HYBRIDS), *, codes=CODES, seeds=SEEDS, output_directory=OUTPUT_DIRECTORY,
-    generation_timeout=GENERATION_TIMEOUT_SECONDS, timeout=TIMEOUT_SECONDS,
-    memory_limit_bytes=MEMORY_LIMIT_BYTES, verbose=VERBOSE,
+    problems=tuple(HYBRIDS),
+    *,
+    codes=CODES,
+    seeds=SEEDS,
+    output_directory=OUTPUT_DIRECTORY,
+    generation_timeout=GENERATION_TIMEOUT_SECONDS,
+    timeout=TIMEOUT_SECONDS,
+    memory_limit_bytes=MEMORY_LIMIT_BYTES,
+    verbose=VERBOSE,
 ) -> None:
     with tempfile.TemporaryDirectory() as scratch:
         log_path = Path(scratch) / "trace.log"
@@ -223,13 +282,22 @@ def collect(
                             continue
                         instance = instances.get(key)
                         if instance is None:
-                            outcome = run(generate_instance, (problem, code_name, positive, seed),
-                                          None, timeout=generation_timeout,
-                                          max_memory_bytes=memory_limit_bytes)
+                            outcome = run(
+                                generate_instance,
+                                (problem, code_name, positive, seed),
+                                None,
+                                timeout=generation_timeout,
+                                max_memory_bytes=memory_limit_bytes,
+                            )
                             instance = outcome.result or {
-                                "code": code_name, "positive": positive, "seed": seed,
-                                "n": "", "k": "", "status": "generation_error",
-                                "left": "", "right": "",
+                                "code": code_name,
+                                "positive": positive,
+                                "seed": seed,
+                                "n": "",
+                                "k": "",
+                                "status": "generation_error",
+                                "left": "",
+                                "right": "",
                                 "error": outcome.error or f"generation {execution_status(outcome)}",
                             }
                             instance = {field: str(instance[field]) for field in INSTANCE_FIELDS}
@@ -237,28 +305,43 @@ def collect(
                             instances[key] = instance
                         if instance["status"] != "success":
                             row = {
-                                "problem": problem, "code": code_name, "positive": positive,
-                                "seed": seed, "n": instance["n"], "k": instance["k"],
-                                "status": "generation_error", "runtime_seconds": "",
-                                "decided_by": "", "stuck_at": "", "timeout_seconds": timeout,
+                                "problem": problem,
+                                "code": code_name,
+                                "positive": positive,
+                                "seed": seed,
+                                "n": instance["n"],
+                                "k": instance["k"],
+                                "status": "generation_error",
+                                "runtime_seconds": "",
+                                "decided_by": "",
+                                "stuck_at": "",
+                                "timeout_seconds": timeout,
                                 "error": instance["error"],
                             }
                         else:
-                            row = run_instance(problem, instance, log_path, timeout=timeout,
-                                               memory_limit_bytes=memory_limit_bytes)
+                            row = run_instance(
+                                problem, instance, log_path, timeout=timeout, memory_limit_bytes=memory_limit_bytes
+                            )
                         append_row(raw_file, row, RAW_FIELDS)
                         measured.add(key)
                         if verbose:
                             detail = row["decided_by"] or row["stuck_at"] or row["error"]
                             runtime = f"{row['runtime_seconds']}s " if row["runtime_seconds"] else ""
-                            print(f"{problem} {code_name} positive={positive} seed={seed}: "
-                                  f"{row['status']} {runtime}{detail}", flush=True)
+                            print(
+                                f"{problem} {code_name} positive={positive} seed={seed}: "
+                                f"{row['status']} {runtime}{detail}",
+                                flush=True,
+                            )
 
 
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--problem", choices=tuple(HYBRIDS), action="append",
-                        help="collect only this problem (repeatable); default: all")
+    parser.add_argument(
+        "--problem",
+        choices=tuple(HYBRIDS),
+        action="append",
+        help="collect only this problem (repeatable); default: all",
+    )
     return parser.parse_args(argv)
 
 

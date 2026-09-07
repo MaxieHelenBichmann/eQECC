@@ -1,6 +1,6 @@
 """Classical code equivalence based permutation equivalence checking.
 
-References for this algorithm: 
+References for this algorithm:
 - A. R. Calderbank, E. M. Rains, P. W. Shor, N. J. A. Sloane: Quantum Error Correction Via Codes Over GF(4)
 - Nicolas Sendrier: Finding the Permutation Between Equivalent Linear Codes: The Support Splitting Algorithm
 - Thomas Feulner: The Automorphism Groups of Linear Codes and Canonical Representatives of Their Semilinear Isometry Classes
@@ -25,6 +25,7 @@ _GF4_MUL_TABLE = (
 
 _GF4_CONJ_TABLE = (0, 1, 3, 2)
 
+
 @dataclass(frozen=True, slots=True)
 class GF4:
     """
@@ -34,9 +35,10 @@ class GF4:
     1 = 01
     w = 10
     w_bar = w + 1 = 11
-    
+
     (not original Calderbank/Rains/Shor/Sloane mapping, but a more convenient/intuitive in my opinion, and also Danielsen/Parker and MacAree/Howard)
     """
+
     value: int
 
     def __post_init__(self):
@@ -67,7 +69,7 @@ class GF4:
     def inverse(self) -> GF4:
         if self.value == 0:
             raise ZeroDivisionError("0 has no multiplicative inverse in GF(4).")
-        return self ** 2
+        return self**2
 
     def __truediv__(self, other: GF4) -> GF4:
         return self * other.inverse()
@@ -92,10 +94,12 @@ class GF4:
         }
         return names[self.value]
 
+
 ZERO = GF4(0)
 ONE = GF4(1)
 W = GF4(2)
 W_BAR = GF4(3)
+
 
 def _symplectic_to_gf4(tableau: np.ndarray) -> np.ndarray:
     # I = (0|0) -> 0, X = (1|0) -> 1, Z = (0|1) -> w, Y = (1|1) -> w_bar
@@ -104,11 +108,12 @@ def _symplectic_to_gf4(tableau: np.ndarray) -> np.ndarray:
     values = tableau[:, :n] + 2 * tableau[:, n:]
     return gf4_entries[values]
 
+
 def _gf4_to_symplectic(tableau: np.ndarray) -> np.ndarray:
     # 0 -> I = (0|0), 1 -> X = (1|0), w -> Z = (0|1), w_bar -> Y = (1|1)
     n = tableau.shape[1]
     r = tableau.shape[0]
-    symplectic_matrix = np.empty((r, 2*n), dtype=np.uint8)
+    symplectic_matrix = np.empty((r, 2 * n), dtype=np.uint8)
     for q in range(n):
         for i in range(r):
             value = tableau[i, q].value
@@ -116,6 +121,7 @@ def _gf4_to_symplectic(tableau: np.ndarray) -> np.ndarray:
             symplectic_matrix[i, q + n] = value >> 1
 
     return symplectic_matrix
+
 
 def _gf4_rref(matrix: np.ndarray, to_col: int | None = None) -> tuple[int, np.ndarray, list[int]]:
     # matrix has GF(4) entries, this is NOT the normal RREF of GF(4)-linear codes, but of GF(4)-additive codes!
@@ -134,7 +140,7 @@ def _gf4_rref(matrix: np.ndarray, to_col: int | None = None) -> tuple[int, np.nd
     if to_col is None:
         to_col = n
 
-    for bit_col in range(2*to_col):
+    for bit_col in range(2 * to_col):
         col = bit_col % to_col
 
         pivot = None
@@ -161,6 +167,7 @@ def _gf4_rref(matrix: np.ndarray, to_col: int | None = None) -> tuple[int, np.nd
             break
     return rank, matrix, pivot_columns
 
+
 def _gf4_trace_inner_product(a: np.ndarray, b: np.ndarray) -> GF4:
     acc = 0
     for ai, bi in zip(a, b):
@@ -169,9 +176,10 @@ def _gf4_trace_inner_product(a: np.ndarray, b: np.ndarray) -> GF4:
         acc ^= ((av & 1) & (bv >> 1)) ^ ((av >> 1) & (bv & 1))
     return ONE if acc else ZERO
 
+
 def _compute_signatures(generator_matrix: np.ndarray) -> list[tuple[int, ...]]:
-    """Compute the combined Sendrier's invariant of the weight enumerator of the hull of the punctured code of each column of the code.
-    """
+    """Compute the combined Sendrier's invariant of the weight enumerator of the hull of the punctured code of each column of the code."""
+
     def _gf2_kernel_basis(A: np.ndarray) -> np.ndarray:
         A = (np.asarray(A) & 1).astype(np.uint8)
         K = mod2.nullspace(A)
@@ -183,9 +191,7 @@ def _compute_signatures(generator_matrix: np.ndarray) -> list[tuple[int, ...]]:
         if K.ndim == 1:
             K = K.reshape(1, -1)
         if K.shape[1] != A.shape[1]:
-            raise ValueError(
-               "Kernel basis must have the same number of columns as the input matrix."
-            )
+            raise ValueError("Kernel basis must have the same number of columns as the input matrix.")
         return K
 
     def _gf4_values(G: np.ndarray) -> np.ndarray:
@@ -275,12 +281,16 @@ def _compute_signatures(generator_matrix: np.ndarray) -> list[tuple[int, ...]]:
         # gram is in GF(2) due to the trace inner product that simulates the symplectic product (aka commutation/anti-commutation)
         gram = full_gram ^ column_gram_contributions[col_idx]
 
-        coeff_basis = _gf2_kernel_basis(gram.T) # c @ gram = gram.T @ c.T = 0 -> x = c @ Gp with <x, Gp[i]> = 0 for all rows j -> x orthogonal to all rows of Gp -> x in Gp perp
+        coeff_basis = _gf2_kernel_basis(
+            gram.T
+        )  # c @ gram = gram.T @ c.T = 0 -> x = c @ Gp with <x, Gp[i]> = 0 for all rows j -> x orthogonal to all rows of Gp -> x in Gp perp
 
         if coeff_basis.shape[0] == 0:
             hull_basis = np.zeros((0, g_p), dtype=np.uint8)
         else:
-            hull_basis = _gf4_value_row_basis(_gf2_gf4_value_matmul(coeff_basis, Gp)) # c @ Gp = x -> words in Gp that are orthogonal to all rows of Gp -> hull
+            hull_basis = _gf4_value_row_basis(
+                _gf2_gf4_value_matmul(coeff_basis, Gp)
+            )  # c @ Gp = x -> words in Gp that are orthogonal to all rows of Gp -> hull
 
         hull_h, hull_n = hull_basis.shape
         enumerator = [1] + [0] * g_p
@@ -315,18 +325,20 @@ def _compute_signatures(generator_matrix: np.ndarray) -> list[tuple[int, ...]]:
 
     return invariants
 
+
 def _partition_columns_by_invariants(invariants: list[tuple[int, ...]]) -> dict[tuple[int, ...], list[int]]:
     partition = defaultdict(list)
     for idx, inv in enumerate(invariants):
         partition[inv].append(idx)
     return {k: sorted(v) for k, v in sorted(partition.items(), key=lambda item: item[0])}
 
+
 def _compute_canonical_form(matrix: np.ndarray, cells: list[list[int]]) -> np.ndarray:
-    """Compute the canonical form of the GF(4) representation of the  code, using Feulner's algorithm, and return the canonical form and the corresponding permutation of the columns. Partition is used for pruning the search tree.
-    """
+    """Compute the canonical form of the GF(4) representation of the  code, using Feulner's algorithm, and return the canonical form and the corresponding permutation of the columns. Partition is used for pruning the search tree."""
+
     def _prefix_semicanonical(G: np.ndarray, i: int) -> np.ndarray:
         """Bring the first i columns of G into semi-canonical form only using GF(2) row operations."""
-        _, rref_to_i , _ = _gf4_rref(G, to_col=i)
+        _, rref_to_i, _ = _gf4_rref(G, to_col=i)
         return rref_to_i
 
     def _flatten(cells_: list[list[int]]) -> list[int]:
@@ -338,7 +350,7 @@ def _compute_canonical_form(matrix: np.ndarray, cells: list[list[int]]) -> np.nd
         return tuple(tuple(symplectic[r, c] for r in range(k_m)) for c in range(2 * n_m))
 
     def prefix_key(M: np.ndarray, i: int) -> tuple[tuple[int, ...], ...]:
-        return matrix_key(M[:, :i]) # lexicographic key of the first i columns of M, because python can compare tuples
+        return matrix_key(M[:, :i])  # lexicographic key of the first i columns of M, because python can compare tuples
 
     n_g = matrix.shape[1]
     best_matrix: np.ndarray | None = None
@@ -347,7 +359,9 @@ def _compute_canonical_form(matrix: np.ndarray, cells: list[list[int]]) -> np.nd
 
     cells = [sorted(cell) for cell in cells if cell]
 
-    def _search(prefix: list[int], remaining_cells: list[list[int]], path_keys: list[tuple[tuple[int, ...], ...]]) -> None: # recursive search over the space of permutations
+    def _search(
+        prefix: list[int], remaining_cells: list[list[int]], path_keys: list[tuple[tuple[int, ...], ...]]
+    ) -> None:  # recursive search over the space of permutations
         nonlocal best_matrix, best_full_key, best_prefix_keys
         i = len(prefix)
         trial_perm = prefix + _flatten(remaining_cells)
@@ -360,15 +374,17 @@ def _compute_canonical_form(matrix: np.ndarray, cells: list[list[int]]) -> np.nd
         if best_prefix_keys is not None and i > 0:
             best_prefix = best_prefix_keys[i]
 
-            if current_prefix > best_prefix: # prune this branch, since the canonical form must be lexicographically minimal
+            if (
+                current_prefix > best_prefix
+            ):  # prune this branch, since the canonical form must be lexicographically minimal
                 return
 
-            if current_prefix < best_prefix: # update the best prefix, since we found a better one on current path
+            if current_prefix < best_prefix:  # update the best prefix, since we found a better one on current path
                 best_matrix = None
                 best_full_key = None
                 best_prefix_keys = None
 
-        if i == n_g: # we are at leaf (have a full permutation)
+        if i == n_g:  # we are at leaf (have a full permutation)
             full_key = matrix_key(M_semi)
 
             if best_full_key is None or full_key < best_full_key:
@@ -394,7 +410,7 @@ def _compute_canonical_form(matrix: np.ndarray, cells: list[list[int]]) -> np.nd
 
 
 def are_peq_stab_classical(c1: StabilizerCode, c2: StabilizerCode) -> bool:
-    """Check permutation equivalence mapping a tableau to GF(4) and using algorithms for classical code equivalence. A two-layer approach is used, where the first layer uses Sendrier's Support Splitting Algorithm to partition the columns of the generator matrices into equivalence classes based on the weight enumerator of the hull of the punctured code. 
+    """Check permutation equivalence mapping a tableau to GF(4) and using algorithms for classical code equivalence. A two-layer approach is used, where the first layer uses Sendrier's Support Splitting Algorithm to partition the columns of the generator matrices into equivalence classes based on the weight enumerator of the hull of the punctured code.
     The second layer then checks for permutation equivalence by traversing the search tree of possible permutations, and pruning branches based on the canonical form of Feulner's Algorithm.
 
     ! ATTENTION ! I might map the stabilizer tableau to a classical code over GF(4), but i cannot use all the operations in GF(4) since the original stabilizer code is only GF(2)-additive and i have to keep that property. Thus computing the RREF is NOT the normal RREF of GF(4)-linear codes, similar for the semicanonical form, and as the inner product I use the trace inner product.

@@ -96,6 +96,7 @@ def _perturbed_stabilizer_code(
 # Permutation equivalence
 # --------------------------------------------------------------------------
 
+
 class PEqCodePairGenerator:
     """Generator for seeded benchmark pairs of permutation-equivalent codes."""
 
@@ -126,9 +127,7 @@ class PEqCodePairGenerator:
         code_seed = _seed(rng)
         permutation_seed = _seed(rng)
 
-        code = random_stabilizer_code(
-            n, k, seed=code_seed, clifford_steps=clifford_steps
-        )
+        code = random_stabilizer_code(n, k, seed=code_seed, clifford_steps=clifford_steps)
         permutation = _random_permutation(n, seed=permutation_seed)
         return code, _permute_stabilizer_code(code, permutation)
 
@@ -159,9 +158,7 @@ class PEqCodePairGenerator:
         code_seed = _seed(rng)
         partner_seed = _seed(rng)
 
-        code = random_stabilizer_code(
-            n, k, seed=code_seed, clifford_steps=clifford_steps
-        )
+        code = random_stabilizer_code(n, k, seed=code_seed, clifford_steps=clifford_steps)
         return code, permutation_equivalent_code(code, seed=partner_seed)
 
     @staticmethod
@@ -191,9 +188,7 @@ class PEqCodePairGenerator:
         code_seed = _seed(rng)
         permutation_seed = _seed(rng)
 
-        code = random_stabilizer_code(
-            n, k, seed=code_seed, clifford_steps=clifford_steps
-        )
+        code = random_stabilizer_code(n, k, seed=code_seed, clifford_steps=clifford_steps)
         permutation = _random_permutation(n, seed=permutation_seed)
         return code, StabilizerCode(
             generators=_permute_tableau(code.generators, permutation),
@@ -266,6 +261,7 @@ class PEqCodePairGenerator:
 
         code = random_css_code(n, k, x_rank, seed=code_seed)
         return code, permutation_equivalent_css_code(code, permutation_seed)
+
 
 class NonPEqCodePairGenerator:
     """Generator for seeded benchmark pairs outside one permutation orbit."""
@@ -416,9 +412,7 @@ class NonPEqCodePairGenerator:
         partner_seed = _seed(rng)
 
         code = random_stabilizer_code(n, k, seed=source_seed)
-        partner = _perturbed_stabilizer_code(
-            code, seed=partner_seed, gate_steps=gate_steps
-        )
+        partner = _perturbed_stabilizer_code(code, seed=partner_seed, gate_steps=gate_steps)
         return code, partner
 
     @staticmethod
@@ -455,12 +449,8 @@ class NonPEqCodePairGenerator:
         left_seed = _seed(rng)
         right_seed = _seed(rng)
         return (
-            random_stabilizer_code(
-                n, k, seed=left_seed, clifford_steps=clifford_steps
-            ),
-            random_stabilizer_code(
-                n, k, seed=right_seed, clifford_steps=clifford_steps
-            ),
+            random_stabilizer_code(n, k, seed=left_seed, clifford_steps=clifford_steps),
+            random_stabilizer_code(n, k, seed=right_seed, clifford_steps=clifford_steps),
         )
 
     @staticmethod
@@ -691,6 +681,7 @@ class NonPEqCodePairGenerator:
 # local Clifford equivalence
 # --------------------------------------------------------------------------
 
+
 class LCEqCodePairGenerator:
     """Generator for seeded benchmark pairs in one local-Clifford orbit."""
 
@@ -751,9 +742,8 @@ class LCEqCodePairGenerator:
         partner_seed = _seed(rng)
 
         code = random_stabilizer_code(n, k, seed=code_seed)
-        return code, lc_equivalent_code_and_log_ops(
-            code, seed=partner_seed, row_steps=row_steps
-        )
+        return code, lc_equivalent_code_and_log_ops(code, seed=partner_seed, row_steps=row_steps)
+
 
 class NonLCEqCodePairGenerator:
     """Generator for seeded benchmark pairs in different local-Clifford orbits."""
@@ -790,9 +780,7 @@ class NonLCEqCodePairGenerator:
         partner_seed = _seed(rng)
 
         code = random_stabilizer_code(n, k, seed=code_seed)
-        return code, non_lc_equivalent_code(
-            code, seed=partner_seed, row_steps=row_steps, max_attempts=max_attempts
-        )
+        return code, non_lc_equivalent_code(code, seed=partner_seed, row_steps=row_steps, max_attempts=max_attempts)
 
 
 # --------------------------------------------------------------------------
@@ -907,17 +895,13 @@ def _retry_stabilizer_pair(
     for _ in range(max_attempts):
         code_seed = _seed(rng)
         partner_seed = _seed(rng)
-        code = random_stabilizer_code(
-            n, k, seed=code_seed, clifford_steps=clifford_steps
-        )
+        code = random_stabilizer_code(n, k, seed=code_seed, clifford_steps=clifford_steps)
         try:
             return code, partner(code, partner_seed)
         except RandomizeError:
             continue
 
-    raise RandomizeError(
-        f"Could not generate a certified stabilizer pair after {max_attempts} attempts."
-    )
+    raise RandomizeError(f"Could not generate a certified stabilizer pair after {max_attempts} attempts.")
 
 
 def _retry_css_pair(
@@ -952,9 +936,7 @@ def _retry_css_pair(
         except RandomizeError:
             continue
 
-    raise RandomizeError(
-        f"Could not generate a certified CSS pair after {max_attempts} attempts."
-    )
+    raise RandomizeError(f"Could not generate a certified CSS pair after {max_attempts} attempts.")
 
 
 # --------------------------------------------------------------------------
@@ -986,9 +968,7 @@ def non_permutation_equivalent_stabilizer_code(
 
     rng = np.random.default_rng(seed)
     if code.k == code.n:
-        raise RandomizeError(
-            "No non-equivalent stabilizer code exists with these small invariants."
-        )
+        raise RandomizeError("No non-equivalent stabilizer code exists with these small invariants.")
 
     invariant = _projection_rank_invariant(code)[2]
     for _ in range(max_attempts):
@@ -998,9 +978,7 @@ def non_permutation_equivalent_stabilizer_code(
         if _projection_rank_invariant(candidate)[2] != invariant:
             return candidate
 
-    raise RandomizeError(
-        "Could not find a cheap-filter-preserving candidate with a different X+Z projection rank."
-    )
+    raise RandomizeError("Could not find a cheap-filter-preserving candidate with a different X+Z projection rank.")
 
 
 def non_permutation_equivalent_stabilizer_code_anchored(
@@ -1023,20 +1001,14 @@ def non_permutation_equivalent_stabilizer_code_anchored(
     """
     rng = np.random.default_rng(seed)
     if code.k == code.n:
-        raise RandomizeError(
-            "No non-equivalent stabilizer code exists with these small invariants."
-        )
+        raise RandomizeError("No non-equivalent stabilizer code exists with these small invariants.")
 
     invariant = _projection_rank_invariant(code)
     # Use a stronger separation than PEQ strictly needs so color-symmetric
     # benchmark reductions do not collapse X-only and Z-only negatives.
     xz_swapped_invariant = (invariant[1], invariant[0], invariant[2])
-    base_code = _random_anchor_base_code(
-        code.n, code.k, rng=rng, clifford_steps=clifford_steps
-    )
-    base_invariant = (
-        (0, 0, 0) if base_code is None else _projection_rank_invariant(base_code)
-    )
+    base_code = _random_anchor_base_code(code.n, code.k, rng=rng, clifford_steps=clifford_steps)
+    base_invariant = (0, 0, 0) if base_code is None else _projection_rank_invariant(base_code)
 
     anchors = ["X", "Z", "Y"]
     rng.shuffle(anchors)
@@ -1051,9 +1023,7 @@ def non_permutation_equivalent_stabilizer_code_anchored(
                 rng=rng,
             )
 
-    raise RandomizeError(
-        "Could not construct a candidate with a different projection-rank invariant."
-    )
+    raise RandomizeError("Could not construct a candidate with a different projection-rank invariant.")
 
 
 def non_permutation_equivalent_stabilizer_code_independent(
@@ -1072,22 +1042,16 @@ def non_permutation_equivalent_stabilizer_code_independent(
     if max_attempts < 1:
         raise ValueError("max_attempts must be positive.")
     if code.k == code.n:
-        raise RandomizeError(
-            "No non-equivalent stabilizer code exists with these small invariants."
-        )
+        raise RandomizeError("No non-equivalent stabilizer code exists with these small invariants.")
 
     rng = np.random.default_rng(seed)
     invariant = _projection_rank_invariant(code)
     for _ in range(max_attempts):
-        candidate = random_stabilizer_code(
-            code.n, code.k, seed=_seed(rng), clifford_steps=clifford_steps
-        )
+        candidate = random_stabilizer_code(code.n, code.k, seed=_seed(rng), clifford_steps=clifford_steps)
         if _projection_rank_invariant(candidate) != invariant:
             return candidate
 
-    raise RandomizeError(
-        "Could not find an independent candidate with a different projection-rank invariant."
-    )
+    raise RandomizeError("Could not find an independent candidate with a different projection-rank invariant.")
 
 
 # --------------------------------------------------------------------------
@@ -1095,9 +1059,7 @@ def non_permutation_equivalent_stabilizer_code_independent(
 # --------------------------------------------------------------------------
 
 
-def non_permutation_equivalent_css_code(
-    code: CSSCode, seed: int | None = None
-) -> CSSCode:
+def non_permutation_equivalent_css_code(code: CSSCode, seed: int | None = None) -> CSSCode:
     """Return a CSS code certified non-equivalent by permutation invariants.
 
     Tries the CNOT, decoupled-permutation and independent-sample methods in
@@ -1121,9 +1083,7 @@ def non_permutation_equivalent_css_code(
         except RandomizeError:
             pass
 
-    return non_permutation_equivalent_css_code_independent_invariant_certified(
-        code, seed=_seed(rng)
-    )
+    return non_permutation_equivalent_css_code_independent_invariant_certified(code, seed=_seed(rng))
 
 
 def non_permutation_equivalent_css_code_cnot(
@@ -1155,9 +1115,7 @@ def non_permutation_equivalent_css_code_cnot(
         if _certificate(candidate) != invariant:
             return candidate
 
-    raise RandomizeError(
-        "Could not find a CNOT candidate with a different CSS permutation invariant."
-    )
+    raise RandomizeError("Could not find a CNOT candidate with a different CSS permutation invariant.")
 
 
 def non_permutation_equivalent_css_code_decoupled(
@@ -1176,9 +1134,7 @@ def non_permutation_equivalent_css_code_decoupled(
     rx = _rank_binary(code.Hx)
     rz = _rank_binary(code.Hz)
     if not (rx and rz):
-        raise RandomizeError(
-            "The decoupled construction needs a nonempty X and Z check sector."
-        )
+        raise RandomizeError("The decoupled construction needs a nonempty X and Z check sector.")
 
     rng = np.random.default_rng(seed)
     invariant = _certificate(code)
@@ -1190,9 +1146,7 @@ def non_permutation_equivalent_css_code_decoupled(
         if _certificate(candidate) != invariant:
             return candidate
 
-    raise RandomizeError(
-        "Could not find a decoupled candidate with a different CSS permutation invariant."
-    )
+    raise RandomizeError("Could not find a decoupled candidate with a different CSS permutation invariant.")
 
 
 def non_permutation_equivalent_css_code_independent_invariant_certified(
@@ -1218,21 +1172,18 @@ def non_permutation_equivalent_css_code_independent_invariant_certified(
     strict_attempts = max_attempts if _uses_additive_invariant(code) else 1_000
 
     for attempt in range(max_attempts):
-        candidate_hx, candidate_hz = _random_css_check_matrices(
-            code.n, code.k, rx=rx, seed=_seed(rng)
-        )
-        if attempt < strict_attempts and _visible_css_invariant_matrices(
-            candidate_hx, candidate_hz, k=code.k
-        ) != visible_invariant:
+        candidate_hx, candidate_hz = _random_css_check_matrices(code.n, code.k, rx=rx, seed=_seed(rng))
+        if (
+            attempt < strict_attempts
+            and _visible_css_invariant_matrices(candidate_hx, candidate_hz, k=code.k) != visible_invariant
+        ):
             continue
 
         candidate = _css_like(code, candidate_hx, candidate_hz)
         if _certificate(candidate) != invariant:
             return candidate
 
-    raise RandomizeError(
-        "Could not find a same-cheap-invariant candidate with a different CSS invariant."
-    )
+    raise RandomizeError("Could not find a same-cheap-invariant candidate with a different CSS invariant.")
 
 
 # --------------------------------------------------------------------------
@@ -1257,9 +1208,7 @@ def non_lc_equivalent_code(
         msg = "max_attempts must be positive."
         raise ValueError(msg)
     if code.k == code.n:
-        raise RandomizeError(
-            "No non-LC-equivalent stabilizer code exists for the trivial code."
-        )
+        raise RandomizeError("No non-LC-equivalent stabilizer code exists for the trivial code.")
     if code.n == 1:
         raise RandomizeError("No non-LC-equivalent one-qubit stabilizer code exists.")
 
@@ -1273,15 +1222,9 @@ def non_lc_equivalent_code(
         if _lc_projection_rank_invariant(candidate) != invariant:
             if row_steps is None:
                 return candidate
-            return StabilizerCode(
-                _random_tableau_row_space_base_change(
-                    candidate.generators, rng=rng, steps=row_steps
-                )
-            )
+            return StabilizerCode(_random_tableau_row_space_base_change(candidate.generators, rng=rng, steps=row_steps))
 
-    raise RandomizeError(
-        "Could not find a candidate with a different LC support-rank invariant."
-    )
+    raise RandomizeError("Could not find a candidate with a different LC support-rank invariant.")
 
 
 # --------------------------------------------------------------------------
@@ -1315,11 +1258,7 @@ def _random_css_cnot_candidate_matrices(
     """
     hx = np.asarray(code.Hx, dtype=np.int8).copy() % 2
     hz = np.asarray(code.Hz, dtype=np.int8).copy() % 2
-    steps = (
-        int(rng.integers(1, min(9, code.n) + 1))
-        if gate_steps is None
-        else gate_steps
-    )
+    steps = int(rng.integers(1, min(9, code.n) + 1)) if gate_steps is None else gate_steps
     for _ in range(steps):
         control, target = (int(q) for q in rng.choice(code.n, size=2, replace=False))
         hx[:, target] ^= hx[:, control]
@@ -1364,9 +1303,7 @@ def _random_anchor_base_code(
         return None
 
     base_seed = _seed(rng)
-    return random_stabilizer_code(
-        n - 1, k, seed=base_seed, clifford_steps=clifford_steps
-    )
+    return random_stabilizer_code(n - 1, k, seed=base_seed, clifford_steps=clifford_steps)
 
 
 def _random_anchored_stabilizer_code(
@@ -1410,10 +1347,7 @@ def _anchored_stabilizer_tableau(
     if base_code is not None:
         base_n = n - 1
         if base_code.n != base_n or base_code.k != k:
-            msg = (
-                f"Expected a base [[{base_n}, {k}]] code, "
-                f"got [[{base_code.n}, {base_code.k}]]."
-            )
+            msg = f"Expected a base [[{base_n}, {k}]] code, got [[{base_code.n}, {base_code.k}]]."
             raise ValueError(msg)
 
         base_matrix = np.asarray(base_code.symplectic, dtype=np.int8) % 2
@@ -1427,10 +1361,7 @@ def _anchored_stabilizer_tableau(
         matrix[:expected_base_rows, :base_n] = base_basis[:, :base_n]
         matrix[:expected_base_rows, n : n + base_n] = base_basis[:, base_n:]
     elif r != 1:
-        msg = (
-            "A base code is required when the anchored construction has more "
-            "than one stabilizer."
-        )
+        msg = "A base code is required when the anchored construction has more than one stabilizer."
         raise ValueError(msg)
 
     anchor_row = r - 1
@@ -1466,9 +1397,7 @@ def _certificate(code: CSSCode) -> tuple[Any, ...]:
     rx = _rank_binary(code.Hx)
     rz = _rank_binary(code.Hz)
     if (rx, rz) in {(0, 0), (code.n, 0), (0, code.n)}:
-        raise RandomizeError(
-            "No non-equivalent CSS code exists with these small invariants."
-        )
+        raise RandomizeError("No non-equivalent CSS code exists with these small invariants.")
 
     if _uses_additive_invariant(code):
         return _css_additive_collision_invariant_matrices(code.Hx, code.Hz)
@@ -1505,18 +1434,13 @@ def _anchor_projection_rank_invariant(
     )
 
 
-def _lc_projection_rank_invariant(
-    code: StabilizerCode, max_w: int = 3
-) -> tuple[tuple[int, ...], ...]:
+def _lc_projection_rank_invariant(code: StabilizerCode, max_w: int = 3) -> tuple[tuple[int, ...], ...]:
     """Return ordered subset projection ranks preserved by local Cliffords."""
     M = np.asarray(code.symplectic, dtype=np.uint8) & 1
     n = code.n
 
     return tuple(
-        tuple(
-            _rank_binary(M[:, [c for q in qubits for c in (q, q + n)]])
-            for qubits in combinations(range(n), w)
-        )
+        tuple(_rank_binary(M[:, [c for q in qubits for c in (q, q + n)]]) for qubits in combinations(range(n), w))
         for w in range(1, min(max_w, n) + 1)
     )
 
@@ -1643,10 +1567,7 @@ def _css_additive_collision_invariant_matrices(
 def _is_sparse_css(hx: np.ndarray, hz: np.ndarray, max_density: float = 0.2) -> bool:
     """Return whether both supplied check matrices have LDPC-like density."""
     matrices = (np.asarray(hx), np.asarray(hz))
-    return all(
-        matrix.size == 0 or np.count_nonzero(matrix) / matrix.size <= max_density
-        for matrix in matrices
-    )
+    return all(matrix.size == 0 or np.count_nonzero(matrix) / matrix.size <= max_density for matrix in matrices)
 
 
 def _css_support_rank_invariant_matrices(

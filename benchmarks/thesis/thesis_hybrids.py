@@ -85,8 +85,7 @@ _ALGORITHM_FUNCTIONS: dict[str, Callable[..., Any]] = {
     "lc_css_hybrid": is_lceq_css,
 }
 ALGORITHMS: dict[str, DecisionAlgorithm] = {
-    name: DecisionAlgorithm(name, function)
-    for name, function in _ALGORITHM_FUNCTIONS.items()
+    name: DecisionAlgorithm(name, function) for name, function in _ALGORITHM_FUNCTIONS.items()
 }
 
 
@@ -135,9 +134,7 @@ class StructuredCaseGenerator:
             inputs = (
                 PEqCodePairGenerator.stabilizer_codes_basis_changed(name, seed)
                 if self.positive
-                else NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(
-                    name, seed
-                )
+                else NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(name, seed)
             )
         elif self.algorithm_name == "lc_stb_hybrid":
             inputs = (
@@ -157,9 +154,7 @@ class StructuredCaseGenerator:
         return BenchmarkCase(tuple(inputs), self.positive, self.metadata)
 
 
-def _selected_codes(
-    names: Sequence[str] | None, nmin: int | None, nmax: int | None
-) -> list[tuple[str, Any]]:
+def _selected_codes(names: Sequence[str] | None, nmin: int | None, nmax: int | None) -> list[tuple[str, Any]]:
     selected = set(names or named_code_names())
     return [
         (name, code)
@@ -190,14 +185,10 @@ def run_suite(
         if verbose:
             print(f"Running hybrid: {algorithm_name}")
         for code_name, code in codes:
-            if algorithm_name in {"pm_css_hybrid", "lc_css_hybrid"} and not isinstance(
-                code, CSSCode
-            ):
+            if algorithm_name in {"pm_css_hybrid", "lc_css_hybrid"} and not isinstance(code, CSSCode):
                 continue
             for positive in (True, False):
-                generator = StructuredCaseGenerator(
-                    algorithm_name, code_name, code.n, code.k, positive
-                )
+                generator = StructuredCaseGenerator(algorithm_name, code_name, code.n, code.k, positive)
                 if verbose:
                     print(f"    {code_name} {'positive' if positive else 'negative'}")
                 statistics.append(
@@ -223,9 +214,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
         metavar="SELECTOR",
         help="Hybrid name, shell wildcard, or regex; defaults to all four.",
     )
-    parser.add_argument(
-        "--code", action="append", choices=named_code_names(), help="Named code; repeatable."
-    )
+    parser.add_argument("--code", action="append", choices=named_code_names(), help="Named code; repeatable.")
     parser.add_argument("--nmin", type=int, help="Minimum n (inclusive).")
     parser.add_argument("--nmax", type=int, help="Maximum n (inclusive).")
     parser.add_argument("--seed", type=int, default=42)

@@ -260,12 +260,12 @@ class StabilizerCode:
         into k symplectic pairs (Z̄_i, X̄_i). Stores results in self.z_logicals/self.x_logicals.
         """
         if self.generators.n_rows == 0:
-            self.z_logicals = StabilizerTableau.from_pauli_strings([
-                "I" * i + "Z" + "I" * (self.n - i - 1) for i in range(self.n)
-            ])
-            self.x_logicals = StabilizerTableau.from_pauli_strings([
-                "I" * i + "X" + "I" * (self.n - i - 1) for i in range(self.n)
-            ])
+            self.z_logicals = StabilizerTableau.from_pauli_strings(
+                ["I" * i + "Z" + "I" * (self.n - i - 1) for i in range(self.n)]
+            )
+            self.x_logicals = StabilizerTableau.from_pauli_strings(
+                ["I" * i + "X" + "I" * (self.n - i - 1) for i in range(self.n)]
+            )
             return
 
         n = self.n

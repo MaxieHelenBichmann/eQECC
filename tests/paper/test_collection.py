@@ -19,8 +19,15 @@ from src.core.stabilizer_code import StabilizerCode
 
 
 def _run_result(result) -> RunResult:
-    return RunResult(runtime=0.1, result=result, expected=None, result_is_expected=False,
-                     timed_out=False, memory_exceeded=False, error=None)
+    return RunResult(
+        runtime=0.1,
+        result=result,
+        expected=None,
+        result_is_expected=False,
+        timed_out=False,
+        memory_exceeded=False,
+        error=None,
+    )
 
 
 def _rows(path: Path) -> list[dict[str, str]]:
@@ -29,6 +36,7 @@ def _rows(path: Path) -> list[dict[str, str]]:
 
 
 # Suite and certified negatives -----------------------------------------------------------------
+
 
 def test_fixed_suite_matches_the_thesis_grid_and_seed_schedule() -> None:
     assert len(collect_a1.DIMENSIONS) == 185
@@ -39,8 +47,13 @@ def test_fixed_suite_matches_the_thesis_grid_and_seed_schedule() -> None:
 def test_only_active_public_collectors_remain() -> None:
     directory = Path(__file__).resolve().parents[2] / "paper" / "benchmarks"
     assert sorted(path.name for path in directory.glob("collect_*.py")) == [
-        "collect_a1.py", "collect_a2.py", "collect_a3.py", "collect_a6.py",
-        "collect_a7.py", "collect_a8.py", "collect_algorithm.py",
+        "collect_a1.py",
+        "collect_a2.py",
+        "collect_a3.py",
+        "collect_a6.py",
+        "collect_a7.py",
+        "collect_a8.py",
+        "collect_algorithm.py",
     ]
 
 
@@ -65,8 +78,11 @@ def test_cnot_perturbed_css_negative_keeps_check_ranks() -> None:
 def test_stabilizer_candidates_use_clifford_perturbations(monkeypatch: pytest.MonkeyPatch) -> None:
     pair = (object(), object())
     calls = []
-    monkeypatch.setattr(common.NonPEqCodePairGenerator, "stabilizer_codes_clifford_candidate",
-                        lambda *args, **kwargs: calls.append((args, kwargs)) or pair)
+    monkeypatch.setattr(
+        common.NonPEqCodePairGenerator,
+        "stabilizer_codes_clifford_candidate",
+        lambda *args, **kwargs: calls.append((args, kwargs)) or pair,
+    )
     monkeypatch.setattr(common, "certified_inequivalent", lambda *args: True)
     assert certified_negative_pair("pm_stb", 7, 3, 89) is pair
     assert certified_negative_pair("lc_stb", 7, 3, 89) is pair
@@ -83,14 +99,18 @@ def test_css_certifier_selection_respects_backend_limits() -> None:
 def test_large_high_rank_css_uses_certified_generator_without_backend(monkeypatch: pytest.MonkeyPatch) -> None:
     pair = (object(), object())
     monkeypatch.setattr(common.NonPEqCodePairGenerator, "css_codes_cascaded", lambda *args: pair)
-    monkeypatch.setattr(common, "certified_inequivalent",
-                        lambda *args: pytest.fail("large CSS fallback must not invoke a backend"))
+    monkeypatch.setattr(
+        common, "certified_inequivalent", lambda *args: pytest.fail("large CSS fallback must not invoke a backend")
+    )
     assert certified_negative_pair("pm_css", 29, 19, 89, max_attempts=1) is pair
 
 
 # A1 rejections and A2 signatures -----------------------------------------------------------------
 
-def test_raw_collector_persists_rows_and_resumes_without_duplicates(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+
+def test_raw_collector_persists_rows_and_resumes_without_duplicates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     output = tmp_path / "rejections.csv"
     monkeypatch.setattr(collect_a1, "PROBLEMS", ("pm_stb",))
     monkeypatch.setattr(collect_a1, "certified_negative_pair", lambda *args: (object(), object()))
@@ -137,6 +157,7 @@ def test_signature_metric_has_the_expected_extremes() -> None:
 
 # A3 invariant timings ----------------------------------------------------------------------------
 
+
 def test_invariant_timing_generator_certifies_locally_before_preparing(monkeypatch: pytest.MonkeyPatch) -> None:
     pair = (StabilizerCode.get_trivial_code(3), StabilizerCode.get_trivial_code(3))
     prepared = (object(), object())
@@ -150,7 +171,9 @@ def test_invariant_timing_generator_certifies_locally_before_preparing(monkeypat
     assert events == ["certify", "prepare"]
 
 
-def test_negative_certification_failure_becomes_generation_failure(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_negative_certification_failure_becomes_generation_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     calls: list[tuple[object, ...]] = []
 
     def failing(*args):
@@ -170,12 +193,15 @@ def test_negative_certification_failure_becomes_generation_failure(tmp_path: Pat
 
 
 def test_prepared_matrix_arity_matches_each_invariant_family() -> None:
-    arity = {problem: len(invariant_matrices(problem, *collect_a3.generate_pair(problem, 3, 1, True, 89)))
-             for problem in ("pm_stb", "pm_css", "lc_stb")}
+    arity = {
+        problem: len(invariant_matrices(problem, *collect_a3.generate_pair(problem, 3, 1, True, 89)))
+        for problem in ("pm_stb", "pm_css", "lc_stb")
+    }
     assert arity == {"pm_stb": 2, "pm_css": 4, "lc_stb": 2}
 
 
 # Algorithm collector -----------------------------------------------------------------------------
+
 
 def test_runtime_negative_uses_local_a1_style_generator(monkeypatch: pytest.MonkeyPatch) -> None:
     pair = (object(), object())
@@ -194,7 +220,9 @@ def test_algorithm_collector_cli_selects_algorithms() -> None:
     assert collect_algorithm.parse_args([]).algorithm == list(collect_algorithm.ALGORITHM_N_RANGES)
 
 
-def test_algorithm_collector_chooses_output_file_from_algorithm(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_algorithm_collector_chooses_output_file_from_algorithm(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     calls = []
     monkeypatch.setattr(collect_algorithm, "OUTPUT_DIRECTORY", tmp_path)
     monkeypatch.setattr(collect_algorithm, "VERBOSE", False)
@@ -213,7 +241,9 @@ def test_algorithm_collector_chooses_output_file_from_algorithm(tmp_path: Path, 
 
 
 def test_automorphism_collection_skips_before_writing_without_gap(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str],
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
 ) -> None:
     monkeypatch.setattr(collect_algorithm.shutil, "which", lambda _: None)
     monkeypatch.setattr(collect_algorithm, "OUTPUT_DIRECTORY", tmp_path)

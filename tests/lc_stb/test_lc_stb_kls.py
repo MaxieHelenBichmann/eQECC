@@ -162,6 +162,7 @@ def test_code_to_graph_rejects_identity_stabilizer_row() -> None:
     with pytest.raises(ValueError, match="identity stabilizer row"):
         _code_to_graph(StabilizerCode(["I"]))
 
+
 @pytest.mark.parametrize(
     "code",
     [
@@ -202,7 +203,7 @@ def test_code_to_graph_rejects_identity_stabilizer_row() -> None:
             StabilizerCode(["ZXZZI", "IXIIZ", "IIIZI"]),
             id="failing-example-3",
         ),
-                pytest.param(
+        pytest.param(
             StabilizerCode(["XZXYYXIZX", "IIXIIIIII", "XXXZXIZIZ", "XZXZYYXXY", "IYXIZXIZI"]),
             id="failing-example-4",
         ),
@@ -212,6 +213,7 @@ def test_code_to_graph_encoder_respecting_form_smoke(code: StabilizerCode) -> No
     assert isinstance(_code_to_graph(code), GSLC)
     graph = _code_to_graph(code)
     _assert_graph_represents_encoder(code, graph)
+
 
 # ----------------------------------------------------------------------------------------------------
 # _hk_normal_form
@@ -238,7 +240,7 @@ def _assert_graph(
 
 
 def _assert_adjacency_matches_edges(graph: GSLC) -> None:
-    expected : list[set[int]] = [set() for _ in range(graph.n + graph.k)]
+    expected: list[set[int]] = [set() for _ in range(graph.n + graph.k)]
     for u, v in graph.edges:
         expected[u].add(v)
         expected[v].add(u)
@@ -425,6 +427,7 @@ def test_hk_normal_form_rejects_unsupported_residual_word() -> None:
     with pytest.raises(ValueError, match="Expected only I, S, or H decorations"):
         _hk([(["H", "S", "H"], False), ([], False)], {(0, 1)})
 
+
 # ----------------------------------------------------------------------------------------------------
 # _kls_normal_form
 # ----------------------------------------------------------------------------------------------------
@@ -445,7 +448,7 @@ def _graph(
 
 
 def _assert_rref(matrix: np.ndarray) -> None:
-    pivots : list[int] = []
+    pivots: list[int] = []
     zero_row_seen = False
 
     for row_idx, row in enumerate(matrix.astype(np.uint8)):
@@ -496,7 +499,7 @@ def _assert_kls_pivot_requirements(graph: GSLC) -> None:
         assert graph.vertices[pivot_vertex] == ([], False)
 
     for i, pivot_a in enumerate(pivot_vertices):
-        for pivot_b in pivot_vertices[i + 1:]:
+        for pivot_b in pivot_vertices[i + 1 :]:
             assert (pivot_a, pivot_b) not in graph.edges
 
 
@@ -580,15 +583,18 @@ def test_kls_normal_form_clears_pivot_output_decorations() -> None:
 
     _assert_kls_pivot_requirements(graph_hk)
 
+
 # ----------------------------------------------------------------------------------------------------
 # is_lceq_css_kls
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_lceq_kls_choi_failing() -> None:
     code1 = StabilizerCode(["ZIYX", "ZIII"])
     code2 = StabilizerCode(["IIYZ", "XIYZ"])
 
     assert are_lceq_kls(code1, code2) is True
+
 
 @pytest.mark.parametrize(
     ("code1", "code2", "expected"),
@@ -628,16 +634,18 @@ def test_are_lceq_kls_small_codes(
 ) -> None:
     assert are_lceq_kls(code1, code2) is expected
 
+
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in [3, 28, 35]])
 def test_are_lceq_kls_failing_choi(seed: int) -> None:
     """
-    3:  < IZI > | < IXI > 
+    3:  < IZI > | < IXI >
     28: < IXI > | < IYI >
     35: < XZZ > | < ZXX >
     """
     code1 = random_stabilizer_code(3, 2, seed=1000 + seed)
     code2 = lc_equivalent_code(code1, seed=2000 + seed)
     assert are_lceq_kls(code1, code2) is True
+
 
 def test_are_lceq_kls_random_smoke() -> None:
     for n in range(3, 6):
@@ -668,6 +676,7 @@ def test_are_lceq_kls_sh_neighbor_regression() -> None:
     pair = LCEqCodePairGenerator.stabilizer_codes_local_clifford(4, 0, 89)
 
     assert isinstance(are_lceq_kls(*pair), bool)
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
 def test_are_lceq_kls_random_positive(seed: int) -> None:

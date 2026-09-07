@@ -11,8 +11,15 @@ from paper.experiments.common import COLLECTED_DATA_DIR, RESULTS_DIR, read_csv, 
 INPUT = COLLECTED_DATA_DIR / "signature_space.csv"
 OUTPUT = RESULTS_DIR / "a2" / "by_cell.csv"
 FIELDS = (
-    "problem", "n", "k", "r", "num_requested", "num_valid",
-    "mean_pairwise_refinement", "stddev_pairwise_refinement", "num_censored",
+    "problem",
+    "n",
+    "k",
+    "r",
+    "num_requested",
+    "num_valid",
+    "mean_pairwise_refinement",
+    "stddev_pairwise_refinement",
+    "num_censored",
 )
 
 
@@ -28,13 +35,19 @@ def extract(input_file: Path = INPUT, output_file: Path = OUTPUT) -> list[dict]:
     cells = []
     for (problem, n, k), group in sorted(groups.items()):
         values = [pairwise_refinement(float(row["q_pairs"]), n) for row in group if row["status"] == "success"]
-        cells.append({
-            "problem": problem, "n": n, "k": k, "r": n - k,
-            "num_requested": len(group), "num_valid": len(values),
-            "mean_pairwise_refinement": mean(values) if values else "",
-            "stddev_pairwise_refinement": stdev(values) if len(values) > 1 else (0.0 if values else ""),
-            "num_censored": len(group) - len(values),
-        })
+        cells.append(
+            {
+                "problem": problem,
+                "n": n,
+                "k": k,
+                "r": n - k,
+                "num_requested": len(group),
+                "num_valid": len(values),
+                "mean_pairwise_refinement": mean(values) if values else "",
+                "stddev_pairwise_refinement": stdev(values) if len(values) > 1 else (0.0 if values else ""),
+                "num_censored": len(group) - len(values),
+            }
+        )
     write_csv(output_file, cells, FIELDS)
     return cells
 

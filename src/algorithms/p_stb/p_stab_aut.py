@@ -1,6 +1,6 @@
 """Automorphism-group based equivalence checking for general Stabilizer Codes.
 
-References for this algorithm: 
+References for this algorithm:
 - Hanson Hao: Investigations on Automorphism Groups of Quantum Stabilizer Codes
 """
 
@@ -18,10 +18,12 @@ import ldpc.mod2.mod2_numpy as mod2
 
 from ...core.stabilizer_code import StabilizerCode
 
+
 def _rank(matrix: np.ndarray) -> int:
     if matrix.shape[0] == 0:
         return 0
     return mod2.rank(matrix)
+
 
 _GAP_BEGIN = "__BM_QECC_GAP_AUT_PERMS_BEGIN__"
 _GAP_END = "__BM_QECC_GAP_AUT_PERMS_END__"
@@ -66,20 +68,20 @@ def _run_gap(script: str) -> str:
     )
     if proc.returncode != 0:
         raise RuntimeError(
-            "GAP failed while computing the automorphism group.\n"
-            f"stdout:\n{proc.stdout}\n"
-            f"stderr:\n{proc.stderr}"
+            f"GAP failed while computing the automorphism group.\nstdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
         )
 
     return proc.stdout
 
+
 def _automorphisms(tableau: np.ndarray, n: int) -> list[tuple[int, ...]]:
     """Use GAP and the package GUAVA to compute the automorphism group of a stabilizer code."""
+
     def _extract_valid_permutations(aut_group) -> list[tuple[int, ...]]:
         perms = []
         for aut in aut_group:
             if all(aut[i + n] == aut[i] + n for i in range(n)):
-                x_perm = tuple( aut[i] - 1 for i in range(n) )
+                x_perm = tuple(aut[i] - 1 for i in range(n))
                 perms.append(x_perm)
         return perms
 
@@ -92,7 +94,7 @@ if LoadPackage("guava") = fail then
     QUIT_GAP(1);
 fi;
 
-G := Z(2)^0 * {str(tableau.tolist()).replace(' ', '')};
+G := Z(2)^0 * {str(tableau.tolist()).replace(" ", "")};
 C := GeneratorMatCode(G, GF(2));
 AutC := AutomorphismGroup(C);
 perms := List(Elements(AutC), g -> List([1..{2 * n}], i -> i^g));
@@ -107,11 +109,13 @@ QUIT;
 
     return _extract_valid_permutations(gap_perms)
 
+
 def are_peq_stab_aut(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check permutation equivalence by brute-force search over all elements of S_n, but reducing the search space using automorphisms.
 
     Can be better than brute-force if the automorphism group of the code is large, but still has factorial worst-case runtime if the automorphism group is trivial.
     """
+
     def _compose(p, q):
         return tuple(p[i] for i in q)
 
@@ -119,13 +123,12 @@ def are_peq_stab_aut(c1: StabilizerCode, c2: StabilizerCode) -> bool:
 
     if c2_rank != _rank(c1.symplectic):
         return False
-    
+
     aut_c2 = _automorphisms(c2.symplectic, c2.n)
 
     def _is_coset_representative(perm: tuple[int, ...]) -> bool:
         # isomorphisms(c1, c2) = { α ∘ φ | α ∈ Aut(c2) } with φ: c1 -> c2
         return perm == min(_compose(perm, alpha) for alpha in aut_c2)
-
 
     for perm in permutations(range(c1.n)):
         if not _is_coset_representative(perm):

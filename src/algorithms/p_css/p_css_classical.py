@@ -1,6 +1,6 @@
 """Classical code equivalence based permutation equivalence checking.
 
-References for this algorithm: 
+References for this algorithm:
 - Nicolas Sendrier: Finding the Permutation Between Equivalent Linear Codes: The Support Splitting Algorithm
 - Thomas Feulner: The Automorphism Groups of Linear Codes and Canonical Representatives of Their Semilinear Isometry Classes
 """
@@ -16,10 +16,12 @@ import ldpc.mod2.mod2_numpy as mod2
 
 from ...core.css_code import CSSCode
 
+
 def _rank(matrix: np.ndarray) -> int:
     if matrix.shape[0] == 0:
         return 0
     return mod2.rank(matrix)
+
 
 def _kernel_basis(A: np.ndarray) -> np.ndarray:
     A = (np.asarray(A) & 1).astype(np.uint8)
@@ -32,10 +34,9 @@ def _kernel_basis(A: np.ndarray) -> np.ndarray:
     if K.ndim == 1:
         K = K.reshape(1, -1)
     if K.shape[1] != A.shape[1]:
-        raise ValueError(
-            "Kernel basis must have the same number of columns as the input matrix."
-        )
+        raise ValueError("Kernel basis must have the same number of columns as the input matrix.")
     return K
+
 
 def _row_basis(M: np.ndarray) -> np.ndarray:
     M = (np.asarray(M) & 1).astype(np.uint8)
@@ -51,9 +52,10 @@ def _row_basis(M: np.ndarray) -> np.ndarray:
         B = B.reshape(1, -1)
     return B
 
+
 def _compute_signatures(G1: np.ndarray, G2: np.ndarray) -> list[int]:
-    """Compute the combined Sendrier's invariant of the weight enumerator of the hull of the punctured code of each column of the CSS code.
-    """
+    """Compute the combined Sendrier's invariant of the weight enumerator of the hull of the punctured code of each column of the CSS code."""
+
     def _weight_enumerator_of_hull_punctured(G: np.ndarray, col_idx: int) -> list[int]:
         Gp = np.delete(G, col_idx, axis=1)
         g_p = Gp.shape[1]
@@ -91,11 +93,7 @@ def _compute_signatures(G1: np.ndarray, G2: np.ndarray) -> list[int]:
         return enumerator
 
     def _combine_invariants(inv_hx: list[int], inv_hz: list[int]) -> int:
-        payload = (
-            ",".join(map(str, inv_hx))
-            + "|"
-            + ",".join(map(str, inv_hz))
-        ).encode("ascii")
+        payload = (",".join(map(str, inv_hx)) + "|" + ",".join(map(str, inv_hz))).encode("ascii")
         return int.from_bytes(hashlib.sha256(payload).digest(), byteorder="big")
 
     invariants = []
@@ -108,15 +106,17 @@ def _compute_signatures(G1: np.ndarray, G2: np.ndarray) -> list[int]:
 
     return invariants
 
+
 def _partition_columns_by_invariants(invariants: list[int]) -> dict[int, list[int]]:
     partition = defaultdict(list)
     for idx, inv in enumerate(invariants):
         partition[inv].append(idx)
     return {k: v for k, v in sorted(partition.items())}
 
+
 def _compute_canonical_form(G: np.ndarray, cells: list[list[int]]) -> tuple[np.ndarray, list[list[int]]]:
-    """Compute the canonical form of Hx of the CSS code, using Feulner's algorithm, and return the canonical form and the corresponding permutation of the columns. Partition is used for pruning the search tree.
-    """
+    """Compute the canonical form of Hx of the CSS code, using Feulner's algorithm, and return the canonical form and the corresponding permutation of the columns. Partition is used for pruning the search tree."""
+
     def _prefix_semicanonical(G: np.ndarray, i: int) -> np.ndarray:
         """Bring the first i columns of G into semi-canonical form only using row operations."""
         M = np.array(G, dtype=np.int8) & 1
@@ -126,7 +126,9 @@ def _compute_canonical_form(G: np.ndarray, cells: list[list[int]]) -> tuple[np.n
         pivot_row = 0
 
         for c in range(i):
-            if _rank(M[:, : c + 1]) > _rank(M[:, :c]): # independent column, bring it to semi-canonical form (dependent case not important for binary matrices)
+            if _rank(M[:, : c + 1]) > _rank(
+                M[:, :c]
+            ):  # independent column, bring it to semi-canonical form (dependent case not important for binary matrices)
                 if pivot_row >= k_m:
                     continue
 
@@ -155,11 +157,10 @@ def _compute_canonical_form(G: np.ndarray, cells: list[list[int]]) -> tuple[np.n
 
     def matrix_key(M: np.ndarray) -> tuple[tuple[int, ...], ...]:
         M = np.asarray(M, dtype=np.int8) & 1
-        return tuple(map(tuple, M.T.tolist())) # lexicographic key of the rows of M, because python can compare tuples
+        return tuple(map(tuple, M.T.tolist()))  # lexicographic key of the rows of M, because python can compare tuples
 
     def prefix_key(M: np.ndarray, i: int) -> tuple[tuple[int, ...], ...]:
-        return matrix_key(M[:, :i]) # lexicographic key of the first i columns of M, because python can compare tuples
-
+        return matrix_key(M[:, :i])  # lexicographic key of the first i columns of M, because python can compare tuples
 
     G = np.array(G, dtype=np.int8, copy=True) & 1
     n_g = G.shape[1]
@@ -169,7 +170,9 @@ def _compute_canonical_form(G: np.ndarray, cells: list[list[int]]) -> tuple[np.n
 
     cells = [sorted(cell) for cell in cells if cell]
 
-    def _search(prefix: list[int], remaining_cells: list[list[int]]) -> None: # recursive search over the space of permutations
+    def _search(
+        prefix: list[int], remaining_cells: list[list[int]]
+    ) -> None:  # recursive search over the space of permutations
         nonlocal best_matrix, best_full_key, best_perms
         i = len(prefix)
         trial_perm = prefix + _flatten(remaining_cells)
@@ -182,15 +185,17 @@ def _compute_canonical_form(G: np.ndarray, cells: list[list[int]]) -> tuple[np.n
             current_prefix = prefix_key(M_semi, i)
             best_prefix = prefix_key(best_matrix, i)
 
-            if current_prefix > best_prefix: # prune this branch, since the canonical form must be lexicographically minimal
+            if (
+                current_prefix > best_prefix
+            ):  # prune this branch, since the canonical form must be lexicographically minimal
                 return
 
-            if current_prefix < best_prefix: # update the best prefix, since we found a better one on current path
+            if current_prefix < best_prefix:  # update the best prefix, since we found a better one on current path
                 best_matrix = None
                 best_full_key = None
                 best_perms = []
 
-        if i == n_g: # we are at leaf (have a full permutation)
+        if i == n_g:  # we are at leaf (have a full permutation)
             full_key = matrix_key(M_semi)
 
             if best_full_key is None or full_key < best_full_key:
@@ -217,7 +222,10 @@ def _compute_canonical_form(G: np.ndarray, cells: list[list[int]]) -> tuple[np.n
 
     return best_matrix, best_perms
 
-def _iter_permutations(canon1: np.ndarray, canon2: np.ndarray, can_to_g1: list[list[int]], can_to_g2: list[list[int]]) -> Iterator[tuple[int, ...]]:
+
+def _iter_permutations(
+    canon1: np.ndarray, canon2: np.ndarray, can_to_g1: list[list[int]], can_to_g2: list[list[int]]
+) -> Iterator[tuple[int, ...]]:
     def _inverse_perm(p):
         inv = [None] * len(p)
         for i, x in enumerate(p):
@@ -234,13 +242,14 @@ def _iter_permutations(canon1: np.ndarray, canon2: np.ndarray, can_to_g1: list[l
         for p2 in can_to_g2:
             yield _compose(p1, _inverse_perm(p2))
 
+
 def are_peq_css_classical(c1: CSSCode, c2: CSSCode) -> bool:
-    """Check permutation equivalence using algorithms for classical code equivalence. A two-layer approach is used, where the first layer uses Sendrier's Support Splitting Algorithm to partition the columns of the generator matrices into equivalence classes based on the weight enumerator of the hull of the punctured code. 
+    """Check permutation equivalence using algorithms for classical code equivalence. A two-layer approach is used, where the first layer uses Sendrier's Support Splitting Algorithm to partition the columns of the generator matrices into equivalence classes based on the weight enumerator of the hull of the punctured code.
     The second layer then checks for permutation equivalence by traversing the search tree of possible permutations, and pruning branches based on the canonical form of Feulner's Algorithm.
-    
+
     For each code, the following is done:
     1.) Partition the columns of Hx and Hz into equivalence classes according to the weight enumerator of Sendrier (we risk a complex computation O(2^k) for both Hx and Hz to have a better chance of a fine-grained partition).
-    2.) Canonicalize the generator matrices of Gx1 anf Gx2 using Feulner's algorithm, and check for equivalence of the canonical forms, pruning the search tree of possible permutations. 
+    2.) Canonicalize the generator matrices of Gx1 anf Gx2 using Feulner's algorithm, and check for equivalence of the canonical forms, pruning the search tree of possible permutations.
     3.) Check if the found permutation is valid for both Hx and Hz.
 
     This algorithm should be more efficient than the brute-force algorithm, since it avoids checking all permutations, BUT it is still not efficient in the worst case.
@@ -288,7 +297,9 @@ def are_peq_css_classical(c1: CSSCode, c2: CSSCode) -> bool:
     canon_c2, perm2 = _compute_canonical_form(Gx2, list(partition_c2.values()))
 
     for perm in _iter_permutations(canon_c1, canon_c2, perm1, perm2):
-        if hx_rank == _rank(np.vstack([c2.Hx, c1.Hx[:, perm]])) and hz_rank == _rank(np.vstack([c2.Hz, c1.Hz[:, perm]])):
+        if hx_rank == _rank(np.vstack([c2.Hx, c1.Hx[:, perm]])) and hz_rank == _rank(
+            np.vstack([c2.Hz, c1.Hz[:, perm]])
+        ):
             return True
 
     return False

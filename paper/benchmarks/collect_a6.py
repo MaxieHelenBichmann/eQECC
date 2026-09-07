@@ -15,7 +15,11 @@ from benchmarks.experiments.generators_random import PEqCodePairGenerator
 from benchmarks.experiments.statistics import BenchmarkCase, run_statistics
 from benchmarks.thesis.thesis_prototypes import DecisionAlgorithm, measurement_dimensions
 from paper.benchmarks.common import (
-    COLLECTED_DIR, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS, certified_negative_pair,
+    COLLECTED_DIR,
+    MASTER_SEED,
+    MEMORY_LIMIT_BYTES,
+    TIMEOUT_SECONDS,
+    certified_negative_pair,
 )
 from src.algorithms.p_stb.p_stab_sat import are_peq_stab_sat
 

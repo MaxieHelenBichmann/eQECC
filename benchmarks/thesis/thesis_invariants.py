@@ -90,19 +90,11 @@ PM_INVARIANTS: dict[str, Callable[..., bool]] = {
 }
 LC_INVARIANTS: dict[str, Callable[..., bool]] = {
     "lc_local_weight_distribution": preserved_local_weight_distribution,
-    "lc_local_weight_distribution_s2": partial(
-        preserved_local_weight_distribution, max_subset_size=2
-    ),
-    "lc_local_weight_distribution_s4": partial(
-        preserved_local_weight_distribution, max_subset_size=4
-    ),
+    "lc_local_weight_distribution_s2": partial(preserved_local_weight_distribution, max_subset_size=2),
+    "lc_local_weight_distribution_s4": partial(preserved_local_weight_distribution, max_subset_size=4),
     "lc_low_degree_local_invariant": preserved_low_degree_local_invariant,
-    "lc_low_degree_local_invariant_s2": partial(
-        preserved_low_degree_local_invariant, max_subset_size=2
-    ),
-    "lc_low_degree_local_invariant_s4": partial(
-        preserved_low_degree_local_invariant, max_subset_size=4
-    ),
+    "lc_low_degree_local_invariant_s2": partial(preserved_low_degree_local_invariant, max_subset_size=2),
+    "lc_low_degree_local_invariant_s4": partial(preserved_low_degree_local_invariant, max_subset_size=4),
 }
 INVARIANTS = {**PM_INVARIANTS, **LC_INVARIANTS}
 
@@ -168,9 +160,7 @@ class InvariantCaseGenerator:
         if self.invariant_name.startswith("pm_"):
             if self.structured_name is not None:
                 inputs = (
-                    StructuredPEqCodePairGenerator.stabilizer_codes_basis_changed(
-                        self.structured_name, seed
-                    )
+                    StructuredPEqCodePairGenerator.stabilizer_codes_basis_changed(self.structured_name, seed)
                     if self.positive
                     else StructuredNonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(
                         self.structured_name, seed
@@ -180,19 +170,13 @@ class InvariantCaseGenerator:
                 inputs = (
                     PEqCodePairGenerator.stabilizer_codes_permuted(self.n, self.k, seed)
                     if self.positive
-                    else NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(
-                        self.n, self.k, seed
-                    )
+                    else NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(self.n, self.k, seed)
                 )
         else:
             inputs = (
-                LCEqCodePairGenerator.stabilizer_codes_local_clifford(
-                    self.n, self.k, seed
-                )
+                LCEqCodePairGenerator.stabilizer_codes_local_clifford(self.n, self.k, seed)
                 if self.positive
-                else NonLCEqCodePairGenerator.stabilizer_codes_independent(
-                    self.n, self.k, seed
-                )
+                else NonLCEqCodePairGenerator.stabilizer_codes_independent(self.n, self.k, seed)
             )
         return BenchmarkCase(tuple(inputs), self.positive, self.metadata)
 
@@ -209,9 +193,7 @@ def measurements(
                 yield (
                     invariant_name,
                     INVARIANTS[invariant_name],
-                    InvariantCaseGenerator(
-                        invariant_name, n, k, positive, structured_name
-                    ),
+                    InvariantCaseGenerator(invariant_name, n, k, positive, structured_name),
                 )
 
 
@@ -232,10 +214,7 @@ def run_suite(
             print(f"Running invariant: {invariant_name}")
             current_invariant = invariant_name
         if verbose:
-            print(
-                f"    [[{generator.n},{generator.k}]] "
-                f"{'positive' if generator.positive else 'negative'}"
-            )
+            print(f"    [[{generator.n},{generator.k}]] {'positive' if generator.positive else 'negative'}")
         statistics.append(
             run_statistics(
                 invariant,
@@ -261,9 +240,7 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     )
     parser.add_argument("--family", choices=("pm", "lc", "both"), default="both")
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument(
-        "--nr-seeds", "--num-seeds", type=int, default=N_INVARIANT_STATS
-    )
+    parser.add_argument("--nr-seeds", "--num-seeds", type=int, default=N_INVARIANT_STATS)
     parser.add_argument("--output", type=Path, default=Path("results/invariants.csv"))
     parser.add_argument("--timeout", type=float)
     parser.add_argument("--memory-limit", type=parse_memory_limit)

@@ -34,7 +34,7 @@ def _red_graph(
 
 
 def _assert_adjacency_matches_edges(graph: RedStabGraph) -> None:
-    expected : list[set[int]] = [set() for _ in range(graph.n + graph.k)]
+    expected: list[set[int]] = [set() for _ in range(graph.n + graph.k)]
     for u, v in graph.edges:
         expected[u].add(v)
         expected[v].add(u)
@@ -152,6 +152,7 @@ def test_apply_cz_mixed_adjacent_pair_does_not_create_self_edge() -> None:
     assert result.edges == {(0, 1), (0, 2)}
     assert result.is_valid()
 
+
 # ----------------------------------------------------------------------------------------------------
 # _stab_code_to_stab_state
 # ----------------------------------------------------------------------------------------------------
@@ -210,12 +211,12 @@ def test_apply_cz_mixed_adjacent_pair_does_not_create_self_edge() -> None:
             StabilizerCode(["XZYI", "IXXY"]),
             np.array(
                 [
-                    [1, 0, 1, 0, 0, 0,  0, 1, 1, 0, 0, 0],
-                    [0, 1, 1, 1, 0, 0,  0, 0, 0, 1, 0, 0],
-                    [0, 0, 0, 1, 1, 0,  0, 1, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 1,  1, 0, 0, 0, 0, 0],
-                    [0, 1, 1, 0, 0, 0,  0, 0, 0, 0, 1, 0],
-                    [1, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 1],
+                    [1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 ],
                 dtype=np.uint8,
             ),

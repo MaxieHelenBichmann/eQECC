@@ -44,9 +44,11 @@ def _assert_maps_rowspace(
     assert code2_rank == rank
     assert combined_rank == rank
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_peq_stab
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_peq_stab_preserves_n() -> None:
     assert are_peq_stab(StabilizerCode.get_trivial_code(3), StabilizerCode.get_trivial_code(4)) is None

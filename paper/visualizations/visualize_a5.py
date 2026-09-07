@@ -10,10 +10,21 @@ from matplotlib.patches import Patch, Polygon
 
 from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.visualizations.common import (
-    COLOR_PAPER_CYAN_STRONG, COLOR_PAPER_DARK_CYAN, COLOR_PAPER_DARK_PINK, COLOR_PAPER_DARK_RED,
-    COLOR_PAPER_GRAY_VERY_DARK, COLOR_PAPER_GRAY_VERY_VERY_DARK, COLOR_PAPER_GREEN_DEEP,
-    COLOR_PAPER_LIGHT_RED, COLOR_PAPER_LILA, COLOR_PAPER_ZX_BLUE, WIDE_TEXT_SCALE,
-    parameter_axis, partition_cell, save_png, use_style,
+    COLOR_PAPER_CYAN_STRONG,
+    COLOR_PAPER_DARK_CYAN,
+    COLOR_PAPER_DARK_PINK,
+    COLOR_PAPER_DARK_RED,
+    COLOR_PAPER_GRAY_VERY_DARK,
+    COLOR_PAPER_GRAY_VERY_VERY_DARK,
+    COLOR_PAPER_GREEN_DEEP,
+    COLOR_PAPER_LIGHT_RED,
+    COLOR_PAPER_LILA,
+    COLOR_PAPER_ZX_BLUE,
+    WIDE_TEXT_SCALE,
+    parameter_axis,
+    partition_cell,
+    save_png,
+    use_style,
 )
 
 INPUT = RESULTS_DIR / "a5" / "by_cell.csv"
@@ -47,16 +58,28 @@ def method(algorithm: str) -> tuple[str, str]:
 def overlay_runner_up(ax, n: int, r: int, color: str) -> None:
     # lower-right triangle; the winner keeps the upper-left one
     x, y = n - 0.5, r - 0.5
-    ax.add_patch(Polygon([(x, y), (x + 1, y), (x + 1, y + 1)], closed=True, facecolor=color, edgecolor="none", zorder=3))
+    ax.add_patch(
+        Polygon([(x, y), (x + 1, y), (x + 1, y + 1)], closed=True, facecolor=color, edgecolor="none", zorder=3)
+    )
 
 
 class SplitCellHandler(HandlerBase):
     def create_artists(self, legend, handle, xdescent, ydescent, width, height, fontsize, trans):
         x, y = -xdescent, -ydescent
-        top = Polygon([(x, y), (x, y + height), (x + width, y + height)], closed=True,
-                      facecolor=COLOR_PAPER_GRAY_VERY_VERY_DARK, edgecolor="none", transform=trans)
-        bottom = Polygon([(x, y), (x + width, y), (x + width, y + height)], closed=True,
-                         facecolor=COLOR_PAPER_GRAY_VERY_DARK, edgecolor="none", transform=trans)
+        top = Polygon(
+            [(x, y), (x, y + height), (x + width, y + height)],
+            closed=True,
+            facecolor=COLOR_PAPER_GRAY_VERY_VERY_DARK,
+            edgecolor="none",
+            transform=trans,
+        )
+        bottom = Polygon(
+            [(x, y), (x + width, y), (x + width, y + height)],
+            closed=True,
+            facecolor=COLOR_PAPER_GRAY_VERY_DARK,
+            edgecolor="none",
+            transform=trans,
+        )
         return [top, bottom]
 
 
@@ -83,8 +106,13 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     split_key = Patch(label="top/bottom: within 5%")
     handles = [Patch(facecolor=color, edgecolor="none", label=label) for _, label, color in METHODS if label in present]
     figure.legend(
-        handles=[*handles, split_key], handler_map={split_key: SplitCellHandler()},
-        loc="lower center", ncol=5, frameon=False, fontsize=11, bbox_to_anchor=(0.5, 0.025),
+        handles=[*handles, split_key],
+        handler_map={split_key: SplitCellHandler()},
+        loc="lower center",
+        ncol=5,
+        frameon=False,
+        fontsize=11,
+        bbox_to_anchor=(0.5, 0.025),
     )
     return save_png(figure, output)
 

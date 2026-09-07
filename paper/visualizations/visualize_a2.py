@@ -10,8 +10,16 @@ from matplotlib.patches import Patch
 
 from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.visualizations.common import (
-    COLOR_PAPER_GRAY_VERY_LIGHT, COLOR_PAPER_GRAY_VERY_VERY_DARK, SIGNATURE_CMAP,
-    aggregate_cells, outline_partition, parameter_axis, partition_cell, save_png, scalar_mappable, use_style,
+    COLOR_PAPER_GRAY_VERY_LIGHT,
+    COLOR_PAPER_GRAY_VERY_VERY_DARK,
+    SIGNATURE_CMAP,
+    aggregate_cells,
+    outline_partition,
+    parameter_axis,
+    partition_cell,
+    save_png,
+    scalar_mappable,
+    use_style,
 )
 
 INPUT = RESULTS_DIR / "a2" / "by_cell.csv"
@@ -38,11 +46,19 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
                 outline_partition(ax, n, r, 0, 1, COLOR_PAPER_GRAY_VERY_VERY_DARK)
     figure.suptitle("Pairwise Refinement Induced by Permutation Signatures", fontsize=12)
     figure.legend(
-        handles=[Patch(
-            facecolor=COLOR_PAPER_GRAY_VERY_LIGHT, edgecolor=COLOR_PAPER_GRAY_VERY_VERY_DARK, linewidth=0.9,
-            label="All instances timed out, no mean recoverable",
-        )],
-        loc="lower center", ncol=1, frameon=False, fontsize=9, bbox_to_anchor=(0.47, 0.015),
+        handles=[
+            Patch(
+                facecolor=COLOR_PAPER_GRAY_VERY_LIGHT,
+                edgecolor=COLOR_PAPER_GRAY_VERY_VERY_DARK,
+                linewidth=0.9,
+                label="All instances timed out, no mean recoverable",
+            )
+        ],
+        loc="lower center",
+        ncol=1,
+        frameon=False,
+        fontsize=9,
+        bbox_to_anchor=(0.47, 0.015),
     )
     bar = figure.colorbar(scalar_mappable(SIGNATURE_CMAP, norm), ax=axes, fraction=0.025, pad=0.02)
     bar.set_label("Fraction of qubit pairs distinguished by signature\n(0 = no refinement, 1 = complete refinement)")

@@ -14,9 +14,17 @@ from benchmarks.experiments.run import run
 from benchmarks.experiments.statistics import deterministic_seeds
 from benchmarks.thesis.thesis_prototypes import measurement_dimensions
 from paper.benchmarks.common import (
-    COLLECTED_DIR, INVARIANTS, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS,
-    append_row, certified_negative_pair, completed_keys, evaluate_invariant,
-    execution_status, invariant_matrices,
+    COLLECTED_DIR,
+    INVARIANTS,
+    MASTER_SEED,
+    MEMORY_LIMIT_BYTES,
+    TIMEOUT_SECONDS,
+    append_row,
+    certified_negative_pair,
+    completed_keys,
+    evaluate_invariant,
+    execution_status,
+    invariant_matrices,
 )
 
 NUM_SEEDS = 10
@@ -26,8 +34,18 @@ OUTPUT_FILE = COLLECTED_DIR / "invariant_rejections.csv"
 PROBLEMS = ("pm_stb", "pm_css", "lc_stb")
 KEY_FIELDS = ("problem", "n", "k", "seed", "invariant")
 FIELDS = (
-    "problem", "instance_id", "seed", "n", "k", "r", "invariant",
-    "rejected", "status", "timeout", "memory_limited", "error",
+    "problem",
+    "instance_id",
+    "seed",
+    "n",
+    "k",
+    "r",
+    "invariant",
+    "rejected",
+    "status",
+    "timeout",
+    "memory_limited",
+    "error",
 )
 
 
@@ -39,14 +57,19 @@ def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list
         for n, k in dimensions:
             for seed in seeds:
                 missing = [
-                    invariant for invariant in INVARIANTS[problem]
+                    invariant
+                    for invariant in INVARIANTS[problem]
                     if (problem, str(n), str(k), str(seed), invariant) not in completed
                 ]
                 if not missing:
                     continue
                 base = {
-                    "problem": problem, "instance_id": f"{problem}-n{n}k{k}-s{seed}",
-                    "seed": seed, "n": n, "k": k, "r": n - k,
+                    "problem": problem,
+                    "instance_id": f"{problem}-n{n}k{k}-s{seed}",
+                    "seed": seed,
+                    "n": n,
+                    "k": k,
+                    "r": n - k,
                 }
                 try:
                     pair = certified_negative_pair(problem, n, k, seed, css_cnots=True)
@@ -57,17 +80,24 @@ def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list
                 for invariant in missing:
                     row = {**base, "invariant": invariant}
                     if matrices is None:
-                        row.update(rejected=None, status="generation_error", timeout=False, memory_limited=False, error=error)
+                        row.update(
+                            rejected=None, status="generation_error", timeout=False, memory_limited=False, error=error
+                        )
                     else:
                         result = run(
-                            evaluate_invariant, (invariant, problem, *matrices), None,
-                            timeout=TIMEOUT_SECONDS, max_memory_bytes=MEMORY_LIMIT_BYTES,
+                            evaluate_invariant,
+                            (invariant, problem, *matrices),
+                            None,
+                            timeout=TIMEOUT_SECONDS,
+                            max_memory_bytes=MEMORY_LIMIT_BYTES,
                         )
                         status = execution_status(result)
                         row.update(
                             rejected=not result.result if status == "success" else None,
-                            status=status, timeout=result.timed_out,
-                            memory_limited=result.memory_exceeded, error=result.error or "",
+                            status=status,
+                            timeout=result.timed_out,
+                            memory_limited=result.memory_exceeded,
+                            error=result.error or "",
                         )
                     append_row(output_file, row, FIELDS)
                     rows.append(row)

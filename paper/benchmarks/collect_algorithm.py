@@ -21,7 +21,11 @@ from benchmarks.experiments.statistics import BenchmarkCase, run_statistics
 from benchmarks.thesis import resolve_names
 from benchmarks.thesis.thesis_prototypes import ALGORITHMS, RandomCaseGenerator, measurement_dimensions
 from paper.benchmarks.common import (
-    COLLECTED_DIR, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS, certified_negative_pair,
+    COLLECTED_DIR,
+    MASTER_SEED,
+    MEMORY_LIMIT_BYTES,
+    TIMEOUT_SECONDS,
+    certified_negative_pair,
 )
 from paper.experiments.common import problem_for_algorithm
 
@@ -122,7 +126,9 @@ def collect(algorithm_names) -> None:
 def parse_args(argv=None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--algorithm", action="append", metavar="SELECTOR",
+        "--algorithm",
+        action="append",
+        metavar="SELECTOR",
         help="exact name, shell wildcard, or regex; repeatable; default: all",
     )
     args = parser.parse_args(argv)

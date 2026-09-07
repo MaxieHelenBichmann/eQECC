@@ -23,6 +23,7 @@ from src.core.css_code import CSSCode
 # _compute_signatures
 # ----------------------------------------------------------------------------------------------------
 
+
 def test_compute_signatures_column_permutation() -> None:
     Gx = np.array(
         [
@@ -45,9 +46,11 @@ def test_compute_signatures_column_permutation() -> None:
 
     assert permuted_signatures == [signatures[i] for i in permutation]
 
+
 # ----------------------------------------------------------------------------------------------------
 # _compute_canonical_form
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_compute_canonical_form_stable_row_operations() -> None:
     G = np.array(
@@ -66,17 +69,17 @@ def test_compute_canonical_form_stable_row_operations() -> None:
     )
 
     canon, perms = _compute_canonical_form(G, [[0, 1, 2, 3]])
-    row_changed_canon, row_changed_perms = _compute_canonical_form(
-        row_changed, [[0, 1, 2, 3]]
-    )
+    row_changed_canon, row_changed_perms = _compute_canonical_form(row_changed, [[0, 1, 2, 3]])
 
     assert np.array_equal(canon, row_changed_canon)
     assert perms
     assert row_changed_perms
 
+
 # ----------------------------------------------------------------------------------------------------
 # _extract_permutations
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_extract_permutations_matching_convention() -> None:
     def _rank(matrix: np.ndarray) -> int:
@@ -84,29 +87,24 @@ def test_extract_permutations_matching_convention() -> None:
             return 0
         return mod2.rank(matrix)
 
-    canon = np.array([[1, 0, 1, 0],
-                      [0, 1, 1, 0]], dtype=np.uint8)
+    canon = np.array([[1, 0, 1, 0], [0, 1, 1, 0]], dtype=np.uint8)
     can_to_g1 = [[1, 0, 3, 2]]
     can_to_g2 = [[2, 1, 0, 3]]
     expected_permutation = (3, 0, 1, 2)
-    code1 = CSSCode(Hx=np.array([[0, 1, 0, 1],
-                                 [1, 0, 0, 1]], dtype=np.int8), Hz=None)
-    code2 = CSSCode(Hx=np.array([[1, 0, 1, 0],
-                                 [1, 1, 0, 0]], dtype=np.int8), Hz=None)
+    code1 = CSSCode(Hx=np.array([[0, 1, 0, 1], [1, 0, 0, 1]], dtype=np.int8), Hz=None)
+    code2 = CSSCode(Hx=np.array([[1, 0, 1, 0], [1, 1, 0, 0]], dtype=np.int8), Hz=None)
 
     extracted = list(_iter_permutations(canon, canon, can_to_g1, can_to_g2))
 
     assert extracted == [expected_permutation]
-    assert _rank(code1.Hx) == _rank(code2.Hx) == _rank(
-        np.vstack([code2.Hx, code1.Hx[:, extracted[0]]])
-    )
-    assert _rank(code1.Hz) == _rank(code2.Hz) == _rank(
-        np.vstack([code2.Hz, code1.Hz[:, extracted[0]]])
-    )
+    assert _rank(code1.Hx) == _rank(code2.Hx) == _rank(np.vstack([code2.Hx, code1.Hx[:, extracted[0]]]))
+    assert _rank(code1.Hz) == _rank(code2.Hz) == _rank(np.vstack([code2.Hz, code1.Hz[:, extracted[0]]]))
+
 
 # ----------------------------------------------------------------------------------------------------
 # are_peq_css_classical
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_peq_css_classical_random_smoke() -> None:
     for n in range(3, 6):
@@ -116,6 +114,7 @@ def test_are_peq_css_classical_random_smoke() -> None:
                 assert isinstance(are_peq_css_classical(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
 def test_are_peq_css_classical_random_positive(seed: int) -> None:

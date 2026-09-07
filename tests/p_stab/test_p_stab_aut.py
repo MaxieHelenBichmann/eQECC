@@ -8,7 +8,11 @@ import shutil
 
 import pytest
 
-from benchmarks.experiments.utils import RandomizeError, random_permuted_stabilizer_pair, random_non_permuted_stabilizer_pair
+from benchmarks.experiments.utils import (
+    RandomizeError,
+    random_permuted_stabilizer_pair,
+    random_non_permuted_stabilizer_pair,
+)
 from src.algorithms.p_stb import p_stab_aut
 from src.algorithms.p_stb.p_stab_aut import are_peq_stab_aut
 
@@ -21,6 +25,7 @@ requires_gap = pytest.mark.skipif(
 # ----------------------------------------------------------------------------------------------------
 # are_peq_stab_aut
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_gap_package_root_survives_module_moves(monkeypatch: pytest.MonkeyPatch) -> None:
     repo_root = Path(__file__).resolve().parents[2]
@@ -40,6 +45,7 @@ def test_are_peq_stab_aut_random_smoke() -> None:
                 assert isinstance(are_peq_stab_aut(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
 @requires_gap

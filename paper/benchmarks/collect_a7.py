@@ -127,16 +127,12 @@ def _stabilizer_partner(
     else:
         first, second = block_sizes
         matrix[:first] = _random_row_space_base_change(matrix[:first], seed=row_seed)
-        matrix[first:] = _random_row_space_base_change(
-            matrix[first:], seed=row_seed + 1
-        )
+        matrix[first:] = _random_row_space_base_change(matrix[first:], seed=row_seed + 1)
     columns = list(permutation) + [qubit + left.n for qubit in permutation]
     return StabilizerCode(StabilizerTableau(matrix[:, columns]))
 
 
-def _css_partner(
-    left: CSSCode, permutation: Sequence[int], row_seed: int
-) -> CSSCode:
+def _css_partner(left: CSSCode, permutation: Sequence[int], row_seed: int) -> CSSCode:
     hx = _random_row_space_base_change(left.Hx, seed=row_seed)[:, permutation]
     hz = _random_row_space_base_change(left.Hz, seed=row_seed + 1)[:, permutation]
     return CSSCode(hx, hz)
@@ -153,15 +149,8 @@ def _xor(variables: Sequence[z3.BoolRef]) -> z3.BoolRef:
     return value
 
 
-def _column_value(
-    column: np.ndarray, variables: Sequence[z3.BoolRef]
-) -> z3.BoolRef:
-    return z3.And(
-        *[
-            variable if bit else z3.Not(variable)
-            for bit, variable in zip(column, variables, strict=True)
-        ]
-    )
+def _column_value(column: np.ndarray, variables: Sequence[z3.BoolRef]) -> z3.BoolRef:
+    return z3.And(*[variable if bit else z3.Not(variable) for bit, variable in zip(column, variables, strict=True)])
 
 
 def _build_block_general_solver(
@@ -174,37 +163,17 @@ def _build_block_general_solver(
     n = left.n
     first, second = block_sizes
     r = first + second
-    auxiliary = [
-        z3.Bool(f"aux_{row}_{column}")
-        for row in range(r)
-        for column in range(2 * n)
-    ]
-    permutation = [
-        z3.Bool(f"p_{source}_{target}")
-        for source in range(n)
-        for target in range(n)
-    ]
+    auxiliary = [z3.Bool(f"aux_{row}_{column}") for row in range(r) for column in range(2 * n)]
+    permutation = [z3.Bool(f"p_{source}_{target}") for source in range(n) for target in range(n)]
     for source in range(n):
-        solver.add(
-            _exactly_one(
-                [permutation[source * n + target] for target in range(n)]
-            )
-        )
+        solver.add(_exactly_one([permutation[source * n + target] for target in range(n)]))
     for target in range(n):
-        solver.add(
-            _exactly_one(
-                [permutation[source * n + target] for source in range(n)]
-            )
-        )
+        solver.add(_exactly_one([permutation[source * n + target] for source in range(n)]))
 
     for source in range(n):
         for target in range(n):
-            x_variables = [
-                auxiliary[row * (2 * n) + target] for row in range(r)
-            ]
-            z_variables = [
-                auxiliary[row * (2 * n) + target + n] for row in range(r)
-            ]
+            x_variables = [auxiliary[row * (2 * n) + target] for row in range(r)]
+            z_variables = [auxiliary[row * (2 * n) + target + n] for row in range(r)]
             solver.add(
                 z3.Implies(
                     permutation[source * n + target],
@@ -216,11 +185,7 @@ def _build_block_general_solver(
             )
 
     for block, (offset, size) in enumerate(((0, first), (first, second)), 1):
-        coefficients = [
-            z3.Bool(f"r{block}_{row}_{column}")
-            for row in range(size)
-            for column in range(size)
-        ]
+        coefficients = [z3.Bool(f"r{block}_{row}_{column}") for row in range(size) for column in range(size)]
         for local_row in range(size):
             output_row = offset + local_row
             for column in range(2 * n):
@@ -229,10 +194,7 @@ def _build_block_general_solver(
                     for contribution in range(size)
                     if right.symplectic[offset + contribution, column]
                 ]
-                solver.add(
-                    auxiliary[output_row * (2 * n) + column]
-                    == _xor(contributions)
-                )
+                solver.add(auxiliary[output_row * (2 * n) + column] == _xor(contributions))
     return solver
 
 
@@ -240,18 +202,11 @@ def _experiment1_conditions(n: int, k: int, seed: int) -> list[Condition]:
     rng = np.random.default_rng(seed)
     r = n - k
     first, second = r // 2, r - r // 2
-    permutation = tuple(
-        int(value)
-        for value in _random_permutation(n, seed=int(rng.integers(0, 2**31)))
-    )
+    permutation = tuple(int(value) for value in _random_permutation(n, seed=int(rng.integers(0, 2**31))))
     witness = _inverse_permutation(permutation)
 
-    general_left = random_stabilizer_code(
-        n, k, seed=int(rng.integers(0, 2**31))
-    )
-    full_right = _stabilizer_partner(
-        general_left, permutation, int(rng.integers(0, 2**31)), None
-    )
+    general_left = random_stabilizer_code(n, k, seed=int(rng.integers(0, 2**31)))
+    full_right = _stabilizer_partner(general_left, permutation, int(rng.integers(0, 2**31)), None)
     block_right = _stabilizer_partner(
         general_left,
         permutation,
@@ -259,12 +214,8 @@ def _experiment1_conditions(n: int, k: int, seed: int) -> list[Condition]:
         (first, second),
     )
 
-    css_left = random_css_code(
-        n, k, rx=first, seed=int(rng.integers(0, 2**31))
-    )
-    css_right = _css_partner(
-        css_left, permutation, int(rng.integers(0, 2**31))
-    )
+    css_left = random_css_code(n, k, rx=first, seed=int(rng.integers(0, 2**31)))
+    css_right = _css_partner(css_left, permutation, int(rng.integers(0, 2**31)))
 
     return [
         Condition(
@@ -286,9 +237,7 @@ def _experiment1_conditions(n: int, k: int, seed: int) -> list[Condition]:
         Condition(
             EXPERIMENT1,
             "B2",
-            lambda: _build_block_general_solver(
-                general_left, block_right, (first, second)
-            ),
+            lambda: _build_block_general_solver(general_left, block_right, (first, second)),
             witness,
             first * first + second * second,
             True,
@@ -308,17 +257,10 @@ def _experiment2_conditions(n: int, k: int, seed: int) -> list[Condition]:
     rng = np.random.default_rng(seed)
     r = n - k
     first = r // 2
-    permutation = tuple(
-        int(value)
-        for value in _random_permutation(n, seed=int(rng.integers(0, 2**31)))
-    )
+    permutation = tuple(int(value) for value in _random_permutation(n, seed=int(rng.integers(0, 2**31))))
     witness = _inverse_permutation(permutation)
-    css_left = random_css_code(
-        n, k, rx=first, seed=int(rng.integers(0, 2**31))
-    )
-    css_right = _css_partner(
-        css_left, permutation, int(rng.integers(0, 2**31))
-    )
+    css_left = random_css_code(n, k, rx=first, seed=int(rng.integers(0, 2**31)))
+    css_right = _css_partner(css_left, permutation, int(rng.integers(0, 2**31)))
     clean_left = StabilizerCode(css_left.generators)
     clean_right = StabilizerCode(css_right.generators)
     mixed_left = StabilizerCode(
@@ -412,9 +354,7 @@ def _measure(
     }
 
 
-def _probe_assignments(
-    n: int, witness: Sequence[int], probes: int, seed: int
-) -> list[tuple[int, int]]:
+def _probe_assignments(n: int, witness: Sequence[int], probes: int, seed: int) -> list[tuple[int, int]]:
     rng = np.random.default_rng(seed + 1)
     sources = rng.choice(n, size=min(probes, n), replace=False)
     alternatives = [int(rng.integers(0, n - 1)) for _ in sources]
@@ -442,13 +382,10 @@ def _collect_conditions(
 ) -> None:
     assignments = _probe_assignments(n, conditions[0].witness, probes, seed)
     for condition in conditions:
-        specifications: list[tuple[str, int | str, int | str, int | str]] = [
-            ("base", "", "", "")
-        ]
+        specifications: list[tuple[str, int | str, int | str, int | str]] = [("base", "", "", "")]
         if condition.probe_mappings:
             specifications.extend(
-                ("invalid_mapping", probe, source, target)
-                for probe, (source, target) in enumerate(assignments)
+                ("invalid_mapping", probe, source, target) for probe, (source, target) in enumerate(assignments)
             )
         for measurement, probe, source, target in specifications:
             identity = {
@@ -497,9 +434,16 @@ def collect() -> None:
             for sample in range(NUM_SAMPLES):
                 seed = _sample_seed(MASTER_SEED, experiment, n, sample)
                 _collect_conditions(
-                    conditions(n, K, seed), sample=sample, seed=seed, n=n, k=K,
-                    probes=NUM_PROBES, timeout_seconds=TIMEOUT_SECONDS, output=OUTPUT,
-                    completed=completed, verbose=VERBOSE,
+                    conditions(n, K, seed),
+                    sample=sample,
+                    seed=seed,
+                    n=n,
+                    k=K,
+                    probes=NUM_PROBES,
+                    timeout_seconds=TIMEOUT_SECONDS,
+                    output=OUTPUT,
+                    completed=completed,
+                    verbose=VERBOSE,
                 )
 
 

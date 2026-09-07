@@ -11,11 +11,13 @@ from src.algorithms.p_stb.p_stab_sat import are_peq_stab_sat
 # are_peq_stab_sat
 # ----------------------------------------------------------------------------------------------------
 
+
 def test_are_peq_stab_sat_random_smoke() -> None:
     for n in range(3, 6):
         for k in range(n + 1):
             code1, code2 = random_permuted_stabilizer_pair(n, k, seed=1000 + 17 * n + k)
             assert isinstance(are_peq_stab_sat(code1, code2), bool)
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(20)])
 def test_are_peq_stab_sat_random_positive(seed: int) -> None:

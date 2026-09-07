@@ -1,8 +1,8 @@
 """Collect invariant runtimes (A3).
 
-5 positive and 5 negative pairs per (n, k). Negative instances are certified as 
-in A1, except that PM-CSS negatives are two independent codes with matching 
-check ranks. Only the invariant call is timed; the row-basis reduction of the 
+5 positive and 5 negative pairs per (n, k). Negative instances are certified as
+in A1, except that PM-CSS negatives are two independent codes with matching
+check ranks. Only the invariant call is timed; the row-basis reduction of the
 inputs happens before. Rows are appended to invariant_timings.csv and existing
 keys are skipped on restart.
 """
@@ -13,9 +13,18 @@ from benchmarks.experiments.run import run
 from benchmarks.experiments.statistics import deterministic_seeds
 from benchmarks.thesis.thesis_prototypes import RandomCaseGenerator, measurement_dimensions
 from paper.benchmarks.common import (
-    COLLECTED_DIR, INVARIANTS, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS, CodePair,
-    append_row, certified_negative_pair, completed_keys, evaluate_invariant,
-    execution_status, invariant_matrices,
+    COLLECTED_DIR,
+    INVARIANTS,
+    MASTER_SEED,
+    MEMORY_LIMIT_BYTES,
+    TIMEOUT_SECONDS,
+    CodePair,
+    append_row,
+    certified_negative_pair,
+    completed_keys,
+    evaluate_invariant,
+    execution_status,
+    invariant_matrices,
 )
 
 NUM_SEEDS = 5
@@ -25,8 +34,20 @@ VERBOSE = True
 OUTPUT_FILE = COLLECTED_DIR / "invariant_timings.csv"
 KEY_FIELDS = ("problem", "invariant", "n", "k", "positive", "seed")
 FIELDS = (
-    "problem", "invariant", "instance_id", "seed", "n", "k", "r", "positive",
-    "accepted", "runtime_seconds", "status", "timeout", "memory_limited", "error",
+    "problem",
+    "invariant",
+    "instance_id",
+    "seed",
+    "n",
+    "k",
+    "r",
+    "positive",
+    "accepted",
+    "runtime_seconds",
+    "status",
+    "timeout",
+    "memory_limited",
+    "error",
 )
 
 
@@ -46,7 +67,8 @@ def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list
                 label = "positive" if positive else "negative"
                 for seed in seeds:
                     missing = [
-                        invariant for invariant in invariants
+                        invariant
+                        for invariant in invariants
                         if (problem, invariant, str(n), str(k), str(positive), str(seed)) not in completed
                     ]
                     if not missing:
@@ -54,8 +76,13 @@ def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list
                     if VERBOSE:
                         print(f"    [[{n},{k}]] {label} seed={seed}", flush=True)
                     base = {
-                        "problem": problem, "instance_id": f"{problem}-n{n}k{k}-s{seed}-{label}",
-                        "seed": seed, "n": n, "k": k, "r": n - k, "positive": positive,
+                        "problem": problem,
+                        "instance_id": f"{problem}-n{n}k{k}-s{seed}-{label}",
+                        "seed": seed,
+                        "n": n,
+                        "k": k,
+                        "r": n - k,
+                        "positive": positive,
                     }
                     try:
                         matrices = invariant_matrices(problem, *generate_pair(problem, n, k, positive, seed))
@@ -66,19 +93,29 @@ def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list
                         row = {**base, "invariant": invariant}
                         if matrices is None:
                             row.update(
-                                accepted=None, runtime_seconds=None, status="generation_error",
-                                timeout=False, memory_limited=False, error=error,
+                                accepted=None,
+                                runtime_seconds=None,
+                                status="generation_error",
+                                timeout=False,
+                                memory_limited=False,
+                                error=error,
                             )
                         else:
                             result = run(
-                                evaluate_invariant, (invariant, problem, *matrices), None,
-                                timeout=TIMEOUT_SECONDS, max_memory_bytes=MEMORY_LIMIT_BYTES,
+                                evaluate_invariant,
+                                (invariant, problem, *matrices),
+                                None,
+                                timeout=TIMEOUT_SECONDS,
+                                max_memory_bytes=MEMORY_LIMIT_BYTES,
                             )
                             status = execution_status(result)
                             row.update(
                                 accepted=result.result if status == "success" else None,
-                                runtime_seconds=result.runtime, status=status, timeout=result.timed_out,
-                                memory_limited=result.memory_exceeded, error=result.error or "",
+                                runtime_seconds=result.runtime,
+                                status=status,
+                                timeout=result.timed_out,
+                                memory_limited=result.memory_exceeded,
+                                error=result.error or "",
                             )
                         append_row(output_file, row, FIELDS)
                         rows.append(row)

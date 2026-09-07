@@ -1,7 +1,7 @@
 """Collect signature partition sizes of random codes (A2).
 
-One random stabilizer or CSS code per (n, k, seed); the instance result stores the 
-sizes of its signature classes and q = sum(|J_i|^2) / n^2, the probability that two 
+One random stabilizer or CSS code per (n, k, seed); the instance result stores the
+sizes of its signature classes and q = sum(|J_i|^2) / n^2, the probability that two
 qubits drawn with replacement share a signature. Rows are appended to
 signature_space.csv and existing keys are skipped on restart.
 """
@@ -15,8 +15,13 @@ from benchmarks.experiments.statistics import deterministic_seeds
 from benchmarks.experiments.utils import random_css_code, random_stabilizer_code
 from benchmarks.thesis.thesis_prototypes import measurement_dimensions
 from paper.benchmarks.common import (
-    COLLECTED_DIR, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS,
-    append_row, completed_keys, execution_status,
+    COLLECTED_DIR,
+    MASTER_SEED,
+    MEMORY_LIMIT_BYTES,
+    TIMEOUT_SECONDS,
+    append_row,
+    completed_keys,
+    execution_status,
 )
 from src.hybrids import p_css, p_stab
 
@@ -28,8 +33,18 @@ OUTPUT_FILE = COLLECTED_DIR / "signature_space.csv"
 PROBLEMS = ("pm_stb", "pm_css")
 KEY_FIELDS = ("problem", "n", "k", "seed")
 FIELDS = (
-    "problem", "seed", "n", "k", "r", "x_rank", "class_sizes", "q_pairs",
-    "status", "timeout", "memory_limited", "error",
+    "problem",
+    "seed",
+    "n",
+    "k",
+    "r",
+    "x_rank",
+    "class_sizes",
+    "q_pairs",
+    "status",
+    "timeout",
+    "memory_limited",
+    "error",
 )
 
 
@@ -75,21 +90,30 @@ def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list
                     row["x_rank"] = "" if x_rank is None else x_rank
                 except Exception as exc:
                     row.update(
-                        class_sizes="", q_pairs=None, status="generation_error", timeout=False,
-                        memory_limited=False, error=f"{type(exc).__name__}: {exc}",
+                        class_sizes="",
+                        q_pairs=None,
+                        status="generation_error",
+                        timeout=False,
+                        memory_limited=False,
+                        error=f"{type(exc).__name__}: {exc}",
                     )
                 else:
                     result = run(
-                        evaluate_signature_partition, (problem, code), None,
-                        timeout=TIMEOUT_SECONDS, max_memory_bytes=MEMORY_LIMIT_BYTES,
+                        evaluate_signature_partition,
+                        (problem, code),
+                        None,
+                        timeout=TIMEOUT_SECONDS,
+                        max_memory_bytes=MEMORY_LIMIT_BYTES,
                     )
                     status = execution_status(result)
                     sizes = list(result.result) if status == "success" else []
                     row.update(
                         class_sizes=" ".join(map(str, sizes)),
                         q_pairs=signature_metric(sizes, n) if status == "success" else None,
-                        status=status, timeout=result.timed_out,
-                        memory_limited=result.memory_exceeded, error=result.error or "",
+                        status=status,
+                        timeout=result.timed_out,
+                        memory_limited=result.memory_exceeded,
+                        error=result.error or "",
                     )
                 append_row(output_file, row, FIELDS)
                 rows.append(row)

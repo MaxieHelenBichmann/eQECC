@@ -55,12 +55,7 @@ class RunResult:
     @property
     def successful(self) -> bool:
         """Whether the call completed and returned the expected result."""
-        return (
-            self.result_is_expected
-            and not self.timed_out
-            and not self.memory_exceeded
-            and self.error is None
-        )
+        return self.result_is_expected and not self.timed_out and not self.memory_exceeded and self.error is None
 
 
 def _set_memory_limit(max_memory_bytes: int) -> None:
@@ -69,16 +64,8 @@ def _set_memory_limit(max_memory_bytes: int) -> None:
         return
 
     soft, hard = resource.getrlimit(resource.RLIMIT_AS)
-    new_hard = (
-        max_memory_bytes
-        if hard == resource.RLIM_INFINITY
-        else min(hard, max_memory_bytes)
-    )
-    new_soft = (
-        max_memory_bytes
-        if soft == resource.RLIM_INFINITY
-        else min(soft, max_memory_bytes)
-    )
+    new_hard = max_memory_bytes if hard == resource.RLIM_INFINITY else min(hard, max_memory_bytes)
+    new_soft = max_memory_bytes if soft == resource.RLIM_INFINITY else min(soft, max_memory_bytes)
     if new_hard != resource.RLIM_INFINITY:
         new_soft = min(new_soft, new_hard)
 
@@ -108,9 +95,7 @@ def _worker(
     except MemoryError:
         queue.put(("memory", None, perf_counter() - start))
     except BaseException as exc:  # noqa: BLE001 - the supervisor reports all failures
-        queue.put(
-            ("error", f"{type(exc).__name__}: {exc}", perf_counter() - start)
-        )
+        queue.put(("error", f"{type(exc).__name__}: {exc}", perf_counter() - start))
 
 
 def _process_group_rss_bytes(process_group_id: int) -> int | None:
@@ -237,11 +222,7 @@ def run(
             error=None,
         )
 
-    context = (
-        mp.get_context("fork")
-        if "fork" in mp.get_all_start_methods()
-        else mp.get_context()
-    )
+    context = mp.get_context("fork") if "fork" in mp.get_all_start_methods() else mp.get_context()
     queue: mp.Queue = context.Queue()
     process = context.Process(
         target=_worker,
@@ -263,15 +244,9 @@ def run(
             )
 
         rss_bytes = (
-            _process_group_rss_bytes(process.pid)
-            if process.pid is not None and max_memory_bytes is not None
-            else None
+            _process_group_rss_bytes(process.pid) if process.pid is not None and max_memory_bytes is not None else None
         )
-        if (
-            rss_bytes is not None
-            and max_memory_bytes is not None
-            and rss_bytes >= max_memory_bytes
-        ):
+        if rss_bytes is not None and max_memory_bytes is not None and rss_bytes >= max_memory_bytes:
             runtime = perf_counter() - start
             _terminate_process_group(process)
             queue.close()

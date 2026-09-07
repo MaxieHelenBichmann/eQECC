@@ -47,9 +47,11 @@ def _assert_maps_rowspace(
     assert mod2.rank(code2.symplectic) == rank
     assert mod2.rank(np.vstack([transformed, code2.symplectic])) == rank
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_lceq
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_lceq_preserves_n() -> None:
     assert are_lceq(StabilizerCode.get_trivial_code(3), StabilizerCode.get_trivial_code(4)) is None
@@ -174,6 +176,7 @@ def test_are_lceq_random_positive(seed: int) -> None:
     code2 = lc_equivalent_code(code1, seed=2000 + seed)
 
     assert are_lceq(code1, code2) is not None
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(2, 6)])
 def test_are_lceq_random_negative(seed: int) -> None:

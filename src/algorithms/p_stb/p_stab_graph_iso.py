@@ -9,6 +9,7 @@ from pynauty import Graph, certificate
 
 from ...core.stabilizer_code import StabilizerCode
 
+
 def _graph_from_code(code: StabilizerCode) -> Graph:
     r = code.n - code.k
     adj_dict = defaultdict(list)
@@ -18,19 +19,19 @@ def _graph_from_code(code: StabilizerCode) -> Graph:
     z_edges = set()
     x_edges = set()
 
-    stabilizer_group_size = 2 ** r
+    stabilizer_group_size = 2**r
     edge_id = code.n + stabilizer_group_size
 
     for mask in range(0, 1 << r):
         group_element_vertex = code.n + mask
-        x = np.zeros(2*code.n, dtype=np.int8)
+        x = np.zeros(2 * code.n, dtype=np.int8)
 
         for i in range(r):
             if (mask >> i) & 1:
                 x ^= code.symplectic[i]
 
-        x_part = x[:code.n]
-        z_part = x[code.n:]
+        x_part = x[: code.n]
+        z_part = x[code.n :]
 
         for idx in np.flatnonzero(x_part):
             # add new x edge
@@ -58,21 +59,28 @@ def _graph_from_code(code: StabilizerCode) -> Graph:
             adj_dict[group_element_vertex].append(edge_id)
             edge_id += 1
 
-
     z_anchor = edge_id
     x_anchor = edge_id + 1
 
-    return Graph(number_of_vertices=edge_id + 2,
-                 directed=False,
-                 vertex_coloring=[set(range(code.n)), set(range(code.n, code.n + stabilizer_group_size)), z_edges | {z_anchor}, x_edges | {x_anchor}],
-                 adjacency_dict=adj_dict)
+    return Graph(
+        number_of_vertices=edge_id + 2,
+        directed=False,
+        vertex_coloring=[
+            set(range(code.n)),
+            set(range(code.n, code.n + stabilizer_group_size)),
+            z_edges | {z_anchor},
+            x_edges | {x_anchor},
+        ],
+        adjacency_dict=adj_dict,
+    )
+
 
 def are_peq_stab_graph_iso(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check permutation equivalence by reducing to graph isomorphism.
 
     For each code, the following is done:
     1.) Convert the stabilizer code into a colored graph G = (V, E) enumerating all elements in the stabilizer group, thus:
-    V = {1,...,n} union { S_i | S_i ∈ S } with color(S_i) 
+    V = {1,...,n} union { S_i | S_i ∈ S } with color(S_i)
     E = { (j, S_i, red) | S_i has X on qubit j } union { (j, S_i, green) | S_i has Z on qubit j }
 
     2.) Check if the resulting graphs are isomorphic.

@@ -74,8 +74,7 @@ class Pauli:
         x_part = self.symplectic[: self.n]
         z_part = self.symplectic[self.n :]
         pauli = [
-            "X" if x and not z else "Z" if z and not x else "Y" if x and z else "I"
-            for x, z in zip(x_part, z_part)
+            "X" if x and not z else "Z" if z and not x else "Y" if x and z else "I" for x, z in zip(x_part, z_part)
         ]
         return f"{'' if self.phase == 0 else '-'}" + "".join(pauli)
 
@@ -173,10 +172,12 @@ class StabilizerTableau:
         """
         x2x, x2z, z2x, z2z, x_signs, z_signs = stim_tableau.to_numpy(bit_packed=False)
 
-        tableau_matrix = np.block([
-            [x2x.astype(np.int8), x2z.astype(np.int8)],
-            [z2x.astype(np.int8), z2z.astype(np.int8)],
-        ]).astype(np.int8)
+        tableau_matrix = np.block(
+            [
+                [x2x.astype(np.int8), x2z.astype(np.int8)],
+                [z2x.astype(np.int8), z2z.astype(np.int8)],
+            ]
+        ).astype(np.int8)
 
         phase = np.concatenate((x_signs.astype(np.int8), z_signs.astype(np.int8)))
         return cls(SymplecticMatrix(tableau_matrix), phase)

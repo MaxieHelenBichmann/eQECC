@@ -4,12 +4,17 @@ from __future__ import annotations
 
 import pytest
 
-from benchmarks.experiments.utils import RandomizeError, random_permuted_stabilizer_pair, random_non_permuted_stabilizer_pair
+from benchmarks.experiments.utils import (
+    RandomizeError,
+    random_permuted_stabilizer_pair,
+    random_non_permuted_stabilizer_pair,
+)
 from src.algorithms.p_stb.p_stab_bruteforce import are_peq_stab_bruteforce
 
 # ----------------------------------------------------------------------------------------------------
 # are_peq_stab_bruteforce
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_peq_stab_bruteforce_random_smoke() -> None:
     for n in range(3, 6):
@@ -19,6 +24,7 @@ def test_are_peq_stab_bruteforce_random_smoke() -> None:
                 assert isinstance(are_peq_stab_bruteforce(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 def _shape(seed: int) -> tuple[int, int]:
     n = 2 + (3 * seed + 1) % 5

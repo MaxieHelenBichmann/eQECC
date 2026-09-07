@@ -26,15 +26,11 @@ def test_pm_css_matroid_colors_survive_an_empty_circuit_class() -> None:
 def test_pm_css_matroid_backend_reports_circuit_mismatch() -> None:
     code1 = CSSCode(
         Hx=np.array([[1, 0, 0, 0, 0, 0]], dtype=np.int8),
-        Hz=np.array(
-            [[0, 0, 0, 0, 1, 1], [0, 1, 1, 1, 0, 0]], dtype=np.int8
-        ),
+        Hz=np.array([[0, 0, 0, 0, 1, 1], [0, 1, 1, 1, 0, 0]], dtype=np.int8),
     )
     code2 = CSSCode(
         Hx=np.array([[0, 1, 1, 0, 0, 1]], dtype=np.int8),
-        Hz=np.array(
-            [[0, 0, 0, 1, 0, 0], [0, 1, 1, 1, 0, 0]], dtype=np.int8
-        ),
+        Hz=np.array([[0, 0, 0, 1, 0, 0], [0, 1, 1, 1, 0, 0]], dtype=np.int8),
     )
 
     assert pm_css.are_peq_css(code1, code2) == (False, "MI")
@@ -48,9 +44,7 @@ def test_pm_css_sat_backend_uses_satisfiability_as_equivalence() -> None:
     assert pm_css._sat(hx, hz, partition, hx, hz, partition) == (True, "SAT")
 
     different_weight = np.array([[1, 1, 1, 0, 0, 0]], dtype=np.uint8)
-    assert pm_css._sat(
-        hx, hz, partition, different_weight, hz, partition
-    ) == (False, "SAT")
+    assert pm_css._sat(hx, hz, partition, different_weight, hz, partition) == (False, "SAT")
 
 
 def test_pm_css_trivial_codes_are_equivalent() -> None:
@@ -103,9 +97,7 @@ def test_pm_stb_graph_backend_returns_diagnostic_decision() -> None:
     tableau = np.array([[1, 0, 0, 1]], dtype=np.uint8)
     partition = {(0,): [0, 1]}
 
-    assert pm_stb._graph_iso(
-        tableau, partition, tableau, partition
-    ) == (True, "GI")
+    assert pm_stb._graph_iso(tableau, partition, tableau, partition) == (True, "GI")
 
 
 def test_lc_stb_uses_stabilizer_rank_for_tableau_rows() -> None:

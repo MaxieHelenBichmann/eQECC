@@ -88,11 +88,7 @@ def _finish_table(ax, total_height: float) -> None:
 
 
 def _render_experiment1(ax, rows) -> None:
-    cells = {
-        (int(row["n"]), row["condition"]): row
-        for row in rows
-        if row["experiment"] == EXPERIMENT1
-    }
+    cells = {(int(row["n"]), row["condition"]): row for row in rows if row["experiment"] == EXPERIMENT1}
     ns = sorted({n for n, _ in cells})
 
     widths = (0.10, 0.10, 0.12, 0.28, 0.40)
@@ -119,11 +115,7 @@ def _render_experiment1(ax, rows) -> None:
     y = header_height
     for group, n in enumerate(ns):
         group_rows = [cells[(n, condition)] for condition in CONDITIONS]
-        base_color = (
-            COLOR_PAPER_GRAY_VERY_LIGHT
-            if group % 2 == 0
-            else COLOR_PAPER_GRAY_LIGHT
-        )
+        base_color = COLOR_PAPER_GRAY_VERY_LIGHT if group % 2 == 0 else COLOR_PAPER_GRAY_LIGHT
         group_height = len(CONDITIONS) * row_height
         _cell(
             ax,
@@ -177,11 +169,7 @@ def _render_experiment1(ax, rows) -> None:
 
 
 def _render_experiment2(ax, rows) -> None:
-    cells = {
-        (int(row["n"]), row["condition"]): row
-        for row in rows
-        if row["experiment"] == EXPERIMENT2
-    }
+    cells = {(int(row["n"]), row["condition"]): row for row in rows if row["experiment"] == EXPERIMENT2}
     ns = sorted({n for n, _ in cells})
 
     widths = (0.18, 0.18, 0.32, 0.32)
@@ -236,11 +224,7 @@ def _render_experiment2(ax, rows) -> None:
     y = 2 * header_height
     for index, n in enumerate(ns):
         clean, mixed = cells[(n, "clean")], cells[(n, "mixed")]
-        color = (
-            COLOR_PAPER_GRAY_VERY_LIGHT
-            if index % 2 == 0
-            else COLOR_PAPER_GRAY_LIGHT
-        )
+        color = COLOR_PAPER_GRAY_VERY_LIGHT if index % 2 == 0 else COLOR_PAPER_GRAY_LIGHT
         values = (
             str(n),
             clean["r"],

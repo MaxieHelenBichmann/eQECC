@@ -16,9 +16,21 @@ ALGORITHM_DATA_DIR = COLLECTED_DATA_DIR / "algorithms"
 RESULTS_DIR = ROOT / "paper" / "results"
 
 STATISTICS_FIELDS = (
-    "algorithm", "n", "k", "positive", "seed", "nr_seeds", "mean_seconds",
-    "stddev_seconds", "maximum_seconds", "num_cases", "num_successful",
-    "num_unexpected", "num_timeouts", "num_memory_limited", "num_errors",
+    "algorithm",
+    "n",
+    "k",
+    "positive",
+    "seed",
+    "nr_seeds",
+    "mean_seconds",
+    "stddev_seconds",
+    "maximum_seconds",
+    "num_cases",
+    "num_successful",
+    "num_unexpected",
+    "num_timeouts",
+    "num_memory_limited",
+    "num_errors",
     "num_generation_errors",
 )
 
@@ -75,10 +87,7 @@ def _pooled(values: Sequence[tuple[int, float, float]]) -> tuple[float | None, f
     average = sum(count * mean for count, mean, _ in values) / total
     if total == 1:
         return average, 0.0
-    squared = sum(
-        max(0, count - 1) * deviation**2 + count * (mean - average) ** 2
-        for count, mean, deviation in values
-    )
+    squared = sum(max(0, count - 1) * deviation**2 + count * (mean - average) ** 2 for count, mean, deviation in values)
     return average, math.sqrt(squared / (total - 1))
 
 
@@ -123,8 +132,11 @@ def combine_statistic_rows(rows: Sequence[Mapping[str, str]]) -> dict[str, Any]:
         and result["has_negative"]
         and result["num_successful"] == result["num_requested"]
         and not (
-            result["num_unexpected"] or result["num_timeouts"] or result["num_memory_limited"]
-            or result["num_errors"] or result["num_generation_errors"]
+            result["num_unexpected"]
+            or result["num_timeouts"]
+            or result["num_memory_limited"]
+            or result["num_errors"]
+            or result["num_generation_errors"]
         )
     )
     return result

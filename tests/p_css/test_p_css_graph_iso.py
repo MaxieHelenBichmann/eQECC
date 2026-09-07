@@ -22,11 +22,7 @@ from src.algorithms.p_css.p_css_graph_iso import (
 
 
 def _combined_hull_hash(inv_hx: list[int], inv_hz: list[int]) -> int:
-    payload = (
-        ",".join(map(str, inv_hx))
-        + "|"
-        + ",".join(map(str, inv_hz))
-    ).encode("ascii")
+    payload = (",".join(map(str, inv_hx)) + "|" + ",".join(map(str, inv_hz))).encode("ascii")
     return int.from_bytes(hashlib.sha256(payload).digest(), byteorder="big")
 
 
@@ -57,23 +53,25 @@ def _is_permutation_equivalent(
         return False
     return True
 
+
 # ----------------------------------------------------------------------------------------------------
 # _compute_invariant_a
 # ----------------------------------------------------------------------------------------------------
 
+
 def test_invariant_a() -> None:
     code = CSSCode(
-        Hx=np.array([[1, 1, 1, 0, 0],
-                     [1, 0, 0, 1, 0]], dtype=np.int8),
-        Hz=np.array([[0, 1, 1, 0, 0],
-                     [0, 0, 0, 0, 1]], dtype=np.int8),
+        Hx=np.array([[1, 1, 1, 0, 0], [1, 0, 0, 1, 0]], dtype=np.int8),
+        Hz=np.array([[0, 1, 1, 0, 0], [0, 0, 0, 0, 1]], dtype=np.int8),
     )
 
     assert _compute_invariant_a(code) == [1, 3, 3, 1, 2]
 
+
 # ----------------------------------------------------------------------------------------------------
 # _compute_invariant_b
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_invariant_b_trivial_code() -> None:
     zero_hull = [1, 0, 0, 0]
@@ -137,9 +135,11 @@ def test_invariant_b_case2() -> None:
         _combined_hull_hash(even_pair_hull, zero_hull),
     ]
 
+
 # ----------------------------------------------------------------------------------------------------
 # _graph_from_invariants
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_graph_from_invariants() -> None:
     graph = _graph_from_invariants(3, [[7, 7, 9], [4, 5, 4]])
@@ -157,9 +157,11 @@ def test_graph_from_invariants() -> None:
         6: {1},
     }
 
+
 # ----------------------------------------------------------------------------------------------------
 # _iter_qubit_permutations
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_iter_qubit_permutations_full_graph() -> None:
     g1 = Graph(
@@ -194,6 +196,7 @@ def test_iter_qubit_permutations_full_graph() -> None:
 
     assert set(_iter_qubit_permutations(g1, g2, n=7)) == expected_permutations
 
+
 def test_iter_qubit_permutations_only_qubit() -> None:
     g1 = Graph(
         number_of_vertices=7,
@@ -227,26 +230,25 @@ def test_iter_qubit_permutations_only_qubit() -> None:
 
     assert set(_iter_qubit_permutations(g1, g2, n=3)) == expected_permutations
 
+
 def test_graph_iso_uses_matching_permutation_convention() -> None:
     code1 = CSSCode(
-        Hx=np.array([[1, 0, 1, 1, 1],
-                     [0, 0, 1, 0, 1],
-                     [1, 0, 1, 0, 0]], dtype=np.int8),
+        Hx=np.array([[1, 0, 1, 1, 1], [0, 0, 1, 0, 1], [1, 0, 1, 0, 0]], dtype=np.int8),
         Hz=None,
     )
 
     code2 = CSSCode(
-        Hx=np.array([[0, 1, 1, 1, 1],
-                     [0, 1, 0, 0, 1],
-                     [0, 0, 1, 0, 1]], dtype=np.int8),
+        Hx=np.array([[0, 1, 1, 1, 1], [0, 1, 0, 0, 1], [0, 0, 1, 0, 1]], dtype=np.int8),
         Hz=None,
     )
 
     assert are_peq_css_graph_iso(code1, code2) is True
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_peq_css_graph_iso
 # ----------------------------------------------------------------------------------------------------
+
 
 @pytest.mark.parametrize("seed", [pytest.param(4, id="seed-4"), pytest.param(6, id="seed-6")])
 def test_random_positive_seed_4_and_6_extract_checkable_candidates(seed: int) -> None:
@@ -263,15 +265,10 @@ def test_random_positive_seed_4_and_6_extract_checkable_candidates(seed: int) ->
 
     assert certificate(graph_c1) == certificate(graph_c2)
 
-    candidate_permutations = set(
-        _iter_qubit_permutations(graph_c1, graph_c2, code1.n)
-    )
+    candidate_permutations = set(_iter_qubit_permutations(graph_c1, graph_c2, code1.n))
 
     assert candidate_permutations
-    assert any(
-        _is_permutation_equivalent(code1, code2, permutation)
-        for permutation in candidate_permutations
-    )
+    assert any(_is_permutation_equivalent(code1, code2, permutation) for permutation in candidate_permutations)
     assert are_peq_css_graph_iso(code1, code2) is True
 
 
@@ -283,6 +280,7 @@ def test_random_smoke() -> None:
                 assert isinstance(are_peq_css_graph_iso(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
 def test_random_positive(seed: int) -> None:

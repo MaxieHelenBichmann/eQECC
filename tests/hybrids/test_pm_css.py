@@ -17,9 +17,11 @@ def _ranked_x_code(n: int, rank: int) -> CSSCode:
     hx[:, :rank] = np.eye(rank, dtype=np.int8)
     return CSSCode(Hx=hx)
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_peq_css
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_peq_css_preserves_n() -> None:
     assert are_peq_css(CSSCode(n=3), CSSCode(n=4)) is None

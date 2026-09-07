@@ -5,7 +5,12 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
-from benchmarks.experiments.utils import non_lc_equivalent_code, random_stabilizer_code, lc_equivalent_code, lc_equivalent_code_and_log_ops
+from benchmarks.experiments.utils import (
+    non_lc_equivalent_code,
+    random_stabilizer_code,
+    lc_equivalent_code,
+    lc_equivalent_code_and_log_ops,
+)
 from src.algorithms.lc_stb.lc_stb_lse import (
     _stab_state_to_graph_state,
     _stab_code_to_stab_state,
@@ -14,6 +19,7 @@ from src.algorithms.lc_stb.lc_stb_lse import (
 )
 from src.algorithms.lc_stb.lc_stb_bruteforce import are_lceq_bruteforce
 from src.core.stabilizer_code import StabilizerCode
+
 
 def _assert_same_matrix(actual: np.ndarray, expected: np.ndarray) -> None:
     np.testing.assert_array_equal(actual.astype(np.uint8), expected.astype(np.uint8))
@@ -77,12 +83,12 @@ def _assert_same_matrix(actual: np.ndarray, expected: np.ndarray) -> None:
             StabilizerCode(["XZYI", "IXXY"]),
             np.array(
                 [
-                    [1, 0, 1, 0, 0, 0,  0, 1, 1, 0, 0, 0],
-                    [0, 1, 1, 1, 0, 0,  0, 0, 0, 1, 0, 0],
-                    [0, 0, 0, 1, 1, 0,  0, 1, 0, 0, 0, 0],
-                    [0, 0, 1, 0, 0, 1,  1, 0, 0, 0, 0, 0],
-                    [0, 1, 1, 0, 0, 0,  0, 0, 0, 0, 1, 0],
-                    [1, 0, 0, 0, 0, 0,  0, 0, 0, 0, 0, 1],
+                    [1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0],
+                    [0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0],
+                    [0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0],
+                    [0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0],
+                    [0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0],
+                    [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1],
                 ],
                 dtype=np.uint8,
             ),
@@ -98,6 +104,7 @@ def test_stab_code_to_stab_state_small_codes(code: StabilizerCode, expected: np.
 # _stab_state_to_graph_state
 # ----------------------------------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     ("tableau", "expected"),
     [
@@ -107,38 +114,28 @@ def test_stab_code_to_stab_state_small_codes(code: StabilizerCode, expected: np.
             id="one-isolated-vertex",
         ),
         pytest.param(
-            np.array([[1, 0, 0, 0, 1, 1],
-                      [0, 1, 0, 1, 0, 1],
-                      [0, 0, 1, 1, 1, 0]], dtype=np.uint8),
-            np.array([[0, 1, 1],
-                      [1, 0, 1],
-                      [1, 1, 0]], dtype=np.uint8),
+            np.array([[1, 0, 0, 0, 1, 1], [0, 1, 0, 1, 0, 1], [0, 0, 1, 1, 1, 0]], dtype=np.uint8),
+            np.array([[0, 1, 1], [1, 0, 1], [1, 1, 0]], dtype=np.uint8),
             id="triangle",
         ),
         pytest.param(
             np.array(
-                [[0, 0, 1, 0],
-                 [0, 0, 0, 1]],
+                [[0, 0, 1, 0], [0, 0, 0, 1]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 0],
-                 [0, 0]],
+                [[0, 0], [0, 0]],
                 dtype=np.uint8,
             ),
             id="only-hadamard-improvement",
         ),
         pytest.param(
             np.array(
-                [[0, 0, 0, 0, 1, 0],
-                 [1, 0, 0, 1, 0, 0],
-                 [0, 0, 1, 0, 1, 1]],
+                [[0, 0, 0, 0, 1, 0], [1, 0, 0, 1, 0, 0], [0, 0, 1, 0, 1, 1]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 0, 0],
-                 [0, 0, 0],
-                 [0, 0, 0]],
+                [[0, 0, 0], [0, 0, 0], [0, 0, 0]],
                 dtype=np.uint8,
             ),
             id="mixed",
@@ -156,6 +153,7 @@ def test_stab_state_to_graph_state_small_tableau(
 # _lc_equiv_graph_states
 # ----------------------------------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     ("g1", "g2", "expected"),
     [
@@ -169,45 +167,39 @@ def test_stab_state_to_graph_state_small_tableau(
                 dtype=np.uint8,
             ),
             True,
-            id="one-empty"
+            id="one-empty",
         ),
         pytest.param(
             np.array(
-                [[0, 0],
-                 [0, 0]],
+                [[0, 0], [0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 0],
-                 [0, 0]],
+                [[0, 0], [0, 0]],
                 dtype=np.uint8,
             ),
             True,
-            id="two-empty"
+            id="two-empty",
         ),
         pytest.param(
             np.array(
-                [[0, 1],
-                 [1, 0]],
+                [[0, 1], [1, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1],
-                 [1, 0]],
+                [[0, 1], [1, 0]],
                 dtype=np.uint8,
             ),
             True,
-            id="two-same"
+            id="two-same",
         ),
         pytest.param(
             np.array(
-                [[0, 0],
-                 [0, 0]],
+                [[0, 0], [0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1],
-                 [1, 0]],
+                [[0, 1], [1, 0]],
                 dtype=np.uint8,
             ),
             False,
@@ -215,15 +207,11 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 1, 0],
-                 [1, 0, 0],
-                 [0, 0, 0]],
+                [[0, 1, 0], [1, 0, 0], [0, 0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1, 0],
-                 [1, 0, 1],
-                 [0, 1, 0]],
+                [[0, 1, 0], [1, 0, 1], [0, 1, 0]],
                 dtype=np.uint8,
             ),
             False,
@@ -231,17 +219,11 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 1, 1, 1],
-                 [1, 0, 0, 0],
-                 [1, 0, 0, 0],
-                 [1, 0, 0, 0]],
+                [[0, 1, 1, 1], [1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1, 1, 1],
-                 [1, 0, 1, 1],
-                 [1, 1, 0, 1],
-                 [1, 1, 1, 0]],
+                [[0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1], [1, 1, 1, 0]],
                 dtype=np.uint8,
             ),
             True,
@@ -249,17 +231,11 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 0, 0, 1],
-                 [0, 0, 1, 1],
-                 [0, 1, 0, 0],
-                 [1, 1, 0, 0]],
+                [[0, 0, 0, 1], [0, 0, 1, 1], [0, 1, 0, 0], [1, 1, 0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1, 1, 0],
-                 [1, 0, 0, 1],
-                 [1, 0, 0, 1],
-                 [0, 1, 1, 0]],
+                [[0, 1, 1, 0], [1, 0, 0, 1], [1, 0, 0, 1], [0, 1, 1, 0]],
                 dtype=np.uint8,
             ),
             True,
@@ -267,15 +243,11 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 1, 0],
-                 [1, 0, 0],
-                 [0, 0, 0]],
+                [[0, 1, 0], [1, 0, 0], [0, 0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1, 0],
-                 [1, 0, 0],
-                 [0, 0, 0]],
+                [[0, 1, 0], [1, 0, 0], [0, 0, 0]],
                 dtype=np.uint8,
             ),
             True,
@@ -283,17 +255,11 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 0, 1, 0],
-                 [0, 0, 1, 0],
-                 [1, 1, 0, 0],
-                 [0, 0, 0, 0]],
+                [[0, 0, 1, 0], [0, 0, 1, 0], [1, 1, 0, 0], [0, 0, 0, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1, 1, 0],
-                 [1, 0, 0, 0],
-                 [1, 0, 0, 0],
-                 [0, 0, 0, 0]],
+                [[0, 1, 1, 0], [1, 0, 0, 0], [1, 0, 0, 0], [0, 0, 0, 0]],
                 dtype=np.uint8,
             ),
             True,
@@ -301,19 +267,11 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 1, 1, 0, 0],
-                 [1, 0, 1, 0, 0],
-                 [1, 1, 0, 0, 0],
-                 [0, 0, 0, 0, 1],
-                 [0, 0, 0, 1, 0]],
+                [[0, 1, 1, 0, 0], [1, 0, 1, 0, 0], [1, 1, 0, 0, 0], [0, 0, 0, 0, 1], [0, 0, 0, 1, 0]],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 1, 1, 0, 0],
-                 [1, 0, 1, 0, 0],
-                 [1, 1, 0, 0, 0],
-                 [0, 0, 0, 0, 1],
-                 [0, 0, 0, 1, 0]],
+                [[0, 1, 1, 0, 0], [1, 0, 1, 0, 0], [1, 1, 0, 0, 0], [0, 0, 0, 0, 1], [0, 0, 0, 1, 0]],
                 dtype=np.uint8,
             ),
             True,
@@ -321,21 +279,25 @@ def test_stab_state_to_graph_state_small_tableau(
         ),
         pytest.param(
             np.array(
-                [[0, 1, 0, 0, 0, 1],
-                 [1, 0, 0, 0, 0, 1],
-                 [0, 0, 0, 1, 0, 0],
-                 [0, 0, 1, 0, 0, 0],
-                 [0, 0, 0, 0, 0, 1],
-                 [1, 1, 0, 0, 1, 0]],
+                [
+                    [0, 1, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 0, 1],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 1, 0, 0, 0],
+                    [0, 0, 0, 0, 0, 1],
+                    [1, 1, 0, 0, 1, 0],
+                ],
                 dtype=np.uint8,
             ),
             np.array(
-                [[0, 0, 0, 0, 1, 1],
-                 [0, 0, 0, 0, 1, 1],
-                 [0, 0, 0, 1, 0, 0],
-                 [0, 0, 1, 0, 0, 0],
-                 [1, 1, 0, 0, 0, 0],
-                 [1, 1, 0, 0, 0, 0]],
+                [
+                    [0, 0, 0, 0, 1, 1],
+                    [0, 0, 0, 0, 1, 1],
+                    [0, 0, 0, 1, 0, 0],
+                    [0, 0, 1, 0, 0, 0],
+                    [1, 1, 0, 0, 0, 0],
+                    [1, 1, 0, 0, 0, 0],
+                ],
                 dtype=np.uint8,
             ),
             True,
@@ -350,14 +312,16 @@ def test_lc_equiv_graph_states_small_graphs(
 ) -> None:
     assert _lc_equiv_graph_states(g1, g2) is expected
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_lceq_graph_state
 # ----------------------------------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in [3, 28, 35]])
 def test_are_lceq_graph_state_small_k_restricted(seed: int) -> None:
     """
-    3:  < IZI > | < IXI > 
+    3:  < IZI > | < IXI >
     28: < IXI > | < IYI >
     35: < XZZ > | < ZXX >
     """
@@ -374,6 +338,7 @@ def test_are_lceq_graph_state_small_k_random_smoke() -> None:
 
             assert isinstance(are_lceq_graph_state(code1, code2), bool)
 
+
 @pytest.mark.parametrize("n", [pytest.param(n, id=f"n-{n}") for n in range(1, 9)])
 def test_are_lceq_graph_state_small_k_random_positive(n: int) -> None:
     seed = 69 + n
@@ -385,6 +350,7 @@ def test_are_lceq_graph_state_small_k_random_positive(n: int) -> None:
 
     assert are_lceq_graph_state(code_state, state) is True
     assert are_lceq_graph_state(code_small, small) is True
+
 
 @pytest.mark.parametrize("n", [pytest.param(n, id=f"n-{n}") for n in range(2, 5)])
 def test_are_lceq_graph_state_small_k_random_negative(n: int) -> None:

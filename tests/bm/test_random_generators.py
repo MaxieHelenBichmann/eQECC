@@ -95,9 +95,7 @@ def test_negative_lc_css_generator_returns_code_outside_every_css_lc_orbit() -> 
 def test_every_public_generator_has_the_common_prefix_signature() -> None:
     for generator_class in GENERATOR_CLASSES:
         methods = [
-            member
-            for name, member in inspect.getmembers(generator_class, inspect.isfunction)
-            if "_codes_" in name
+            member for name, member in inspect.getmembers(generator_class, inspect.isfunction) if "_codes_" in name
         ]
         assert methods
         for method in methods:
@@ -135,28 +133,17 @@ def test_positive_css_generators_preserve_parameters(method) -> None:
 
 
 def test_anchored_negative_has_a_permutation_certificate() -> None:
-    left, right = (
-        NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection_triple_construction(
-            6, 2, 7
-        )
-    )
+    left, right = NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection_triple_construction(6, 2, 7)
     source = _projection_rank_invariant(left)
     partner = _projection_rank_invariant(right)
     assert partner not in {source, (source[1], source[0], source[2])}
 
 
 def test_independent_stabilizer_candidate_is_seeded_and_uncorrelated() -> None:
-    first = NonPEqCodePairGenerator.stabilizer_codes_independent_candidate(
-        7, 3, 123, clifford_steps=4
-    )
-    second = NonPEqCodePairGenerator.stabilizer_codes_independent_candidate(
-        7, 3, 123, clifford_steps=4
-    )
+    first = NonPEqCodePairGenerator.stabilizer_codes_independent_candidate(7, 3, 123, clifford_steps=4)
+    second = NonPEqCodePairGenerator.stabilizer_codes_independent_candidate(7, 3, 123, clifford_steps=4)
 
-    assert all(
-        np.array_equal(_matrix(left), _matrix(right))
-        for left, right in zip(first, second)
-    )
+    assert all(np.array_equal(_matrix(left), _matrix(right)) for left, right in zip(first, second))
     assert not np.array_equal(_matrix(first[0]), _matrix(first[1]))
 
 
@@ -170,12 +157,8 @@ def test_css_cnot_candidate_is_seeded_css_preserving_and_uncertified(
         "benchmarks.experiments.generators_random._certificate",
         fail_if_certified,
     )
-    first = NonPEqCodePairGenerator.css_codes_cnot_candidate(
-        7, 3, 123, rx=2, gate_steps=2
-    )
-    second = NonPEqCodePairGenerator.css_codes_cnot_candidate(
-        7, 3, 123, rx=2, gate_steps=2
-    )
+    first = NonPEqCodePairGenerator.css_codes_cnot_candidate(7, 3, 123, rx=2, gate_steps=2)
+    second = NonPEqCodePairGenerator.css_codes_cnot_candidate(7, 3, 123, rx=2, gate_steps=2)
 
     for left, right in zip(first, second):
         assert np.array_equal(left.Hx, right.Hx)
@@ -192,13 +175,9 @@ def test_independent_css_candidate_draws_both_codes_without_certifying() -> None
     second = NonPEqCodePairGenerator.css_codes_independent_candidate(7, 3, 123, rx=2)
 
     assert all(
-        np.array_equal(left.Hx, right.Hx) and np.array_equal(left.Hz, right.Hz)
-        for left, right in zip(first, second)
+        np.array_equal(left.Hx, right.Hx) and np.array_equal(left.Hz, right.Hz) for left, right in zip(first, second)
     )
-    assert not (
-        np.array_equal(first[0].Hx, first[1].Hx)
-        and np.array_equal(first[0].Hz, first[1].Hz)
-    )
+    assert not (np.array_equal(first[0].Hx, first[1].Hx) and np.array_equal(first[0].Hz, first[1].Hz))
     assert _rank_binary(first[0].Hx) == _rank_binary(first[1].Hx) == 2
     assert (first[0].n, first[0].k) == (first[1].n, first[1].k) == (7, 3)
 

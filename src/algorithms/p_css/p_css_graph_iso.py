@@ -1,6 +1,6 @@
 """Graph-isomorphism based permutation equivalence checking.
 
-References for this algorithm: 
+References for this algorithm:
 - Nicolas Sendrier: Finding the Permutation Between Equivalent Linear Codes: The Support Splitting Algorithm
 """
 
@@ -17,14 +17,17 @@ from pynauty import Graph, certificate, canon_label, autgrp
 
 from ...core.css_code import CSSCode
 
+
 def _compose(p, q):
     return tuple(p[i] for i in q)
+
 
 def _inverse(p):
     inv = [None] * len(p)
     for i, x in enumerate(p):
         inv[x] = i
     return tuple(inv)
+
 
 def _compute_invariant_a(code: CSSCode) -> list[int]:
     """Compute combined invariant of (non)zero columns of Hx and Hz for each column of the CSS code.
@@ -35,11 +38,13 @@ def _compute_invariant_a(code: CSSCode) -> list[int]:
     hz_nonzero = np.any(code.Hz != 0, axis=0).astype(int)
     return (hx_nonzero + 2 * hz_nonzero).tolist()
 
+
 def _compute_invariant_b(code: CSSCode) -> list[int]:
     """Compute the combined Sendrier's invariant of the weight enumerator of the hull of the punctured code of each column of Hx and Hz of the CSS code.
-    
+
     This is a more expensive invariant, as the hull can be large, but it is also more powerful, as it can distinguish more columns.
     """
+
     def _kernel_basis(A: np.ndarray) -> np.ndarray:
         A = (np.asarray(A) & 1).astype(np.uint8)
         K = mod2.nullspace(A)
@@ -51,9 +56,7 @@ def _compute_invariant_b(code: CSSCode) -> list[int]:
         if K.ndim == 1:
             K = K.reshape(1, -1)
         if K.shape[1] != A.shape[1]:
-            raise ValueError(
-                "Kernel basis must have the same number of columns as the input matrix."
-            )
+            raise ValueError("Kernel basis must have the same number of columns as the input matrix.")
         return K
 
     def _row_basis(M: np.ndarray) -> np.ndarray:
@@ -112,11 +115,7 @@ def _compute_invariant_b(code: CSSCode) -> list[int]:
         return enumerator
 
     def _combine_invariants(inv_hx: list[int], inv_hz: list[int]) -> int:
-        payload = (
-            ",".join(map(str, inv_hx))
-            + "|"
-            + ",".join(map(str, inv_hz))
-        ).encode("ascii")
+        payload = (",".join(map(str, inv_hx)) + "|" + ",".join(map(str, inv_hz))).encode("ascii")
         return int.from_bytes(hashlib.sha256(payload).digest(), byteorder="big")
 
     invariants = []
@@ -131,6 +130,7 @@ def _compute_invariant_b(code: CSSCode) -> list[int]:
 
     return invariants
 
+
 def _graph_from_invariants(n: int, invariants: list[list[int]]) -> Graph:
 
     adj = defaultdict(list)
@@ -139,7 +139,7 @@ def _graph_from_invariants(n: int, invariants: list[list[int]]) -> Graph:
 
     for invariant in invariants:
         inv_value_to_index: dict[int, int] = {}
-        for i , value in enumerate(invariant):
+        for i, value in enumerate(invariant):
             idx = inv_value_to_index.setdefault(value, len(inv_value_to_index))
 
             adj[offset + idx].append(i)
@@ -149,11 +149,9 @@ def _graph_from_invariants(n: int, invariants: list[list[int]]) -> Graph:
         offset += len(inv_value_to_index)
 
     return Graph(
-        number_of_vertices= offset,
-        directed=False,
-        adjacency_dict=adj,
-        vertex_coloring=[set(range(n))] + coloring
+        number_of_vertices=offset, directed=False, adjacency_dict=adj, vertex_coloring=[set(range(n))] + coloring
     )
+
 
 def _isomorphism_data(g1: Graph, g2: Graph) -> tuple[tuple[int, ...], list[tuple[int, ...]]] | None:
     if certificate(g1) != certificate(g2):
@@ -171,6 +169,7 @@ def _isomorphism_data(g1: Graph, g2: Graph) -> tuple[tuple[int, ...], list[tuple
     gens = [tuple(gen) for gen in generators] + [tuple(_inverse(gen)) for gen in generators]
 
     return phi, gens
+
 
 def _iter_qubit_permutations(g1: Graph, g2: Graph, n: int) -> Iterator[tuple[int, ...]]:
     data = _isomorphism_data(g1, g2)
@@ -193,9 +192,10 @@ def _iter_qubit_permutations(g1: Graph, g2: Graph, n: int) -> Iterator[tuple[int
                 queue.append(nxt)
                 yield tuple(gen[current[phi[i]]] for i in range(n))
 
+
 def are_peq_css_graph_iso(c1: CSSCode, c2: CSSCode) -> bool:
     """Check permutation equivalence by checking for isomorphism of the associated graphs constructed from the codes using some invariants.
-    
+
     For each code, the following is done:
     1.) Compute some invariants of the columns of the parity-check matrices Hx and Hz.
     2.) Construct a graph G = (V, E) from the invariants, where the vertices are the set of columns (color 1) and the sets of all values each invariant takes colored according to the invariants (color 2...l). There are edges between column-vertices and invariant-value-vertices if the column has that invariant value, and there are no edges between vertices of the same color.
@@ -204,6 +204,7 @@ def are_peq_css_graph_iso(c1: CSSCode, c2: CSSCode) -> bool:
 
     This algorithm should be more efficient than the brute-force algorithm, since the number of valid permutations (under the given invariants) that have to be checked is typically much smaller than the full number of permutations. BUT the number of valid permutations can still be factorial in the worst case, in the case of highly symmetric codes or poor invariants, and graph isomorphism is not known to be in P. Issues with good invariants is that they can be costly to compute.
     """
+
     def _rank(A: np.ndarray) -> int:
         if A.shape[0] == 0 or A.shape[1] == 0:
             return 0

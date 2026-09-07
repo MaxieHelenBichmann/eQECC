@@ -27,15 +27,37 @@ A5_ALGORITHMS = (
 
 OUTPUT_DIRECTORY = RESULTS_DIR / "a5"
 METHOD_FIELDS = (
-    "problem", "algorithm", "n", "k", "r", "num_requested", "num_successful",
-    "mean_seconds", "stddev_seconds", "maximum_seconds", "num_unexpected",
-    "num_timeouts", "num_memory_limited", "num_errors", "num_generation_errors",
+    "problem",
+    "algorithm",
+    "n",
+    "k",
+    "r",
+    "num_requested",
+    "num_successful",
+    "mean_seconds",
+    "stddev_seconds",
+    "maximum_seconds",
+    "num_unexpected",
+    "num_timeouts",
+    "num_memory_limited",
+    "num_errors",
+    "num_generation_errors",
     "complete",
 )
 WINNER_FIELDS = (
-    "problem", "n", "k", "r", "winner", "mean_seconds", "runner_up",
-    "runner_up_mean_seconds", "speed_ratio", "num_eligible_algorithms",
-    "selection", "winner_num_timeouts", "excluded_algorithms",
+    "problem",
+    "n",
+    "k",
+    "r",
+    "winner",
+    "mean_seconds",
+    "runner_up",
+    "runner_up_mean_seconds",
+    "speed_ratio",
+    "num_eligible_algorithms",
+    "selection",
+    "winner_num_timeouts",
+    "excluded_algorithms",
 )
 
 
@@ -46,7 +68,9 @@ def timeout_candidate(cell: dict) -> bool:
         and cell["mean_seconds"] is not None
         and cell["num_timeouts"] > 0
         and cell["num_successful"] + cell["num_timeouts"] == cell["num_requested"]
-        and not (cell["num_unexpected"] or cell["num_memory_limited"] or cell["num_errors"] or cell["num_generation_errors"])
+        and not (
+            cell["num_unexpected"] or cell["num_memory_limited"] or cell["num_errors"] or cell["num_generation_errors"]
+        )
     )
 
 
@@ -57,9 +81,13 @@ def select_winners(methods, missing_algorithms=()) -> list[dict]:
         groups[(cell["problem"], cell["n"], cell["k"])].append(cell)
     winners = []
     for (problem, n, k), methods_in_cell in sorted(groups.items()):
-        exclusions = {f"{algorithm} (missing data)" for algorithm in missing_algorithms if algorithm.startswith(f"{problem}_")}
+        exclusions = {
+            f"{algorithm} (missing data)" for algorithm in missing_algorithms if algorithm.startswith(f"{problem}_")
+        }
         exclusions.update(
-            f"{cell['algorithm']} (errors)" for cell in methods_in_cell if cell["num_errors"] or cell["num_generation_errors"]
+            f"{cell['algorithm']} (errors)"
+            for cell in methods_in_cell
+            if cell["num_errors"] or cell["num_generation_errors"]
         )
         completed = [cell for cell in methods_in_cell if cell["complete"] and cell["mean_seconds"] is not None]
         if completed:
@@ -73,17 +101,25 @@ def select_winners(methods, missing_algorithms=()) -> list[dict]:
             selection = "timeout_fallback"
         winner = ordered[0]
         runner_up = ordered[1] if len(ordered) > 1 else None
-        winners.append({
-            "problem": problem, "n": n, "k": k, "r": n - k,
-            "winner": winner["algorithm"], "mean_seconds": winner["mean_seconds"],
-            "runner_up": runner_up["algorithm"] if runner_up else "",
-            "runner_up_mean_seconds": runner_up["mean_seconds"] if runner_up else "",
-            "speed_ratio": runner_up["mean_seconds"] / winner["mean_seconds"] if runner_up and winner["mean_seconds"] else "",
-            "num_eligible_algorithms": len(ordered),
-            "selection": selection,
-            "winner_num_timeouts": winner["num_timeouts"],
-            "excluded_algorithms": "; ".join(sorted(exclusions)),
-        })
+        winners.append(
+            {
+                "problem": problem,
+                "n": n,
+                "k": k,
+                "r": n - k,
+                "winner": winner["algorithm"],
+                "mean_seconds": winner["mean_seconds"],
+                "runner_up": runner_up["algorithm"] if runner_up else "",
+                "runner_up_mean_seconds": runner_up["mean_seconds"] if runner_up else "",
+                "speed_ratio": runner_up["mean_seconds"] / winner["mean_seconds"]
+                if runner_up and winner["mean_seconds"]
+                else "",
+                "num_eligible_algorithms": len(ordered),
+                "selection": selection,
+                "winner_num_timeouts": winner["num_timeouts"],
+                "excluded_algorithms": "; ".join(sorted(exclusions)),
+            }
+        )
     return winners
 
 

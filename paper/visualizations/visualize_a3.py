@@ -9,10 +9,22 @@ from matplotlib.patches import Patch
 
 from paper.experiments.common import RESULTS_DIR, as_float, read_csv
 from paper.visualizations.common import (
-    COLOR_PAPER_DARK_BLUE, COLOR_PAPER_DARK_RED, COLOR_PAPER_GRAY_LIGHT, COLOR_PAPER_GRAY_VERY_VERY_DARK,
-    COLOR_PAPER_WHITE, RELATIVE_CMAP, WIDE_TEXT_SCALE,
-    half_cell_key, outline_partition, parameter_axis, partition_cell, ratio_ticks, relative_norm,
-    save_png, scalar_mappable, use_style,
+    COLOR_PAPER_DARK_BLUE,
+    COLOR_PAPER_DARK_RED,
+    COLOR_PAPER_GRAY_LIGHT,
+    COLOR_PAPER_GRAY_VERY_VERY_DARK,
+    COLOR_PAPER_WHITE,
+    RELATIVE_CMAP,
+    WIDE_TEXT_SCALE,
+    half_cell_key,
+    outline_partition,
+    parameter_axis,
+    partition_cell,
+    ratio_ticks,
+    relative_norm,
+    save_png,
+    scalar_mappable,
+    use_style,
 )
 
 INPUT = RESULTS_DIR / "a3" / "by_cell.csv"
@@ -58,7 +70,11 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
             Patch(facecolor=COLOR_PAPER_DARK_RED, edgecolor="none", label="Invariant costs more"),
             Patch(facecolor=COLOR_PAPER_WHITE, edgecolor=gray, linewidth=0.9, label="Backend timed out"),
         ],
-        loc="lower center", ncol=5, frameon=False, fontsize=11, bbox_to_anchor=(0.5, 0.015),
+        loc="lower center",
+        ncol=5,
+        frameon=False,
+        fontsize=11,
+        bbox_to_anchor=(0.5, 0.015),
     )
     bar = figure.colorbar(scalar_mappable(RELATIVE_CMAP, norm), ax=axes, fraction=0.025, pad=0.02, extend="both")
     ratio_ticks(bar)

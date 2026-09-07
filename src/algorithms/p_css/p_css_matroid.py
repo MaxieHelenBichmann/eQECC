@@ -18,12 +18,13 @@ def _circuits_binary_matroid(A: npt.NDArray[np.int8]) -> list[int]:
     In the case of a binary matrix A as matroid, the circuits are the minimal non-empty supports of vectors in the kernel of A.
     Returns bitmasks of column indices.
     """
+
     def _row_support_as_mask(row: npt.NDArray[np.uint8]) -> int:
         support = 0
         for col in np.flatnonzero(row):
             support |= 1 << int(col)
         return support
-    
+
     # find all linear dependencies of the columns of A by finding all vectors in the kernel of A, bc Ax=0 and x interpreted as a coefficient vector stating whether a certain column is included in the linear dependence or not
 
     A = (np.asarray(A) & 1).astype(np.uint8, copy=False)
@@ -66,28 +67,18 @@ def _circuits_binary_matroid(A: npt.NDArray[np.int8]) -> list[int]:
         support_size = support.bit_count()
 
         if any(
-            (circuit & support) == circuit
-            for size in range(1, support_size + 1)
-            for circuit in circuits_by_size[size]
+            (circuit & support) == circuit for size in range(1, support_size + 1) for circuit in circuits_by_size[size]
         ):
             continue
 
         for size in range(support_size + 1, len(circuits_by_size)):
             if not circuits_by_size[size]:
                 continue
-            circuits_by_size[size] = [
-                circuit
-                for circuit in circuits_by_size[size]
-                if (support & circuit) != support
-            ]
+            circuits_by_size[size] = [circuit for circuit in circuits_by_size[size] if (support & circuit) != support]
 
         circuits_by_size[support_size].append(support)
 
-    return [
-        circuit
-        for circuits in circuits_by_size
-        for circuit in sorted(circuits)
-    ]
+    return [circuit for circuits in circuits_by_size for circuit in sorted(circuits)]
 
 
 def _graph_from_circuits(n: int, circuits_hx: list[int], circuits_hz: list[int]) -> Graph:
@@ -126,15 +117,15 @@ def _graph_from_circuits(n: int, circuits_hx: list[int], circuits_hz: list[int])
             set(range(n)),
             set(range(hx_offset, hx_offset + n_hx)) | {hx_anchor},
             set(range(hz_offset, hz_offset + n_hz)) | {hz_anchor},
-        ]
+        ],
     )
 
 
 def are_peq_css_matroid(c1: CSSCode, c2: CSSCode) -> bool:
     """Check permutation equivalence by checking for isomorphism of the associated pair of binary matroids.
-    
+
     For each code, the following is done:
-    1.) Construct a binary matroid M = (E, I) from the Hx and Hz of the CSS code, by treating the columns of Hx and Hz as the ground elements E and using linear dependence of the columns for I. 
+    1.) Construct a binary matroid M = (E, I) from the Hx and Hz of the CSS code, by treating the columns of Hx and Hz as the ground elements E and using linear dependence of the columns for I.
     2.) Extract the circuits of the matroids, which are the minimal non-empty dependent sets of columns of Hx and Hz.
     3.) Construct a graph G = (V, K) from the circuits, where V represents the ground set (color 1), circuits of Hx (color 2) and circuits of Hz (color 3). The circuits are connected to the ground elements they contain, and there are no connections between circuits.
 
@@ -160,11 +151,11 @@ def are_peq_css_matroid(c1: CSSCode, c2: CSSCode) -> bool:
     circuits_c2_hx = _circuits_binary_matroid(c2.Hx)
     if len_circuits_c1_hx != len(circuits_c2_hx):
         return False
-    
+
     circuits_c2_hz = _circuits_binary_matroid(c2.Hz)
     if len_circuits_c1_hz != len(circuits_c2_hz):
         return False
-    
+
     graph_c2 = _graph_from_circuits(c2.n, circuits_c2_hx, circuits_c2_hz)
 
     del circuits_c2_hx

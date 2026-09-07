@@ -183,8 +183,13 @@ def parameter_axis(ax, title: str, *, nmax: int = 47, empty_color: Any = EMPTY) 
         for r in range(1, n + 1):
             ax.add_patch(
                 Rectangle(
-                    (n - 0.5, r - 0.5), 1, 1,
-                    facecolor=empty_color, edgecolor=COLOR_PAPER_WHITE, linewidth=0.12, zorder=0,
+                    (n - 0.5, r - 0.5),
+                    1,
+                    1,
+                    facecolor=empty_color,
+                    edgecolor=COLOR_PAPER_WHITE,
+                    linewidth=0.12,
+                    zorder=0,
                 )
             )
     ax.set_xlim(2.5, nmax + 0.5)
@@ -207,8 +212,13 @@ def partition_cell(ax, n: int, r: int, index: int, count: int, color: Any) -> No
     width = 1 / count
     ax.add_patch(
         Rectangle(
-            (n - 0.5 + index * width, r - 0.5), width, 1,
-            facecolor=color, edgecolor=COLOR_PAPER_WHITE, linewidth=0.16, zorder=2,
+            (n - 0.5 + index * width, r - 0.5),
+            width,
+            1,
+            facecolor=color,
+            edgecolor=COLOR_PAPER_WHITE,
+            linewidth=0.16,
+            zorder=2,
         )
     )
 
@@ -217,8 +227,13 @@ def outline_partition(ax, n: int, r: int, index: int, count: int, color: Any) ->
     width = 1 / count
     ax.add_patch(
         Rectangle(
-            (n - 0.5 + index * width, r - 0.5), width, 1,
-            facecolor="none", edgecolor=color, linewidth=0.5, zorder=4,
+            (n - 0.5 + index * width, r - 0.5),
+            width,
+            1,
+            facecolor="none",
+            edgecolor=color,
+            linewidth=0.5,
+            zorder=4,
         )
     )
 
@@ -240,8 +255,15 @@ def failure_legend() -> list[Line2D]:
 def half_cell_key(fill: str, color: Any, label: str, *, size: float = 7) -> Line2D:
     """Legend key showing only the left or right half of a cell filled."""
     return Line2D(
-        [], [], marker="s", fillstyle=fill, linestyle="none", markersize=size,
-        markerfacecolor=color, markerfacecoloralt=COLOR_PAPER_WHITE, markeredgecolor=color,
+        [],
+        [],
+        marker="s",
+        fillstyle=fill,
+        linestyle="none",
+        markersize=size,
+        markerfacecolor=color,
+        markerfacecoloralt=COLOR_PAPER_WHITE,
+        markeredgecolor=color,
         label=label,
     )
 

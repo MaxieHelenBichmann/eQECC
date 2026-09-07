@@ -1,6 +1,6 @@
 """KLS normal form for checking whether two stabilizer codes are LC-equivalent.
 
-References for this algorithm: 
+References for this algorithm:
 - Andrey Boris Khesin, Jonathan Z. Lu, Peter W. Shor: Universal Graph Representation of Stabilizer Codes
 - Andrey Boris Khesin, Jonathan Z. Lu, Peter W. Shor: Graphical quantum Clifford-encoder compilers from the ZX calculus
 - Alexander Tianlin Hu, Andrey Boris Khesin: Improved Graph Formalism for Quantum Circuit Simulation
@@ -17,8 +17,10 @@ import ldpc.mod2.mod2_numpy as mod2
 
 from ...core.stabilizer_code import StabilizerCode
 
+
 class GSLC:
     """Graph state with local Clifford decorations (in encoder-respecting form), used for the KLS normal form."""
+
     def __init__(self) -> None:
         self.n = 0
         self.k = 0
@@ -36,9 +38,9 @@ class GSLC:
         # HS† = HSZ -> (["H", "S"], True)
         # SH -> (["S", "H"], False),
         # S†H -> (["S", "S", "S", "H"], False)
-        self.vertices : list[tuple[list[str], bool]] = []
-        self.edges : set[tuple[int, int]]= set() # (u,v) with u < v
-        self.adj : list[set[int]] = [] # optimization
+        self.vertices: list[tuple[list[str], bool]] = []
+        self.edges: set[tuple[int, int]] = set()  # (u,v) with u < v
+        self.adj: list[set[int]] = []  # optimization
         self._adj_edge_count = 0
 
     def _rebuild_adjacency(self) -> None:
@@ -120,7 +122,7 @@ class GSLC:
                 q = neighbors[j]
                 self.apply_cz_edge(p, q)
 
-    def apply_cz_edge(self, u: int, v: int) -> None: # toggle the edge (u,v)
+    def apply_cz_edge(self, u: int, v: int) -> None:  # toggle the edge (u,v)
         if u == v:
             return
         self._ensure_adjacency()
@@ -140,7 +142,7 @@ class GSLC:
         new_graph = GSLC()
         new_graph.n = self.n
         new_graph.k = self.k
-        new_graph.vertices = [ (deco.copy(), z) for deco, z in self.vertices ]
+        new_graph.vertices = [(deco.copy(), z) for deco, z in self.vertices]
         new_graph.edges = self.edges.copy()
         new_graph.adj = [neighbors.copy() for neighbors in self.adj]
         new_graph._adj_edge_count = self._adj_edge_count
@@ -150,11 +152,12 @@ class GSLC:
         if not isinstance(other, GSLC):
             return False
         return self.n == other.n and self.k == other.k and self.vertices == other.vertices and self.edges == other.edges
-    
+
+
 def _code_to_encoder_circuit(code) -> zx.Circuit:
     def _delete_first_row_and_qubit(tab: np.ndarray) -> np.ndarray:
         n = tab.shape[1] // 2
-        return np.delete(np.delete(np.delete(tab, 0, axis=0), 0, axis=1) , n-1, axis=1)
+        return np.delete(np.delete(np.delete(tab, 0, axis=0), 0, axis=1), n - 1, axis=1)
 
     tableau = np.asarray(code.symplectic.copy(), dtype=np.uint8) & 1
     n = code.n
@@ -210,9 +213,7 @@ def _code_to_encoder_circuit(code) -> zx.Circuit:
                 tableau[:, 0] ^= tableau[:, q]
                 tableau[:, cur_n + q] ^= tableau[:, cur_n + 0]
 
-                elimination_gates.append(
-                    ("CNOT", (original_qubits[q], original_qubits[0]))
-                )
+                elimination_gates.append(("CNOT", (original_qubits[q], original_qubits[0])))
 
         if (
             np.count_nonzero(tableau[0, :cur_n]) != 0
@@ -226,9 +227,7 @@ def _code_to_encoder_circuit(code) -> zx.Circuit:
             if tableau[r, cur_n]:
                 tableau[r] ^= tableau[0]
             if tableau[r, 0]:
-                raise RuntimeError(
-                    "A remaining row has X on the pivot qubit."
-                )
+                raise RuntimeError("A remaining row has X on the pivot qubit.")
 
         # 5.) remove stabilizer and qubit
         tableau = _delete_first_row_and_qubit(tableau)
@@ -236,11 +235,11 @@ def _code_to_encoder_circuit(code) -> zx.Circuit:
 
     # encoder = inverse elimination Cliffords
     circuit = zx.Circuit(n + k)
-    circuit.initialize_qubits([True] * (n+k))
+    circuit.initialize_qubits([True] * (n + k))
     # already prep with choi in mind
     for j in range(k):
         ref = j
-        inp = k + (n-k) + j
+        inp = k + (n - k) + j
         circuit.add_gate("HAD", ref)
         circuit.add_gate("CNOT", ref, inp)
 
@@ -255,11 +254,12 @@ def _code_to_encoder_circuit(code) -> zx.Circuit:
 
     return circuit
 
-def _stab_state_to_graph_state(tableau: np.ndarray, old_n : int, old_k : int) -> GSLC:
+
+def _stab_state_to_graph_state(tableau: np.ndarray, old_n: int, old_k: int) -> GSLC:
     """Convert a stabilizer state into a graph state under local Clifford operations.
     Returns the adjacency matrix of the graph state."""
     n = tableau.shape[1] // 2
-    local_clifords : list[list[str]] = [ [] for _ in range(n) ]
+    local_clifords: list[list[str]] = [[] for _ in range(n)]
 
     def _rank(matrix: np.ndarray) -> int:
         if matrix.shape[0] == 0:
@@ -282,7 +282,11 @@ def _stab_state_to_graph_state(tableau: np.ndarray, old_n : int, old_k : int) ->
                 x_col = t[:, q].copy()
                 z_col = t[:, q + n].copy()
 
-                for new_x, new_z , op in [ (x_col, z_col, []), (z_col, x_col, ["H"]), ((x_col + z_col) % 2, x_col, ["H","S"]) ]:
+                for new_x, new_z, op in [
+                    (x_col, z_col, []),
+                    (z_col, x_col, ["H"]),
+                    ((x_col + z_col) % 2, x_col, ["H", "S"]),
+                ]:
                     t[:, q] = new_x
                     new_x_rank = _rank(t[:, :n])
                     if new_x_rank > best_rank:
@@ -308,6 +312,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray, old_n : int, old_k : int) ->
 
     def _extract_adjacency_matrix(tableau: np.ndarray) -> np.ndarray:
         """Extract the adjacency matrix from the stabilizer state."""
+
         def _rref_no_column_swaps(matrix: np.ndarray) -> tuple[np.ndarray, int]:
             n_rows, n_cols = matrix.shape
             pivot_row = 0
@@ -347,7 +352,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray, old_n : int, old_k : int) ->
                 tableau[r, r] = 0
                 local_clifords[r] = ["S"] + local_clifords[r]
         return tableau
-    
+
     def _extract_decorations(deco: list[str]) -> tuple[list[str], bool]:
         z_bit = False
         if len(deco) > 1 and deco[-2:] == ["S", "S"]:
@@ -364,7 +369,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray, old_n : int, old_k : int) ->
     graph = GSLC()
     graph.n = old_n
     graph.k = old_k
-    graph.vertices = [ _extract_decorations(local_clifords[i]) for i in range(n) ]
+    graph.vertices = [_extract_decorations(local_clifords[i]) for i in range(n)]
     edges = set()
     for i in range(n):
         for j in range(i + 1, n):
@@ -373,6 +378,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray, old_n : int, old_k : int) ->
     graph.set_edges(edges)
 
     return graph
+
 
 def _code_to_graph(code) -> GSLC:
     """Convert the stabilizer code into a LC-equivalent graph state with local Clifford decorations on the vertices.
@@ -395,7 +401,7 @@ def _code_to_graph(code) -> GSLC:
             if gate.phase == 1 / 2:
                 initial_state[:, n + gate.target] ^= initial_state[:, gate.target]
             elif gate.phase == 1:
-                pass # Z has no effect on tableau
+                pass  # Z has no effect on tableau
             elif gate.phase == 3 / 2:
                 initial_state[:, n + gate.target] ^= initial_state[:, gate.target]
                 # S† = SZ, but Z has no effect on tableau, so only apply S part to tableau
@@ -409,8 +415,9 @@ def _code_to_graph(code) -> GSLC:
 
     # 3.) state tableau -> GSLC
     graph = _stab_state_to_graph_state(initial_state, code.n, code.k)
-    
+
     return graph
+
 
 def _hk_normal_form(graph: GSLC) -> None:
     """Requirements HK normal form:
@@ -419,29 +426,30 @@ def _hk_normal_form(graph: GSLC) -> None:
         - only decorations I , S , H allowed (apart from additional Z phases)
         - if vertex has a H decoration, then it cannot have a neighbor with a smaller index
     """
+
     def _h_slide_down(g: GSLC, upper: int, lower: int) -> None:
         # (Eq. 13) H_upper |G> = H_lower Z_upper Z_lower prod_{p in A, q in B} CZ_{p,q} |G>
         # with A = N(upper) union {upper}, B = N(lower) union {lower}
         A = set(g.neighbors(upper)) | {upper}
         B = set(g.neighbors(lower)) | {lower}
 
-        g.vertices[upper] = ( g.vertices[upper][0][:-1] , g.vertices[upper][1] ^ True ) # remove H, add Z
+        g.vertices[upper] = (g.vertices[upper][0][:-1], g.vertices[upper][1] ^ True)  # remove H, add Z
 
-        if g.vertices[lower][0] and g.vertices[lower][0][-1] == "H": # add H, add Z
-            g.vertices[lower] = ( g.vertices[lower][0][:-1] , g.vertices[lower][1] ^ True )
+        if g.vertices[lower][0] and g.vertices[lower][0][-1] == "H":  # add H, add Z
+            g.vertices[lower] = (g.vertices[lower][0][:-1], g.vertices[lower][1] ^ True)
         else:
-            g.vertices[lower] = ( g.vertices[lower][0] + ["H"] , g.vertices[lower][1] ^ True )
+            g.vertices[lower] = (g.vertices[lower][0] + ["H"], g.vertices[lower][1] ^ True)
 
         for p in A:
             for q in B:
                 if p == q:
-                    g.vertices[p] = ( g.vertices[p][0] , g.vertices[p][1] ^ True ) # add Z
+                    g.vertices[p] = (g.vertices[p][0], g.vertices[p][1] ^ True)  # add Z
                 else:
                     g.apply_cz_edge(p, q)
 
     def _reduce_trailing_HS(g: GSLC, i: int) -> None:
         # (Eq. 12) H_i S_i |G> = S_i^3 prod_{p in N(i)} Z_p prod_{p,q in N(i)} CS_{p,q} |G>
-        g.vertices[i] = ( g.vertices[i][0][:-2] + ["S", "S", "S"], g.vertices[i][1] )
+        g.vertices[i] = (g.vertices[i][0][:-2] + ["S", "S", "S"], g.vertices[i][1])
 
         for j in g.neighbors(i):
             g.vertices[j][0].extend(["S", "S"])
@@ -484,8 +492,8 @@ def _hk_normal_form(graph: GSLC) -> None:
         A = set(g.neighbors(i)) | {i}
         B = set(g.neighbors(j)) | {j}
 
-        g.vertices[i] = ( g.vertices[i][0][:-1] + ["S", "S"], g.vertices[i][1] )
-        g.vertices[j] = ( g.vertices[j][0][:-1] + ["S", "S"], g.vertices[j][1] )
+        g.vertices[i] = (g.vertices[i][0][:-1] + ["S", "S"], g.vertices[i][1])
+        g.vertices[j] = (g.vertices[j][0][:-1] + ["S", "S"], g.vertices[j][1])
 
         for p in A:
             for q in B:
@@ -558,7 +566,7 @@ def _hk_normal_form(graph: GSLC) -> None:
                 changed = True
                 break
             if graph.vertices[i][-2:][0] == ["S", "H"]:
-                h_neighbors = [ j for j in graph.neighbors(i) if graph.vertices[j][0][-1:] == ["H"] ]
+                h_neighbors = [j for j in graph.neighbors(i) if graph.vertices[j][0][-1:] == ["H"]]
                 if len(h_neighbors) == 0:
                     _reduce_solo_trailing_SH(graph, i)
                 else:
@@ -567,13 +575,15 @@ def _hk_normal_form(graph: GSLC) -> None:
                 break
 
     for i in range(n):
-        deco, _ = graph.vertices[i] # should only be I, S, or H decorations (+ additional Z bits) left (aka I, Z, S, SZ = S†, H, HZ)
+        deco, _ = graph.vertices[
+            i
+        ]  # should only be I, S, or H decorations (+ additional Z bits) left (aka I, Z, S, SZ = S†, H, HZ)
         if deco not in ([], ["S"], ["H"]):
             raise ValueError(f"After reduction of decorations: Expected only I, S, or H decorations, but got: {deco}.")
 
     # 2.) slides trailing H down
     for x in reversed(range(n)):
-        while graph.vertices[x][0][-1:] == ["H"]: # x has a trailing Hadamard
+        while graph.vertices[x][0][-1:] == ["H"]:  # x has a trailing Hadamard
             low_neighbors = [v for v in graph.neighbors(x) if v < x]
             if len(low_neighbors) == 0:
                 break
@@ -583,12 +593,14 @@ def _hk_normal_form(graph: GSLC) -> None:
 
     for x in range(n):
         if graph.vertices[x][0] not in ([], ["H"], ["S"], ["S", "H"]):
-            raise ValueError(f"After sliding down all H: Expected only I, S, H decorations, but got: {graph.vertices[x][0]}.")
+            raise ValueError(
+                f"After sliding down all H: Expected only I, S, H decorations, but got: {graph.vertices[x][0]}."
+            )
     # now should only have decorations I , H, S, SH
 
     # 3.) cleanup SH decorations
     for i in range(n):
-        if graph.vertices[i][0] == ["S", "H"]: # apply Eq. 11
+        if graph.vertices[i][0] == ["S", "H"]:  # apply Eq. 11
             graph.vertices[i] = (["H"], graph.vertices[i][1])
             for p in graph.neighbors(i):
                 if graph.vertices[p][0] == []:
@@ -596,12 +608,17 @@ def _hk_normal_form(graph: GSLC) -> None:
                 elif graph.vertices[p][0] == ["S"]:
                     graph.vertices[p] = ([], graph.vertices[p][1] ^ True)
                 else:
-                    raise ValueError(f"Expected only I, S decorations in the neighborhood of a H-decorated vertex, but got: {graph.vertices[p][0]}")
+                    raise ValueError(
+                        f"Expected only I, S decorations in the neighborhood of a H-decorated vertex, but got: {graph.vertices[p][0]}"
+                    )
             graph.local_complementation(i)
 
     for x in range(n):
         if graph.vertices[x][0] not in ([], ["H"], ["S"]):
-            raise ValueError(f"After cleaning up SH: Expected only I, S, H decorations, but got: {graph.vertices[x][0]}.")
+            raise ValueError(
+                f"After cleaning up SH: Expected only I, S, H decorations, but got: {graph.vertices[x][0]}."
+            )
+
 
 def _kls_normal_form(graph: GSLC) -> None:
     """Additional requirements KLS normal form:
@@ -615,11 +632,7 @@ def _kls_normal_form(graph: GSLC) -> None:
         for q in range(graph.k):
             graph.vertices[q] = ([], False)
 
-        graph.set_edges({
-            (u, v)
-            for u, v in graph.edges
-            if not (u < graph.k and v < graph.k)
-        })
+        graph.set_edges({(u, v) for u, v in graph.edges if not (u < graph.k and v < graph.k)})
 
     _strip_input()
 
@@ -632,7 +645,7 @@ def _kls_normal_form(graph: GSLC) -> None:
         for c in range(graph.n):
             if pivot_row >= graph.k:
                 break
-    
+
             tail = matrix[pivot_row:, c]
             pivot_offset = int(np.argmax(tail))
 
@@ -652,7 +665,7 @@ def _kls_normal_form(graph: GSLC) -> None:
             pivot_row += 1
 
         return matrix, pivots
-    
+
     adj, pivots = _rref_no_column_swaps(adj)
 
     # 3.) set the IO-edges according to the new adjacency matrix (equivalent to applying the corresponding CNOT gates on the graph state and simplifying with bialgebra rule -> output-output edges and decorations not changed)
@@ -679,7 +692,7 @@ def _kls_normal_form(graph: GSLC) -> None:
 
         while len(deco) >= 2:
             if deco[-2:] == ["S", "S"]:
-                deco = deco[:-2] 
+                deco = deco[:-2]
                 new_z_bit ^= True
             else:
                 break
@@ -690,8 +703,10 @@ def _kls_normal_form(graph: GSLC) -> None:
         deco, z = graph.vertices[pivot]
 
         if "H" in deco:
-            raise ValueError(f"Pivot {pivot} has an H decoration. Should have been pushed to a (lower numbered) input during HK normal form reduction.")
-        
+            raise ValueError(
+                f"Pivot {pivot} has an H decoration. Should have been pushed to a (lower numbered) input during HK normal form reduction."
+            )
+
         if z:
             graph.vertices[pivot] = (deco + ["S", "S"], False)
 
@@ -702,7 +717,7 @@ def _kls_normal_form(graph: GSLC) -> None:
                 graph.vertices[neighbor] = _add_S(graph.vertices[neighbor])
 
             graph.local_complementation(input)
-    
+
     # 5.) remove pivot-pivot edges, basically apply Eq. 11 (but HZ on inputs can be removed)
     # |G> = H_i Z_i H_j Z_j prod_{p in A, q in B} CZ_{p,q} |G>
     # with A = N(i) union {i}, B = N(j) union {j}
@@ -710,11 +725,7 @@ def _kls_normal_form(graph: GSLC) -> None:
     pivot_vertices = set(pivot_to_input)
     while True:
         pivot_edge = next(
-            (
-                (u, v)
-                for u, v in graph.edges
-                if u in pivot_vertices and v in pivot_vertices
-            ),
+            ((u, v) for u, v in graph.edges if u in pivot_vertices and v in pivot_vertices),
             None,
         )
         if pivot_edge is None:
@@ -730,7 +741,7 @@ def _kls_normal_form(graph: GSLC) -> None:
         for p in A:
             for q in B:
                 if p == q:
-                    graph.vertices[p] = (graph.vertices[p][0], graph.vertices[p][1] ^ True) # add Z
+                    graph.vertices[p] = (graph.vertices[p][0], graph.vertices[p][1] ^ True)  # add Z
                 else:
                     graph.apply_cz_edge(p, q)
 
@@ -752,8 +763,10 @@ def _kls_normal_form(graph: GSLC) -> None:
     adj, _ = _rref_no_column_swaps(adj)
     _set_io_edges(adj)
 
+
 def _traverse_lc_orbit(graph: GSLC, target: GSLC) -> bool:
     """Traverse LC orbit and re-canonicalize to KLS normal form at each step"""
+
     def _canonical_key(g: GSLC) -> tuple[int, int, bytes, tuple[tuple[tuple[str, ...], bool], ...]]:
         adj_key = g.get_upper_adjacency_key()
         vertex_key = tuple((tuple(word), z) for word, z in g.vertices)
@@ -764,8 +777,8 @@ def _traverse_lc_orbit(graph: GSLC, target: GSLC) -> bool:
     queue = deque([start])
 
     while queue:
-        current_graph : GSLC = queue.popleft()
-        
+        current_graph: GSLC = queue.popleft()
+
         if current_graph == target:
             return True
 
@@ -784,6 +797,7 @@ def _traverse_lc_orbit(graph: GSLC, target: GSLC) -> bool:
                     seen.add(key)
 
     return False
+
 
 def are_lceq_kls(code1: StabilizerCode, code2: StabilizerCode) -> bool:
     """Check if two stabilizer codes are LC-equivalent by traversing the LC orbit of one, renormalizing at each step and checking if the KLS form of the other one is found.

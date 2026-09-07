@@ -11,13 +11,9 @@ from typing import Any
 
 def parse_memory_limit(value: str) -> int:
     """Parse a byte count or a human-readable size such as ``512M`` or ``13GiB``."""
-    match = re.fullmatch(
-        r"\s*(\d+(?:\.\d+)?)\s*([kmgt]?i?b?|b)?\s*", value, re.IGNORECASE
-    )
+    match = re.fullmatch(r"\s*(\d+(?:\.\d+)?)\s*([kmgt]?i?b?|b)?\s*", value, re.IGNORECASE)
     if match is None:
-        raise argparse.ArgumentTypeError(
-            "expected a size like 4096M, 32G, 16GiB, or raw bytes"
-        )
+        raise argparse.ArgumentTypeError("expected a size like 4096M, 32G, 16GiB, or raw bytes")
 
     multipliers = {
         "": 1,
@@ -47,9 +43,7 @@ def parse_memory_limit(value: str) -> int:
     return bytes_value
 
 
-def resolve_names(
-    selectors: Sequence[str] | None, available: Mapping[str, Any]
-) -> list[str]:
+def resolve_names(selectors: Sequence[str] | None, available: Mapping[str, Any]) -> list[str]:
     """Resolve exact names, shell wildcards, or regular expressions."""
     names = sorted(available)
     if not selectors:
@@ -75,9 +69,7 @@ def resolve_names(
             invalid.append(f"{selector!r} (no matches)")
 
     if invalid:
-        raise ValueError(
-            f"Unknown selector(s): {', '.join(invalid)}. Available: {', '.join(names)}"
-        )
+        raise ValueError(f"Unknown selector(s): {', '.join(invalid)}. Available: {', '.join(names)}")
     return sorted(selected)
 
 
@@ -91,9 +83,5 @@ def validate_common_args(parser: argparse.ArgumentParser, args: argparse.Namespa
         parser.error("--nmin must be at least one")
     if getattr(args, "nmax", None) is not None and args.nmax < 1:
         parser.error("--nmax must be at least one")
-    if (
-        getattr(args, "nmin", None) is not None
-        and getattr(args, "nmax", None) is not None
-        and args.nmin > args.nmax
-    ):
+    if getattr(args, "nmin", None) is not None and getattr(args, "nmax", None) is not None and args.nmin > args.nmax:
         parser.error("--nmin cannot be greater than --nmax")

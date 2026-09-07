@@ -1,5 +1,4 @@
-"""LC Orbit traversal for checking whether a stabilizer code with k < 2 is LC-equivalent to a CSS code.
-"""
+"""LC Orbit traversal for checking whether a stabilizer code with k < 2 is LC-equivalent to a CSS code."""
 
 from __future__ import annotations
 
@@ -9,6 +8,7 @@ import numpy as np
 import ldpc.mod2.mod2_numpy as mod2
 
 from ...core.stabilizer_code import StabilizerCode
+
 
 def _upper_triangle_key(
     graph: np.ndarray,
@@ -25,7 +25,7 @@ def _upper_triangle_key(
 def _stab_code_to_stab_state(code: StabilizerCode) -> np.ndarray:
     """Convert a stabilizer code into a stabilizer state using the Choi-Jamiolkowski isomorphism.
     Return only stabilizer tableau of the resulting stabilizer state.
-    
+
     S = [S_x | S_z] ; Lx = [Lx_x | Lx_z] ; Lz = [Lz_x | Lz_z]
 
     S_choi = [S_x  | 0 | S_z  | 0]
@@ -48,11 +48,12 @@ def _stab_code_to_stab_state(code: StabilizerCode) -> np.ndarray:
     log_z_x = code.z_logicals.tableau.matrix[:, :n]
     log_z_z = code.z_logicals.tableau.matrix[:, n:]
 
-    stabilizer_part = np.hstack([stab_x,np.zeros((r, k), dtype=np.int8), stab_z, np.zeros((r, k), dtype=np.int8)])
-    logical_x_part = np.hstack([log_x_x,np.eye(k, dtype=np.int8),log_x_z,np.zeros((k, k), dtype=np.int8)])
-    logical_z_part = np.hstack([log_z_x,np.zeros((k, k), dtype=np.int8),log_z_z,np.eye(k, dtype=np.int8)])
+    stabilizer_part = np.hstack([stab_x, np.zeros((r, k), dtype=np.int8), stab_z, np.zeros((r, k), dtype=np.int8)])
+    logical_x_part = np.hstack([log_x_x, np.eye(k, dtype=np.int8), log_x_z, np.zeros((k, k), dtype=np.int8)])
+    logical_z_part = np.hstack([log_z_x, np.zeros((k, k), dtype=np.int8), log_z_z, np.eye(k, dtype=np.int8)])
 
     return np.vstack([stabilizer_part, logical_x_part, logical_z_part]).astype(np.int8)
+
 
 def _stab_state_to_graph_state(tableau: np.ndarray) -> np.ndarray:
     """Convert a stabilizer state into a graph state under local Clifford operations.
@@ -79,7 +80,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray) -> np.ndarray:
                 x_col = t[:, q].copy()
                 z_col = t[:, q + n].copy()
 
-                for new_x, new_z in [ (x_col, z_col), (z_col, x_col), ((x_col + z_col) % 2, x_col) ]:
+                for new_x, new_z in [(x_col, z_col), (z_col, x_col), ((x_col + z_col) % 2, x_col)]:
                     t[:, q] = new_x
                     new_x_rank = _rank(t[:, :n])
                     if new_x_rank > best_rank:
@@ -102,6 +103,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray) -> np.ndarray:
 
     def _extract_adjacency_matrix(tableau: np.ndarray) -> np.ndarray:
         """Extract the adjacency matrix from the stabilizer state."""
+
         def _rref_no_column_swaps(matrix: np.ndarray) -> tuple[np.ndarray, int]:
             n_rows, n_cols = matrix.shape
             pivot_row = 0
@@ -147,6 +149,7 @@ def _stab_state_to_graph_state(tableau: np.ndarray) -> np.ndarray:
 
     return gamma
 
+
 def _traverse_lc_orbit(graph: np.ndarray) -> bool:
     n = graph.shape[0]
 
@@ -155,7 +158,7 @@ def _traverse_lc_orbit(graph: np.ndarray) -> bool:
 
         if neighbors.size < 2:
             return None
-        
+
         new_graph = graph.copy()
 
         new_graph[np.ix_(neighbors, neighbors)] ^= 1
@@ -228,7 +231,7 @@ def is_lceq_css_lc_orbit(code: StabilizerCode) -> bool:
 
 
     This approach is only valid for stabilizer codes with k < 2, as the Choi-Jamiolkowski isomorphism fixes a certain logical basis and thus hides the freedom of choice of the logical operators (there can be arbitrary Cliffords on the input qubits, which can be entangling - thus not recognized - for more than one input qubit). For codes with k >= 2, this method will most likely lead to false negatives.
-    It will only work for k >= 2 if it is guaranteed that the logical operators of the input code are already "matching" the logical basis of the potential CSS Code in the orbit, which is a very strong restriction and thus not generally applicable. 
+    It will only work for k >= 2 if it is guaranteed that the logical operators of the input code are already "matching" the logical basis of the potential CSS Code in the orbit, which is a very strong restriction and thus not generally applicable.
     """
     stab_state = _stab_code_to_stab_state(code)
     graph_state = _stab_state_to_graph_state(stab_state)

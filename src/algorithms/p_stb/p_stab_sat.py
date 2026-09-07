@@ -6,14 +6,14 @@ import z3
 
 from ...core.stabilizer_code import StabilizerCode
 
+
 def _elementwise_map(normal_bool, variables):
-    return z3.And([
-        v if bit == 1 else z3.Not(v)
-        for bit, v in zip(normal_bool, variables)
-    ])
+    return z3.And([v if bit == 1 else z3.Not(v) for bit, v in zip(normal_bool, variables)])
+
 
 def _exactly_one(variables):
     return z3.PbEq([(v, 1) for v in variables], 1)
+
 
 def _xor_list(variables):
     acc = z3.BoolVal(False)
@@ -21,17 +21,18 @@ def _xor_list(variables):
         acc = z3.Xor(acc, v)
     return acc
 
+
 def _build_peq_stab_sat_solver(c1: StabilizerCode, c2: StabilizerCode) -> z3.Solver:
     """Build the SAT instance."""
     solver = z3.Solver()
 
     n = c1.n
     k = c1.k
-    r = n - k # assume that tableau is minimal and has no dependent rows, and both tableaus have the same rank
+    r = n - k  # assume that tableau is minimal and has no dependent rows, and both tableaus have the same rank
 
     # permutations
-    aux_tableau = [z3.Bool(f'aux_{row}_{col}') for row in range(r) for col in range(2*n)]
-    permutation_variables = [z3.Bool(f'p_{i}_{j}') for i in range(n) for j in range(n)]
+    aux_tableau = [z3.Bool(f"aux_{row}_{col}") for row in range(r) for col in range(2 * n)]
+    permutation_variables = [z3.Bool(f"p_{i}_{j}") for i in range(n) for j in range(n)]
 
     for i in range(n):
         solver.add(_exactly_one([permutation_variables[i * n + j] for j in range(n)]))
@@ -43,23 +44,30 @@ def _build_peq_stab_sat_solver(c1: StabilizerCode, c2: StabilizerCode) -> z3.Sol
             x_column_original = c1.symplectic[:, i]
             z_column_original = c1.symplectic[:, i + n]
 
-            x_column_permuted = [aux_tableau[row * (2*n) + j] for row in range(r)]
-            z_column_permuted = [aux_tableau[row * (2*n) + j + n] for row in range(r)]
+            x_column_permuted = [aux_tableau[row * (2 * n) + j] for row in range(r)]
+            z_column_permuted = [aux_tableau[row * (2 * n) + j + n] for row in range(r)]
 
-            solver.add(z3.Implies(permutation_variables[i * n + j], z3.And(_elementwise_map(x_column_original, x_column_permuted), _elementwise_map(z_column_original, z_column_permuted))))
+            solver.add(
+                z3.Implies(
+                    permutation_variables[i * n + j],
+                    z3.And(
+                        _elementwise_map(x_column_original, x_column_permuted),
+                        _elementwise_map(z_column_original, z_column_permuted),
+                    ),
+                )
+            )
 
     # row operations
-    row_operation_coefficients = [z3.Bool(f'r_{i}_{j}') for i in range(r) for j in range(r)]
+    row_operation_coefficients = [z3.Bool(f"r_{i}_{j}") for i in range(r) for j in range(r)]
 
     for row in range(r):
         for q in range(2 * n):
-
             row_contributions = []
             for contribution in range(r):
                 if c2.symplectic[contribution, q] == 1:
                     row_contributions.append(row_operation_coefficients[row * r + contribution])
 
-            solver.add(aux_tableau[row * (2*n) + q] == _xor_list(row_contributions))
+            solver.add(aux_tableau[row * (2 * n) + q] == _xor_list(row_contributions))
 
     return solver
 

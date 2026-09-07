@@ -9,9 +9,21 @@ from paper.experiments.common import ALGORITHM_DATA_DIR, RESULTS_DIR, aggregate_
 ALGORITHMS = ("pm_stb_graph_iso", "pm_css_matroid", "lc_stb_graph_iso")
 OUTPUT = RESULTS_DIR / "a4" / "by_cell.csv"
 FIELDS = (
-    "problem", "algorithm", "n", "k", "r", "num_requested", "num_successful",
-    "mean_seconds", "stddev_seconds", "maximum_seconds",
-    "num_timeouts", "num_memory_limited", "num_errors", "num_unexpected", "num_generation_errors",
+    "problem",
+    "algorithm",
+    "n",
+    "k",
+    "r",
+    "num_requested",
+    "num_successful",
+    "mean_seconds",
+    "stddev_seconds",
+    "maximum_seconds",
+    "num_timeouts",
+    "num_memory_limited",
+    "num_errors",
+    "num_unexpected",
+    "num_generation_errors",
 )
 
 

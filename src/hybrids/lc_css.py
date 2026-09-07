@@ -28,10 +28,12 @@ def is_lceq_css(code: StabilizerCode) -> bool:
 
     return _sat(reduced_symplectic)
 
+
 # ----------------------------------------------------------------------------------------------------
 # algorithms
 # ----------------------------------------------------------------------------------------------------
 LOCAL_CLIFFORDS = ("I", "H", "S", "HS", "SH", "HSH")
+
 
 def _bruteforce(tableau) -> bool:
     """lc_css_bruteforce.py"""
@@ -40,12 +42,12 @@ def _bruteforce(tableau) -> bool:
     def apply_lc(tableau: npt.NDArray[np.int8], lc: str, qubit: int):
         if lc == "I":
             pass
-        elif lc  == "H":
+        elif lc == "H":
             tableau[:, [qubit, qubit + n]] = tableau[:, [qubit + n, qubit]]
         elif lc == "S":
             tableau[:, qubit + n] ^= tableau[:, qubit]
         elif lc == "HS":
-            tableau[:, qubit + n] ^=  tableau[:, qubit]
+            tableau[:, qubit + n] ^= tableau[:, qubit]
             tableau[:, [qubit, qubit + n]] = tableau[:, [qubit + n, qubit]]
         elif lc == "SH":
             tableau[:, qubit] ^= tableau[:, qubit + n]
@@ -67,11 +69,9 @@ def _bruteforce(tableau) -> bool:
 
 def _sat(tableau: npt.NDArray[np.int8]) -> bool:
     """lc_css_sat.py"""
+
     def _elementwise_map(normal_bool, variables):
-        return z3.And([
-            v if bit == 1 else z3.Not(v)
-            for bit, v in zip(normal_bool, variables)
-        ])
+        return z3.And([v if bit == 1 else z3.Not(v) for bit, v in zip(normal_bool, variables)])
 
     def _exactly_one(variables):
         return z3.PbEq([(v, 1) for v in variables], 1)
@@ -86,15 +86,10 @@ def _sat(tableau: npt.NDArray[np.int8]) -> bool:
 
     r, n = tableau.shape[0], tableau.shape[1] // 2
     # cliffords
-    aux_tableau = [z3.Bool(f'aux_{row}_{col}') for row in range(r) for col in range(2*n)]
-
+    aux_tableau = [z3.Bool(f"aux_{row}_{col}") for row in range(r) for col in range(2 * n)]
 
     local_clifford_variables = [
-        {
-            operation: z3.Bool(f"lc_{qubit}_{operation}")
-            for operation in LOCAL_CLIFFORDS
-        }
-        for qubit in range(n)
+        {operation: z3.Bool(f"lc_{qubit}_{operation}") for operation in LOCAL_CLIFFORDS} for qubit in range(n)
     ]
 
     for qubit_variables in local_clifford_variables:
@@ -106,50 +101,98 @@ def _sat(tableau: npt.NDArray[np.int8]) -> bool:
         x_z_column_original = (x_column_original + z_column_original) % 2
         zero_column_original = np.zeros_like(x_column_original)
 
-        x_column_aux = [aux_tableau[row * (2*n) + i] for row in range(r)]
-        z_column_aux = [aux_tableau[row * (2*n) + i + n] for row in range(r)]
+        x_column_aux = [aux_tableau[row * (2 * n) + i] for row in range(r)]
+        z_column_aux = [aux_tableau[row * (2 * n) + i + n] for row in range(r)]
 
         # I^(-1) P_x I : (x, z) -> (x, 0)
-        solver.add(z3.Implies(local_clifford_variables[i]["I"], z3.And(_elementwise_map(x_column_original, x_column_aux), _elementwise_map(zero_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["I"],
+                z3.And(
+                    _elementwise_map(x_column_original, x_column_aux),
+                    _elementwise_map(zero_column_original, z_column_aux),
+                ),
+            )
+        )
 
         # H^(-1) P_x H : (x, z) -> (0, z)
-        solver.add(z3.Implies(local_clifford_variables[i]["H"], z3.And(_elementwise_map(zero_column_original, x_column_aux), _elementwise_map(z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["H"],
+                z3.And(
+                    _elementwise_map(zero_column_original, x_column_aux),
+                    _elementwise_map(z_column_original, z_column_aux),
+                ),
+            )
+        )
 
         # S^(-1) P_x S : (x, z) -> (x, x)
-        solver.add(z3.Implies(local_clifford_variables[i]["S"], z3.And(_elementwise_map(x_column_original, x_column_aux), _elementwise_map(x_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["S"],
+                z3.And(
+                    _elementwise_map(x_column_original, x_column_aux), _elementwise_map(x_column_original, z_column_aux)
+                ),
+            )
+        )
 
         # (HS)^(-1) P_x (HS)  : (x, z) -> (z, z)
-        solver.add(z3.Implies(local_clifford_variables[i]["HS"], z3.And(_elementwise_map(z_column_original, x_column_aux), _elementwise_map(z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["HS"],
+                z3.And(
+                    _elementwise_map(z_column_original, x_column_aux), _elementwise_map(z_column_original, z_column_aux)
+                ),
+            )
+        )
 
         # (SH)^(-1) P_x (SH) : (x, z) -> (0, x + z)
-        solver.add(z3.Implies(local_clifford_variables[i]["SH"], z3.And(_elementwise_map(zero_column_original, x_column_aux), _elementwise_map(x_z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["SH"],
+                z3.And(
+                    _elementwise_map(zero_column_original, x_column_aux),
+                    _elementwise_map(x_z_column_original, z_column_aux),
+                ),
+            )
+        )
 
         # (HSH)^(-1) P_x (HSH) : (x, z) -> (x + z, 0)
-        solver.add(z3.Implies(local_clifford_variables[i]["HSH"], z3.And(_elementwise_map(x_z_column_original, x_column_aux), _elementwise_map(zero_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["HSH"],
+                z3.And(
+                    _elementwise_map(x_z_column_original, x_column_aux),
+                    _elementwise_map(zero_column_original, z_column_aux),
+                ),
+            )
+        )
 
     # row operations
-    row_operation_coefficients = [z3.Bool(f'r_{i}_{j}') for i in range(r) for j in range(r)]
+    row_operation_coefficients = [z3.Bool(f"r_{i}_{j}") for i in range(r) for j in range(r)]
 
     for row in range(r):
         for q in range(2 * n):
-
             row_contributions = []
             for contribution in range(r):
                 if tableau[contribution, q] == 1:
                     row_contributions.append(row_operation_coefficients[row * r + contribution])
 
-            solver.add(aux_tableau[row * (2*n) + q] == _xor_list(row_contributions))
+            solver.add(aux_tableau[row * (2 * n) + q] == _xor_list(row_contributions))
 
     return solver.check() == z3.sat
+
 
 # ----------------------------------------------------------------------------------------------------
 # small helpers
 # ----------------------------------------------------------------------------------------------------
 
+
 def _rank(matrix: np.ndarray) -> int:
     if matrix.shape[0] == 0:
         return 0
     return mod2.rank(matrix)
+
 
 def _row_basis(M: np.ndarray) -> np.ndarray:
     M = (np.asarray(M) & 1).astype(np.uint8)

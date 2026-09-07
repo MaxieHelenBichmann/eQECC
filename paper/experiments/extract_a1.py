@@ -9,7 +9,18 @@ from paper.experiments.common import COLLECTED_DATA_DIR, RESULTS_DIR, as_bool, r
 
 INPUT = COLLECTED_DATA_DIR / "invariant_rejections.csv"
 OUTPUT_DIRECTORY = RESULTS_DIR / "a1"
-CELL_FIELDS = ("problem", "n", "k", "r", "invariant", "num_requested", "num_valid", "num_rejected", "rejection_percentage", "num_censored")
+CELL_FIELDS = (
+    "problem",
+    "n",
+    "k",
+    "r",
+    "invariant",
+    "num_requested",
+    "num_valid",
+    "num_rejected",
+    "rejection_percentage",
+    "num_censored",
+)
 OVERALL_FIELDS = ("problem", "invariant", "num_valid", "num_rejected", "rejection_percentage")
 
 
@@ -21,12 +32,14 @@ def extract(input_file: Path = INPUT, output_directory: Path = OUTPUT_DIRECTORY)
         by_instance[(row["problem"], row["instance_id"])].append(row)
     for group in by_instance.values():
         valid = all(row["status"] == "success" for row in group)
-        rows.append({
-            **group[0],
-            "invariant": "combined",
-            "status": "success" if valid else "censored",
-            "rejected": any(as_bool(row["rejected"]) for row in group) if valid else "",
-        })
+        rows.append(
+            {
+                **group[0],
+                "invariant": "combined",
+                "status": "success" if valid else "censored",
+                "rejected": any(as_bool(row["rejected"]) for row in group) if valid else "",
+            }
+        )
 
     cells = []
     groups = defaultdict(list)
@@ -35,12 +48,20 @@ def extract(input_file: Path = INPUT, output_directory: Path = OUTPUT_DIRECTORY)
     for (problem, n, k, invariant), group in sorted(groups.items()):
         valid_rows = [row for row in group if row["status"] == "success"]
         rejected = sum(as_bool(row["rejected"]) for row in valid_rows)
-        cells.append({
-            "problem": problem, "n": n, "k": k, "r": n - k, "invariant": invariant,
-            "num_requested": len(group), "num_valid": len(valid_rows), "num_rejected": rejected,
-            "rejection_percentage": 100 * rejected / len(valid_rows) if valid_rows else "",
-            "num_censored": len(group) - len(valid_rows),
-        })
+        cells.append(
+            {
+                "problem": problem,
+                "n": n,
+                "k": k,
+                "r": n - k,
+                "invariant": invariant,
+                "num_requested": len(group),
+                "num_valid": len(valid_rows),
+                "num_rejected": rejected,
+                "rejection_percentage": 100 * rejected / len(valid_rows) if valid_rows else "",
+                "num_censored": len(group) - len(valid_rows),
+            }
+        )
 
     overall = []
     groups = defaultdict(list)
@@ -49,10 +70,15 @@ def extract(input_file: Path = INPUT, output_directory: Path = OUTPUT_DIRECTORY)
     for (problem, invariant), group in sorted(groups.items()):
         valid_rows = [row for row in group if row["status"] == "success"]
         rejected = sum(as_bool(row["rejected"]) for row in valid_rows)
-        overall.append({
-            "problem": problem, "invariant": invariant, "num_valid": len(valid_rows), "num_rejected": rejected,
-            "rejection_percentage": 100 * rejected / len(valid_rows) if valid_rows else "",
-        })
+        overall.append(
+            {
+                "problem": problem,
+                "invariant": invariant,
+                "num_valid": len(valid_rows),
+                "num_rejected": rejected,
+                "rejection_percentage": 100 * rejected / len(valid_rows) if valid_rows else "",
+            }
+        )
 
     write_csv(output_directory / "by_cell.csv", cells, CELL_FIELDS)
     write_csv(output_directory / "overall.csv", overall, OVERALL_FIELDS)

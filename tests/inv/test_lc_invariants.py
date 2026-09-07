@@ -78,12 +78,7 @@ def _brute_local_weight_dim(
 
 def _brute_local_weight_profile(code: StabilizerCode) -> tuple[int, ...]:
     subsets = _all_subsets(code.n)
-    return tuple(
-        _brute_local_weight_dim(code, w1, w2, w12)
-        for w1 in subsets
-        for w2 in subsets
-        for w12 in subsets
-    )
+    return tuple(_brute_local_weight_dim(code, w1, w2, w12) for w1 in subsets for w2 in subsets for w12 in subsets)
 
 
 def test_preserved_n_and_k_detect_basic_mismatches() -> None:

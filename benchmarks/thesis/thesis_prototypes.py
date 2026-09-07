@@ -118,8 +118,7 @@ _ALGORITHM_FUNCTIONS: dict[str, Callable[..., Any]] = {
     "lc_css_sat": is_lceq_css_sat,
 }
 ALGORITHMS: dict[str, DecisionAlgorithm] = {
-    name: DecisionAlgorithm(name, function)
-    for name, function in _ALGORITHM_FUNCTIONS.items()
+    name: DecisionAlgorithm(name, function) for name, function in _ALGORITHM_FUNCTIONS.items()
 }
 
 
@@ -147,9 +146,7 @@ def supports_lc_css_negative_case(n: int, k: int, seed: int) -> bool:
     return seed not in _LC_CSS_NEGATIVE_EXCLUDED_SEEDS.get((n, k), set())
 
 
-def generated_lc_css_code(
-    n: int, k: int, *, positive: bool, seed: int
-) -> StabilizerCode | None:
+def generated_lc_css_code(n: int, k: int, *, positive: bool, seed: int) -> StabilizerCode | None:
     """Load a cached random LC-CSS case when one was precomputed."""
     prefix = "lcc_css" if positive else "non_lcc_css"
     path = DATA_DIR / "lc" / f"{prefix}_{n}_{k}_{seed}.txt"
@@ -157,24 +154,17 @@ def generated_lc_css_code(
         return None
     code = StabilizerCode.from_file(path)
     if (code.n, code.k) != (n, k):
-        raise ValueError(
-            f"Cached case {path} is [[{code.n},{code.k}]], expected [[{n},{k}]]."
-        )
+        raise ValueError(f"Cached case {path} is [[{code.n},{code.k}]], expected [[{n},{k}]].")
     return code
 
 
-def measurement_dimensions(
-    nmin: int | None = None, nmax: int | None = None
-) -> list[tuple[int, int]]:
+def measurement_dimensions(nmin: int | None = None, nmax: int | None = None) -> list[tuple[int, int]]:
     """Return the thesis prototype's randomized ``(n, k)`` grid."""
     return [
         (n, k)
         for n in MEAS_STATS
         if (nmin is None or n >= nmin) and (nmax is None or n <= nmax)
-        for k in sorted(
-            set(range(0, n, 1 if n < 7 else 2 if n < 15 else 4 if n < 30 else 5))
-            | {4, 8}
-        )
+        for k in sorted(set(range(0, n, 1 if n < 7 else 2 if n < 15 else 4 if n < 30 else 5)) | {4, 8})
         if k < n
     ]
 
@@ -224,9 +214,7 @@ class RandomCaseGenerator:
             inputs = (
                 PEqCodePairGenerator.stabilizer_codes_basis_changed(n, k, seed)
                 if self.positive
-                else NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(
-                    n, k, seed
-                )
+                else NonPEqCodePairGenerator.stabilizer_codes_x_z_rank_projection(n, k, seed)
             )
         elif self.algorithm_name.startswith("lc_stb"):
             inputs = (
@@ -242,9 +230,7 @@ class RandomCaseGenerator:
                 code = (
                     LCEqCodeGenerator.stabilizer_code_local_clifford(n, k, seed)
                     if self.positive
-                    else NonLCEqCodeGenerator.stabilizer_code_locally_rank_one(
-                        n, k, seed
-                    )
+                    else NonLCEqCodeGenerator.stabilizer_code_locally_rank_one(n, k, seed)
                 )
             inputs = (code,)
         else:  # pragma: no cover - guarded by the registry
@@ -317,12 +303,8 @@ def parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--nmin", type=int, help="Minimum n (inclusive).")
     parser.add_argument("--nmax", type=int, help="Maximum n (inclusive).")
     parser.add_argument("--seed", type=int, default=42, help="Master seed.")
-    parser.add_argument(
-        "--nr-seeds", "--num-seeds", type=int, default=N_STATS, help="Cases per grid cell."
-    )
-    parser.add_argument(
-        "--output", type=Path, default=Path("results/prototypes.csv"), help="Append-only CSV output."
-    )
+    parser.add_argument("--nr-seeds", "--num-seeds", type=int, default=N_STATS, help="Cases per grid cell.")
+    parser.add_argument("--output", type=Path, default=Path("results/prototypes.csv"), help="Append-only CSV output.")
     parser.add_argument("--timeout", type=float, help="Per-case timeout in seconds.")
     parser.add_argument("--memory-limit", type=parse_memory_limit, help="Per-case memory limit.")
     parser.add_argument("--verbose", action="store_true")

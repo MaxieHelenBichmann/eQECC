@@ -14,11 +14,12 @@ from pynauty import Graph, certificate
 
 from src.core.stabilizer_code import StabilizerCode
 
+
 def are_lceq(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
     """Check whether two stabilizer codes are local-clifford-equivalent.
 
     Returns (equivalent, stage) with the tag of the pipeline stage that decided.
-    In case of early external termination, the printed diagnostic stage tag 
+    In case of early external termination, the printed diagnostic stage tag
     indicates the point of termination.
     """
     # Refute
@@ -34,7 +35,7 @@ def are_lceq(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
 
     if n < 1:
         return True, "CI"
-    
+
     reduced_symplectic_1 = _row_basis(c1.symplectic)
     reduced_symplectic_2 = _row_basis(c2.symplectic)
 
@@ -56,8 +57,6 @@ def are_lceq(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
         return _sat(reduced_symplectic_1, reduced_symplectic_2)
 
 
-    
-
 # ----------------------------------------------------------------------------------------------------
 # invariants
 # ----------------------------------------------------------------------------------------------------
@@ -65,19 +64,21 @@ def preserved_n(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the number of qubits is preserved, which is a necessary condition for LC-equivalence."""
     return c1.n == c2.n
 
+
 def preserved_k(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the number of logical qubits is preserved, which is a necessary condition for LC-equivalence."""
     return c1.k == c2.k
 
+
 def preserved_low_degree_local_invariant(c1: np.ndarray, c2: np.ndarray) -> bool:
     """Check whether the r = 2 local invariant is preserved, which is a necessary condition for LC-equivalence.
 
-    for each A ⊆ {1, ..., n}: 
+    for each A ⊆ {1, ..., n}:
         d(A) = dim({s in S | supp(s) ⊆ A})
-            =!= 
+            =!=
         d'(A) = dim({s in S' | supp(s) ⊆ A})
-    
-    Reference for this invariant: 
+
+    Reference for this invariant:
     - Maarten Van den Nest, Bart De Moor: Local Invariants of Stabilizer Codes
     """
     print("EI")
@@ -86,11 +87,11 @@ def preserved_low_degree_local_invariant(c1: np.ndarray, c2: np.ndarray) -> bool
 
     def _supp_subcode_dim(code: np.ndarray, subset: tuple[int, ...]) -> int:
         """
-        d(A) = dim({s in S | supp(s) ⊆ A}) = dim({y in F_2 | supp(yG) ⊆ A}) 
+        d(A) = dim({s in S | supp(s) ⊆ A}) = dim({y in F_2 | supp(yG) ⊆ A})
              = rank(G) - rank(G|_(A^c)})
 
-        -> supp(yG) ⊆ A means "outside of A (aka all qubit not in A), there can only be identity", aka all columns outside of A must be zero 
-        -> y (G|_(A^c)) = 0 for the restricted matrix outside if A 
+        -> supp(yG) ⊆ A means "outside of A (aka all qubit not in A), there can only be identity", aka all columns outside of A must be zero
+        -> y (G|_(A^c)) = 0 for the restricted matrix outside if A
         -> {y in F_2 | supp(yG) ⊆ A} = kernel of G|_(A^c) -> dim ker = n - rank
         """
         G = np.asarray(code, dtype=np.uint8) & 1
@@ -102,10 +103,10 @@ def preserved_low_degree_local_invariant(c1: np.ndarray, c2: np.ndarray) -> bool
 
         if not cols:
             return stabilizer_rank
-        
+
         restricted = G[:, cols]
         return stabilizer_rank - _rank(restricted)
-    
+
     max_subset_size = 2
     for a in range(max_subset_size + 1):
         for subset in combinations(range(n), a):
@@ -120,14 +121,17 @@ def preserved_low_degree_local_invariant(c1: np.ndarray, c2: np.ndarray) -> bool
 # ----------------------------------------------------------------------------------------------------
 LOCAL_CLIFFORDS = ("I", "H", "S", "HS", "SH", "HSH")
 
-def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray) -> tuple[bool, str]:
+
+def _lse(
+    c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray
+) -> tuple[bool, str]:
     """lc_stb_lse.py"""
     print("LSE")
 
     def _stab_code_to_stab_state(code: StabilizerCode, reduced_symplectic: np.ndarray) -> np.ndarray:
         """Convert a stabilizer code into a stabilizer state using the Choi-Jamiolkowski isomorphism.
         Return only stabilizer tableau of the resulting stabilizer state.
-        
+
         S = [S_x | S_z] ; Lx = [Lx_x | Lx_z] ; Lz = [Lz_x | Lz_z]
 
         S_choi = [S_x  | 0 | S_z  | 0]
@@ -150,9 +154,9 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
         log_z_x = code.z_logicals.tableau.matrix[:, :n]
         log_z_z = code.z_logicals.tableau.matrix[:, n:]
 
-        stabilizer_part = np.hstack([stab_x,np.zeros((r, k), dtype=np.int8), stab_z, np.zeros((r, k), dtype=np.int8)])
-        logical_x_part = np.hstack([log_x_x,np.eye(k, dtype=np.int8),log_x_z,np.zeros((k, k), dtype=np.int8)])
-        logical_z_part = np.hstack([log_z_x,np.zeros((k, k), dtype=np.int8),log_z_z,np.eye(k, dtype=np.int8)])
+        stabilizer_part = np.hstack([stab_x, np.zeros((r, k), dtype=np.int8), stab_z, np.zeros((r, k), dtype=np.int8)])
+        logical_x_part = np.hstack([log_x_x, np.eye(k, dtype=np.int8), log_x_z, np.zeros((k, k), dtype=np.int8)])
+        logical_z_part = np.hstack([log_z_x, np.zeros((k, k), dtype=np.int8), log_z_z, np.eye(k, dtype=np.int8)])
 
         return np.vstack([stabilizer_part, logical_x_part, logical_z_part]).astype(np.int8)
 
@@ -176,7 +180,7 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
                     x_col = t[:, q].copy()
                     z_col = t[:, q + n].copy()
 
-                    for new_x, new_z in [ (x_col, z_col), (z_col, x_col), ((x_col + z_col) % 2, x_col) ]:
+                    for new_x, new_z in [(x_col, z_col), (z_col, x_col), ((x_col + z_col) % 2, x_col)]:
                         t[:, q] = new_x
                         new_x_rank = _rank(t[:, :n])
                         if new_x_rank > best_rank:
@@ -199,6 +203,7 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
 
         def _extract_adjacency_matrix(tableau: np.ndarray) -> np.ndarray:
             """Extract the adjacency matrix from the stabilizer state."""
+
             def _rref_no_column_swaps(matrix: np.ndarray) -> tuple[np.ndarray, int]:
                 n_rows, n_cols = matrix.shape
                 pivot_row = 0
@@ -230,12 +235,12 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
                 raise ValueError("X part of the tableau is not full rank, something went wrong.")
 
             return rre[:, n:]
-    
+
         def _remove_diagonal(tableau: np.ndarray) -> None:
             """Basically apply S gate on all qubits to remove self-loops in the graph state."""
             for i in range(tableau.shape[0]):
-                if tableau[i,i] == 1:
-                    tableau[i,i] = 0
+                if tableau[i, i] == 1:
+                    tableau[i, i] = 0
 
         state = _make_X_invertible(tableau)
         gamma = _extract_adjacency_matrix(state)
@@ -248,8 +253,8 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
 
     def _extract_connected_components(g: np.ndarray) -> list[list[int]]:
         n = g.shape[0]
-        connected_components : list[list[int]] = []
-        seen : set[int] = set()
+        connected_components: list[list[int]] = []
+        seen: set[int] = set()
 
         while len(seen) < n:
             start = next(i for i in range(n) if i not in seen)
@@ -259,7 +264,7 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
             seen.add(start)
 
             while queue:
-                cur : int = queue.popleft()
+                cur: int = queue.popleft()
                 comp.append(cur)
 
                 for neighbor in g[cur, :].nonzero()[0]:
@@ -273,12 +278,12 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
 
         return connected_components
 
-    def _lc_equiv_connected(g1: np.ndarray, g2: np.ndarray, n : int) -> bool:
+    def _lc_equiv_connected(g1: np.ndarray, g2: np.ndarray, n: int) -> bool:
         """Check if two graph states are equivalent under local complementations using an efficient algorithm that considers a linear system of equations."""
 
         def _build_lse():
             """Build the matrix A for the following LSE
-            ( sum_{i=0}^{n-1} g1[i,j] * g2[i,k] * c_i ) + g1[j,k] * a_k + g2[j,k] * d_j + delta[j,k] * b_j = 0 
+            ( sum_{i=0}^{n-1} g1[i,j] * g2[i,k] * c_i ) + g1[j,k] * a_k + g2[j,k] * d_j + delta[j,k] * b_j = 0
             with n^2 equations for j,k = 0...n-1 and the following 4n unknowns:
                 [a_0,...,a_{n-1},
                 b_0,...,b_{n-1},
@@ -286,10 +291,13 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
                 d_0,...,d_{n-1}]
             """
             A = np.zeros((n * n, 4 * n), dtype=np.uint8)
+
             def a_idx(i):
                 return i
+
             def b_idx(i):
                 return n + i
+
             def d_idx(i):
                 return 3 * n + i
 
@@ -297,7 +305,7 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
             for j in range(n):
                 for k in range(n):
                     # sum_{i=0}^{n-1} g1[i,j] * g2[i,k] * c_i
-                    A[row, 2 * n:3 * n] = g1[j, :] & g2[:, k]
+                    A[row, 2 * n : 3 * n] = g1[j, :] & g2[:, k]
                     # g1[j, k] * a_k
                     A[row, a_idx(k)] ^= g1[j, k]
                     # g2[j, k] * d_j
@@ -308,15 +316,15 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
                     row += 1
             return A
 
-        def _satisfy_constraints(x : np.ndarray) -> bool:
+        def _satisfy_constraints(x: np.ndarray) -> bool:
             """Check that the solution x of the LSE also satisfies the following constraints on the unknowns for i = 0...n-1:
             a_i d_i + b_i c_i = 1
             """
             x = np.asarray(x, dtype=np.uint8) % 2
             a = x[0:n]
-            b = x[n:2*n]
-            c = x[2*n:3*n]
-            d = x[3*n:4*n]
+            b = x[n : 2 * n]
+            c = x[2 * n : 3 * n]
+            d = x[3 * n : 4 * n]
             dets = (a & d) ^ (b & c)
             return np.all(dets == 1)
 
@@ -325,7 +333,7 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
 
         dim = V.shape[0]
 
-        if dim == 0: # trivial nullspace
+        if dim == 0:  # trivial nullspace
             return False
 
         if dim > 4:
@@ -336,7 +344,6 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
                         return True
         else:
             for coeffs in product([0, 1], repeat=dim):
-
                 x = np.zeros(4 * n, dtype=np.uint8)
                 for bit, basis_vec in zip(coeffs, V):
                     if bit:
@@ -357,7 +364,9 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
         for comp in connected_components_g1:
             comp_idx = list(comp)
 
-            if not _lc_equiv_connected(graph_1[np.ix_(comp_idx, comp_idx)],graph_2[np.ix_(comp_idx, comp_idx)],len(comp_idx)):
+            if not _lc_equiv_connected(
+                graph_1[np.ix_(comp_idx, comp_idx)], graph_2[np.ix_(comp_idx, comp_idx)], len(comp_idx)
+            ):
                 return False
 
         return True
@@ -371,15 +380,12 @@ def _lse(c1: StabilizerCode, c2: StabilizerCode, reduced_symplectic_1: np.ndarra
     return _lc_equiv_graph_states(graph_state1, graph_state2), "LSE"
 
 
-
 def _sat(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray) -> tuple[bool, str]:
     """lc_stb_sat.py"""
     print("SAT")
+
     def _elementwise_map(normal_bool, variables):
-        return z3.And([
-            v if bit == 1 else z3.Not(v)
-            for bit, v in zip(normal_bool, variables)
-        ])
+        return z3.And([v if bit == 1 else z3.Not(v) for bit, v in zip(normal_bool, variables)])
 
     def _exactly_one(variables):
         return z3.PbEq([(v, 1) for v in variables], 1)
@@ -396,14 +402,10 @@ def _sat(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray) -> 
     r = reduced_symplectic_1.shape[0]
 
     # local cliffords
-    aux_tableau = [z3.Bool(f'aux_{row}_{col}') for row in range(r) for col in range(2*n)]
+    aux_tableau = [z3.Bool(f"aux_{row}_{col}") for row in range(r) for col in range(2 * n)]
 
     local_clifford_variables = [
-        {
-            operation: z3.Bool(f"lc_{qubit}_{operation}")
-            for operation in LOCAL_CLIFFORDS
-        }
-        for qubit in range(n)
+        {operation: z3.Bool(f"lc_{qubit}_{operation}") for operation in LOCAL_CLIFFORDS} for qubit in range(n)
     ]
 
     for qubit_variables in local_clifford_variables:
@@ -414,39 +416,84 @@ def _sat(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray) -> 
         z_column_original = reduced_symplectic_1[:, i + n]
         x_z_column_original = (x_column_original + z_column_original) % 2
 
-        x_column_aux = [aux_tableau[row * (2*n) + i] for row in range(r)]
-        z_column_aux = [aux_tableau[row * (2*n) + i + n] for row in range(r)]
+        x_column_aux = [aux_tableau[row * (2 * n) + i] for row in range(r)]
+        z_column_aux = [aux_tableau[row * (2 * n) + i + n] for row in range(r)]
 
         # I : (x, z) -> (x, z)
-        solver.add(z3.Implies(local_clifford_variables[i]["I"], z3.And(_elementwise_map(x_column_original, x_column_aux), _elementwise_map(z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["I"],
+                z3.And(
+                    _elementwise_map(x_column_original, x_column_aux), _elementwise_map(z_column_original, z_column_aux)
+                ),
+            )
+        )
 
         # H : (x, z) -> (z, x)
-        solver.add(z3.Implies(local_clifford_variables[i]["H"], z3.And(_elementwise_map(z_column_original, x_column_aux), _elementwise_map(x_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["H"],
+                z3.And(
+                    _elementwise_map(z_column_original, x_column_aux), _elementwise_map(x_column_original, z_column_aux)
+                ),
+            )
+        )
 
         # S : (x, z) -> (x, x + z)
-        solver.add(z3.Implies(local_clifford_variables[i]["S"], z3.And(_elementwise_map(x_column_original, x_column_aux), _elementwise_map(x_z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["S"],
+                z3.And(
+                    _elementwise_map(x_column_original, x_column_aux),
+                    _elementwise_map(x_z_column_original, z_column_aux),
+                ),
+            )
+        )
 
         # HS : (x, z) -> (x + z, x)
-        solver.add(z3.Implies(local_clifford_variables[i]["HS"], z3.And(_elementwise_map(x_z_column_original, x_column_aux), _elementwise_map(x_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["HS"],
+                z3.And(
+                    _elementwise_map(x_z_column_original, x_column_aux),
+                    _elementwise_map(x_column_original, z_column_aux),
+                ),
+            )
+        )
 
         # SH : (x, z) -> (z, x + z)
-        solver.add(z3.Implies(local_clifford_variables[i]["SH"], z3.And(_elementwise_map(z_column_original, x_column_aux), _elementwise_map(x_z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["SH"],
+                z3.And(
+                    _elementwise_map(z_column_original, x_column_aux),
+                    _elementwise_map(x_z_column_original, z_column_aux),
+                ),
+            )
+        )
 
         # HSH : (x, z) -> (x + z, z)
-        solver.add(z3.Implies(local_clifford_variables[i]["HSH"], z3.And(_elementwise_map(x_z_column_original, x_column_aux), _elementwise_map(z_column_original, z_column_aux))))
+        solver.add(
+            z3.Implies(
+                local_clifford_variables[i]["HSH"],
+                z3.And(
+                    _elementwise_map(x_z_column_original, x_column_aux),
+                    _elementwise_map(z_column_original, z_column_aux),
+                ),
+            )
+        )
 
     # row operations
-    row_operation_coefficients = [z3.Bool(f'r_{i}_{j}') for i in range(r) for j in range(r)]
+    row_operation_coefficients = [z3.Bool(f"r_{i}_{j}") for i in range(r) for j in range(r)]
 
     for row in range(r):
         for q in range(2 * n):
-
             row_contributions = []
             for contribution in range(r):
                 if reduced_symplectic_2[contribution, q] == 1:
                     row_contributions.append(row_operation_coefficients[row * r + contribution])
 
-            solver.add(aux_tableau[row * (2*n) + q] == _xor_list(row_contributions))
+            solver.add(aux_tableau[row * (2 * n) + q] == _xor_list(row_contributions))
 
     return solver.check() == z3.sat, "SAT"
 
@@ -454,6 +501,7 @@ def _sat(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray) -> 
 def _graph_iso(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarray) -> tuple[bool, str]:
     """lc_stb_graph_iso.py"""
     print("GI")
+
     def _graph_from_code(reduced_symplectic: np.ndarray) -> Graph:
         n = reduced_symplectic.shape[1] // 2
         r = reduced_symplectic.shape[0]
@@ -462,7 +510,7 @@ def _graph_iso(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarra
 
         for mask in range(0, 1 << r):
             group_element_vertex = 3 * n + mask
-            x = np.zeros(2*n, dtype=np.int8)
+            x = np.zeros(2 * n, dtype=np.int8)
 
             for i in range(r):
                 if (mask >> i) & 1:
@@ -472,26 +520,28 @@ def _graph_iso(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarra
             z_part = x[n:]
 
             for q in range(n):
-                if x_part[q] == 1 and z_part[q] == 0: # X contribution
+                if x_part[q] == 1 and z_part[q] == 0:  # X contribution
                     adj_dict[3 * q].append(group_element_vertex)
                     adj_dict[group_element_vertex].append(3 * q)
 
-                elif x_part[q] == 0 and z_part[q] == 1: # Z contribution
+                elif x_part[q] == 0 and z_part[q] == 1:  # Z contribution
                     adj_dict[3 * q + 1].append(group_element_vertex)
                     adj_dict[group_element_vertex].append(3 * q + 1)
 
-                elif x_part[q] == 1 and z_part[q] == 1: # Y contribution
+                elif x_part[q] == 1 and z_part[q] == 1:  # Y contribution
                     adj_dict[3 * q + 2].append(group_element_vertex)
                     adj_dict[group_element_vertex].append(3 * q + 2)
 
         pauli_vertex_colors = [set(range(3 * q, 3 * q + 3)) for q in range(n)]
-        stabilizer_group_vertices = set(range(3 * n, 3 * n + 2 ** r))
+        stabilizer_group_vertices = set(range(3 * n, 3 * n + 2**r))
 
-        return Graph(number_of_vertices=n * 3 + 2 ** r,
-                    directed=False,
-                    vertex_coloring=[*pauli_vertex_colors, stabilizer_group_vertices],
-                    adjacency_dict=adj_dict)
-    
+        return Graph(
+            number_of_vertices=n * 3 + 2**r,
+            directed=False,
+            vertex_coloring=[*pauli_vertex_colors, stabilizer_group_vertices],
+            adjacency_dict=adj_dict,
+        )
+
     graph_1 = _graph_from_code(reduced_symplectic_1)
     cert1 = certificate(graph_1)
     del graph_1
@@ -507,10 +557,12 @@ def _graph_iso(reduced_symplectic_1: np.ndarray, reduced_symplectic_2: np.ndarra
 # small helpers
 # ----------------------------------------------------------------------------------------------------
 
+
 def _rank(matrix: np.ndarray) -> int:
     if matrix.shape[0] == 0:
         return 0
     return mod2.rank(matrix)
+
 
 def _kernel_basis(A: np.ndarray) -> np.ndarray:
     A = (np.asarray(A) & 1).astype(np.uint8)
@@ -523,10 +575,9 @@ def _kernel_basis(A: np.ndarray) -> np.ndarray:
     if K.ndim == 1:
         K = K.reshape(1, -1)
     if K.shape[1] != A.shape[1]:
-        raise ValueError(
-            "Kernel basis must have the same number of columns as the input matrix."
-        )
+        raise ValueError("Kernel basis must have the same number of columns as the input matrix.")
     return K
+
 
 def _row_basis(M: np.ndarray) -> np.ndarray:
     M = (np.asarray(M) & 1).astype(np.uint8)

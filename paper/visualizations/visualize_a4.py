@@ -8,9 +8,19 @@ import matplotlib.pyplot as plt
 
 from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.visualizations.common import (
-    RUNTIME_CMAP, WIDE_TEXT_SCALE,
-    aggregate_cells, decimal_ticks, failure_legend, failure_marks, mark_timeout, parameter_axis,
-    partition_cell, runtime_norm, save_png, scalar_mappable, use_style,
+    RUNTIME_CMAP,
+    WIDE_TEXT_SCALE,
+    aggregate_cells,
+    decimal_ticks,
+    failure_legend,
+    failure_marks,
+    mark_timeout,
+    parameter_axis,
+    partition_cell,
+    runtime_norm,
+    save_png,
+    scalar_mappable,
+    use_style,
 )
 
 INPUT = RESULTS_DIR / "a4" / "by_cell.csv"
@@ -25,16 +35,22 @@ PANELS = (
 def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     rows = read_csv(input_file)
     for row in rows:
-        row["num_runtime_samples"] = str(int(row["num_successful"]) + int(row["num_timeouts"]) + int(row["num_unexpected"]))
+        row["num_runtime_samples"] = str(
+            int(row["num_successful"]) + int(row["num_timeouts"]) + int(row["num_unexpected"])
+        )
     aggregated = {
         algorithm: aggregate_cells(
             [row for row in rows if row["algorithm"] == algorithm and int(row["n"]) <= nmax],
-            "mean_seconds", "num_runtime_samples",
+            "mean_seconds",
+            "num_runtime_samples",
         )
         for algorithm, _, nmax in PANELS
     }
     norm = runtime_norm(
-        float(cell["mean_value"]) for cells in aggregated.values() for cell in cells.values() if int(cell["num_successful"])
+        float(cell["mean_value"])
+        for cells in aggregated.values()
+        for cell in cells.values()
+        if int(cell["num_successful"])
     )
 
     use_style(scale=WIDE_TEXT_SCALE)
@@ -50,7 +66,9 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
             cell["num_errors"] = 0
             failure_marks(ax, n, r, cell)
     figure.suptitle("Search Cost using Graph Representations", fontsize=12 * WIDE_TEXT_SCALE)
-    axes[0].legend(handles=failure_legend()[:1], loc="upper left", frameon=False, fontsize=10, handlelength=0.8, handletextpad=0.4)
+    axes[0].legend(
+        handles=failure_legend()[:1], loc="upper left", frameon=False, fontsize=10, handlelength=0.8, handletextpad=0.4
+    )
     bar = figure.colorbar(scalar_mappable(RUNTIME_CMAP, norm), ax=axes, fraction=0.018, pad=0.015)
     decimal_ticks(bar)
     mark_timeout(bar)

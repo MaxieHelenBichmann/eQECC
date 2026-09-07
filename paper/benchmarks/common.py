@@ -84,8 +84,11 @@ def attempt_seed(problem: str, n: int, k: int, seed: int, attempt: int) -> int:
 def certified_inequivalent(problem: str, pair: CodePair, n: int, k: int) -> bool:
     certifier = css_certifier(n, k) if problem == "pm_css" else CERTIFIERS[problem]
     result = run(
-        certifier, pair, False,
-        timeout=CERTIFICATION_TIMEOUT_SECONDS, max_memory_bytes=MEMORY_LIMIT_BYTES,
+        certifier,
+        pair,
+        False,
+        timeout=CERTIFICATION_TIMEOUT_SECONDS,
+        max_memory_bytes=MEMORY_LIMIT_BYTES,
     )
     if result.timed_out:
         raise RuntimeError("inequivalence certification timed out")
@@ -112,12 +115,16 @@ def certified_negative_pair(
             # same dimensions of the check matrices to emulate practically relevant instances and not make the problem too trivial
             rx = candidate_seed % (n - k + 1)
             if css_cnots:
-                pair = NonPEqCodePairGenerator.css_codes_cnot_candidate(n, k, candidate_seed, rx=rx, gate_steps=GATE_STEPS)
+                pair = NonPEqCodePairGenerator.css_codes_cnot_candidate(
+                    n, k, candidate_seed, rx=rx, gate_steps=GATE_STEPS
+                )
             else:
                 pair = NonPEqCodePairGenerator.css_codes_independent_candidate(n, k, candidate_seed, rx=rx)
         else:
             # keeps the two stabilizer codes related somehow to emulate practically relevant instances
-            pair = NonPEqCodePairGenerator.stabilizer_codes_clifford_candidate(n, k, candidate_seed, gate_steps=GATE_STEPS)
+            pair = NonPEqCodePairGenerator.stabilizer_codes_clifford_candidate(
+                n, k, candidate_seed, gate_steps=GATE_STEPS
+            )
         if certified_inequivalent(problem, pair, n, k):
             return pair
     raise RuntimeError(f"could not generate a certified {problem} negative for [[{n},{k}]], seed {seed}")

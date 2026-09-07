@@ -11,6 +11,7 @@ import z3
 
 from ..core.stabilizer_code import StabilizerCode
 
+
 def are_peq_stab(c1: StabilizerCode, c2: StabilizerCode) -> None | list[int]:
     """Check whether two stabilizer codes are permutation-equivalent.
 
@@ -27,27 +28,25 @@ def are_peq_stab(c1: StabilizerCode, c2: StabilizerCode) -> None | list[int]:
 
     if not all(invariant(c1, c2) for invariant in cheap_invariants):
         return None
-    
+
     if c1.n < 1:
         return list(range(c1.n))
-    
+
     reduced_symplectic_1 = _row_basis(c1.symplectic)
     reduced_symplectic_2 = _row_basis(c2.symplectic)
-    
+
     if c1.n <= 5:
         return _bruteforce(reduced_symplectic_1, reduced_symplectic_2)
 
     if not preserved_linear_dependencies(reduced_symplectic_1, reduced_symplectic_2):
         return None
 
-    partition1: dict[tuple[int, ...], list[int]] = {
-        (0,): list(range(c1.n))
-    }
-    partition2: dict[tuple[int, ...], list[int]] = {
-        (0,): list(range(c2.n))
-    }
+    partition1: dict[tuple[int, ...], list[int]] = {(0,): list(range(c1.n))}
+    partition2: dict[tuple[int, ...], list[int]] = {(0,): list(range(c2.n))}
     if c1.n <= 20:
-        result, refined_partition1, refined_partition2 = preserved_punctured_hull_weight_enumerator(reduced_symplectic_1, reduced_symplectic_2)
+        result, refined_partition1, refined_partition2 = preserved_punctured_hull_weight_enumerator(
+            reduced_symplectic_1, reduced_symplectic_2
+        )
 
         if not result:
             return None
@@ -56,35 +55,47 @@ def are_peq_stab(c1: StabilizerCode, c2: StabilizerCode) -> None | list[int]:
         assert refined_partition2 is not None
         partition1 = refined_partition1
         partition2 = refined_partition2
-        
+
     return _sat(reduced_symplectic_1, partition1, reduced_symplectic_2, partition2)
+
 
 # ----------------------------------------------------------------------------------------------------
 # invariants
 # ----------------------------------------------------------------------------------------------------
 
+
 def preserved_n(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the number of qubits is preserved, which is a necessary condition for P-equivalence."""
     return c1.n == c2.n
+
 
 def preserved_k(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the number of logical qubits is preserved, which is a necessary condition for P-equivalence."""
     return c1.k == c2.k
 
+
 def preserved_d(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the distance is preserved, which is a necessary condition for P-equivalence."""
     return c1.distance == c2.distance
-    
+
+
 def preserved_rank(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the rank of the stabilizer tableau is preserved, which is a necessary condition for P-equivalence."""
-    return _rank(c1.symplectic[:, :c1.n]) == _rank(c2.symplectic[:, :c2.n]) and _rank(c1.symplectic[:, c1.n:]) == _rank(c2.symplectic[:, c2.n:])
+    return _rank(c1.symplectic[:, : c1.n]) == _rank(c2.symplectic[:, : c2.n]) and _rank(
+        c1.symplectic[:, c1.n :]
+    ) == _rank(c2.symplectic[:, c2.n :])
+
 
 def preserved_number_zero_columns(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the number of zero columns is preserved, which is a necessary condition for P-equivalence."""
-    return int(np.count_nonzero(np.all(c1.symplectic == 0, axis=0))) == int(np.count_nonzero(np.all(c2.symplectic == 0, axis=0)))
+    return int(np.count_nonzero(np.all(c1.symplectic == 0, axis=0))) == int(
+        np.count_nonzero(np.all(c2.symplectic == 0, axis=0))
+    )
+
 
 def preserved_number_duplicate_columns(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check whether the number of duplicate columns is preserved, which is a necessary condition for P-equivalence."""
+
     def _duplicate_column(M: np.ndarray) -> list[int]:
         columns = [tuple(M[:, j].tolist()) for j in range(M.shape[1])]
         counts = Counter(columns)
@@ -92,22 +103,37 @@ def preserved_number_duplicate_columns(c1: StabilizerCode, c2: StabilizerCode) -
 
     return _duplicate_column(c1.symplectic) == _duplicate_column(c2.symplectic)
 
+
 def preserved_linear_dependencies(c1: np.ndarray, c2: np.ndarray) -> bool:
     """Check whether the linear dependencies between columns are preserved, which is a necessary condition for P-equivalence."""
+
     def _linear_dependencies(M: np.ndarray) -> tuple[list[int], list[int], list[int]]:
         n = M.shape[1] // 2
-        
-        one_columns = [ _rank(np.column_stack([M[:, q], M[:, q + n]])) for q in range(n) ]
 
-        two_columns = [ _rank(np.column_stack([M[:, i], M[:, i + n], M[:, j], M[:, j + n]])) for i in range(n) for j in range(i + 1, n) ]
-        three_columns = [ _rank(np.column_stack([M[:, i], M[:, i + n], M[:, j], M[:, j + n], M[:, k], M[:, k + n]])) for i in range(n) for j in range(i + 1, n) for k in range(j + 1, n) ]
+        one_columns = [_rank(np.column_stack([M[:, q], M[:, q + n]])) for q in range(n)]
+
+        two_columns = [
+            _rank(np.column_stack([M[:, i], M[:, i + n], M[:, j], M[:, j + n]]))
+            for i in range(n)
+            for j in range(i + 1, n)
+        ]
+        three_columns = [
+            _rank(np.column_stack([M[:, i], M[:, i + n], M[:, j], M[:, j + n], M[:, k], M[:, k + n]]))
+            for i in range(n)
+            for j in range(i + 1, n)
+            for k in range(j + 1, n)
+        ]
 
         return (sorted(one_columns), sorted(two_columns), sorted(three_columns))
-    
+
     return _linear_dependencies(c1) == _linear_dependencies(c2)
 
-def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -> tuple[bool, dict[tuple[int, ...], list[int]] | None, dict[tuple[int, ...], list[int]] | None]:
+
+def preserved_punctured_hull_weight_enumerator(
+    c1: np.ndarray, c2: np.ndarray
+) -> tuple[bool, dict[tuple[int, ...], list[int]] | None, dict[tuple[int, ...], list[int]] | None]:
     """SENDRIER - p_stab_classical.py"""
+
     def _symplectic_to_gf4(symplectic: np.ndarray) -> np.ndarray:
         """
         I -> 0 = 00 = 0
@@ -117,10 +143,10 @@ def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -
         """
         n = symplectic.shape[1] // 2
         return symplectic[:, :n] + 2 * symplectic[:, n:]
-    
+
     def _compute_signatures(matrix: np.ndarray) -> list[tuple[int, ...]]:
-        """Compute the combined Sendriers invariant of the weight enumerator of the hull of the punctured code of each column of the code.
-        """
+        """Compute the combined Sendriers invariant of the weight enumerator of the hull of the punctured code of each column of the code."""
+
         def _gf4_column_gram_contributions(M: np.ndarray) -> np.ndarray:
             k, n = M.shape
             contributions = np.zeros((n, k, k), dtype=np.uint8)
@@ -193,12 +219,16 @@ def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -
             # gram is in GF(2) due to the trace inner product that simulates the symplectic product (aka commutation/anti-commutation)
             gram = full_gram ^ column_gram_contributions[col_idx]
 
-            coeff_basis = _kernel_basis(gram.T) # c @ gram = gram.T @ c.T = 0 -> x = c @ Mp with <x, Mp[i]> = 0 for all rows j -> x orthogonal to all rows of Mp -> x in Mp perp
+            coeff_basis = _kernel_basis(
+                gram.T
+            )  # c @ gram = gram.T @ c.T = 0 -> x = c @ Mp with <x, Mp[i]> = 0 for all rows j -> x orthogonal to all rows of Mp -> x in Mp perp
 
             if coeff_basis.shape[0] == 0:
                 hull_basis = np.zeros((0, m_p), dtype=np.uint8)
             else:
-                hull_basis = _gf4_row_basis(_gf2_gf4_matmul(coeff_basis, Mp)) # c @ Mp = x -> words in Mp that are orthogonal to all rows of Mp -> hull
+                hull_basis = _gf4_row_basis(
+                    _gf2_gf4_matmul(coeff_basis, Mp)
+                )  # c @ Mp = x -> words in Mp that are orthogonal to all rows of Mp -> hull
 
             hull_h, hull_n = hull_basis.shape
             enumerator = [1] + [0] * m_p
@@ -220,7 +250,7 @@ def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -
                 previous_gray = gray
 
             return enumerator
-        
+
         column_gram_contributions = _gf4_column_gram_contributions(matrix)
         full_gram = np.bitwise_xor.reduce(column_gram_contributions, axis=0, initial=0)
 
@@ -237,7 +267,7 @@ def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -
         for idx, inv in enumerate(invariants):
             partition[inv].append(idx)
         return {k: sorted(v) for k, v in sorted(partition.items(), key=lambda item: item[0])}
-    
+
     gf4_tableau_c1 = _symplectic_to_gf4(c1)
     gf4_tableau_c2 = _symplectic_to_gf4(c2)
 
@@ -257,13 +287,14 @@ def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -
             return False, None, None
         if len(partition_c1[key1]) != len(partition_c2[key2]):
             return False, None, None
-        
+
     return True, partition_c1, partition_c2
 
 
 # ----------------------------------------------------------------------------------------------------
 # algorithms
 # ----------------------------------------------------------------------------------------------------
+
 
 def _bruteforce(c1: np.ndarray, c2: np.ndarray) -> None | list[int]:
     """p_stab_bruteforce.py"""
@@ -278,13 +309,17 @@ def _bruteforce(c1: np.ndarray, c2: np.ndarray) -> None | list[int]:
 
     return None
 
-def _sat(c1: np.ndarray, partition1: dict[tuple[int, ...], list[int]], c2: np.ndarray, partition2: dict[tuple[int, ...], list[int]]) -> None | list[int]:
+
+def _sat(
+    c1: np.ndarray,
+    partition1: dict[tuple[int, ...], list[int]],
+    c2: np.ndarray,
+    partition2: dict[tuple[int, ...], list[int]],
+) -> None | list[int]:
     """p_stab_sat.py"""
+
     def _elementwise_map(normal_bool, variables):
-        return z3.And([
-            v if bit == 1 else z3.Not(v)
-            for bit, v in zip(normal_bool, variables)
-        ])
+        return z3.And([v if bit == 1 else z3.Not(v) for bit, v in zip(normal_bool, variables)])
 
     def _exactly_one(variables):
         return z3.PbEq([(v, 1) for v in variables], 1)
@@ -294,42 +329,51 @@ def _sat(c1: np.ndarray, partition1: dict[tuple[int, ...], list[int]], c2: np.nd
         for v in variables:
             acc = z3.Xor(acc, v)
         return acc
-    
+
     solver = z3.Solver()
 
     r, n = c1.shape[0], c1.shape[1] // 2
 
     # permutations
-    aux_tableau = [z3.Bool(f'aux_{row}_{col}') for row in range(r) for col in range(2*n)]
+    aux_tableau = [z3.Bool(f"aux_{row}_{col}") for row in range(r) for col in range(2 * n)]
 
-    permutation_variables = {(i,j) :z3.Bool(f'p_{i}_{j}') for sig, col1 in partition1.items() for i in col1 for j in partition2[sig] }
+    permutation_variables = {
+        (i, j): z3.Bool(f"p_{i}_{j}") for sig, col1 in partition1.items() for i in col1 for j in partition2[sig]
+    }
 
     for i in range(n):
         solver.add(_exactly_one([var for (src, _), var in permutation_variables.items() if src == i]))
     for j in range(n):
-        solver.add(_exactly_one([ var for (_, tgt), var in permutation_variables.items() if tgt == j]))
+        solver.add(_exactly_one([var for (_, tgt), var in permutation_variables.items() if tgt == j]))
 
-    for (i,j), permutation_variable in permutation_variables.items():
-            x_column_original = c1[:, i]
-            z_column_original = c1[:, i + n]
+    for (i, j), permutation_variable in permutation_variables.items():
+        x_column_original = c1[:, i]
+        z_column_original = c1[:, i + n]
 
-            x_column_permuted = [aux_tableau[row * (2*n) + j] for row in range(r)]
-            z_column_permuted = [aux_tableau[row * (2*n) + j + n] for row in range(r)]
+        x_column_permuted = [aux_tableau[row * (2 * n) + j] for row in range(r)]
+        z_column_permuted = [aux_tableau[row * (2 * n) + j + n] for row in range(r)]
 
-            solver.add(z3.Implies(permutation_variable, z3.And(_elementwise_map(x_column_original, x_column_permuted), _elementwise_map(z_column_original, z_column_permuted))))
+        solver.add(
+            z3.Implies(
+                permutation_variable,
+                z3.And(
+                    _elementwise_map(x_column_original, x_column_permuted),
+                    _elementwise_map(z_column_original, z_column_permuted),
+                ),
+            )
+        )
 
     # row operations
-    row_operation_coefficients = [z3.Bool(f'r_{i}_{j}') for i in range(r) for j in range(r)]
+    row_operation_coefficients = [z3.Bool(f"r_{i}_{j}") for i in range(r) for j in range(r)]
 
     for row in range(r):
         for q in range(2 * n):
-
             row_contributions = []
             for contribution in range(r):
                 if c2[contribution, q] == 1:
                     row_contributions.append(row_operation_coefficients[row * r + contribution])
 
-            solver.add(aux_tableau[row * (2*n) + q] == _xor_list(row_contributions))
+            solver.add(aux_tableau[row * (2 * n) + q] == _xor_list(row_contributions))
 
     if solver.check() != z3.sat:
         return None
@@ -337,12 +381,10 @@ def _sat(c1: np.ndarray, partition1: dict[tuple[int, ...], list[int]], c2: np.nd
     perm = [-1] * n
     model = solver.model()
     for i in range(n):
-        perm[i] =  next(
+        perm[i] = next(
             j
             for (src, j), var in permutation_variables.items()
-            if src == i and z3.is_true(
-                model.eval(var, model_completion=True)
-            )
+            if src == i and z3.is_true(model.eval(var, model_completion=True))
         )
     return perm
 
@@ -351,10 +393,12 @@ def _sat(c1: np.ndarray, partition1: dict[tuple[int, ...], list[int]], c2: np.nd
 # small helpers
 # ----------------------------------------------------------------------------------------------------
 
+
 def _rank(matrix: np.ndarray) -> int:
     if matrix.shape[0] == 0:
         return 0
     return mod2.rank(matrix)
+
 
 def _kernel_basis(A: np.ndarray) -> np.ndarray:
     A = (np.asarray(A) & 1).astype(np.uint8)
@@ -367,10 +411,9 @@ def _kernel_basis(A: np.ndarray) -> np.ndarray:
     if K.ndim == 1:
         K = K.reshape(1, -1)
     if K.shape[1] != A.shape[1]:
-        raise ValueError(
-            "Kernel basis must have the same number of columns as the input matrix."
-        )
+        raise ValueError("Kernel basis must have the same number of columns as the input matrix.")
     return K
+
 
 def _row_basis(M: np.ndarray) -> np.ndarray:
     M = (np.asarray(M) & 1).astype(np.uint8)

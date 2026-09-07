@@ -19,6 +19,7 @@ from src.hybrids.lc_css import _row_basis, _sat, is_lceq_css
 def test_is_lceq_css_accepts_trivial_code() -> None:
     assert is_lceq_css(StabilizerCode.get_trivial_code(3)) is True
 
+
 def test_is_lceq_css_accepts_css_code() -> None:
     code = CSSCode(
         Hx=np.array([[1, 1, 0, 0]], dtype=np.int8),
@@ -108,11 +109,13 @@ def test_is_lceq_css_random_positive(seed: int) -> None:
 
     assert is_lceq_css(code) is True
 
+
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in [4]])
 def test_is_lceq_css_random_negative(seed: int) -> None:
     code = random_stabilizer_code(6, 2, seed=seed)
 
     assert is_lceq_css(code) is False
+
 
 # ----------------------------------------------------------------------------------------------------
 # _sat

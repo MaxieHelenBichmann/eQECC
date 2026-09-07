@@ -54,9 +54,7 @@ def test_every_structured_generator_uses_name_and_seed_and_documents_bias() -> N
     for generator_class in GENERATOR_CLASSES:
         methods = [
             method
-            for method_name, method in inspect.getmembers(
-                generator_class, inspect.isfunction
-            )
+            for method_name, method in inspect.getmembers(generator_class, inspect.isfunction)
             if "_code_" in method_name or "_codes_" in method_name
         ]
         assert methods
@@ -76,9 +74,7 @@ def test_structured_positive_pair_keeps_named_source() -> None:
 
 
 def test_structured_lc_pair_keeps_named_source() -> None:
-    source, partner = LCEqCodePairGenerator.stabilizer_codes_local_clifford(
-        "5q_prf", 13
-    )
+    source, partner = LCEqCodePairGenerator.stabilizer_codes_local_clifford("5q_prf", 13)
     assert isinstance(source, StabilizerCode)
     assert np.array_equal(source.symplectic, load_named_code("5q_prf").symplectic)
     assert (partner.n, partner.k) == (source.n, source.k)

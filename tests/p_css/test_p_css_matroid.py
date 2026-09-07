@@ -13,6 +13,7 @@ from src.algorithms.p_css.p_css_matroid import _circuits_binary_matroid, _graph_
 # _circuits_binary_matroid
 # ----------------------------------------------------------------------------------------------------
 
+
 def test_circuits_binary_matroid_simple_dependency() -> None:
     matrix = np.array(
         [
@@ -66,17 +67,16 @@ def test_circuits_binary_matroid_matches_direct_enumeration() -> None:
         np.eye(4, dtype=np.int8),
         np.array([[1, 1, 0, 1], [0, 1, 1, 1]], dtype=np.int8),
     ]
-    matrices.extend(
-        rng.integers(0, 2, size=(rows, cols), dtype=np.int8)
-        for rows, cols in [(2, 5), (3, 6), (4, 6)]
-    )
+    matrices.extend(rng.integers(0, 2, size=(rows, cols), dtype=np.int8) for rows, cols in [(2, 5), (3, 6), (4, 6)])
 
     for matrix in matrices:
         assert set(_circuits_binary_matroid(matrix)) == direct_circuits(matrix)
 
+
 # ----------------------------------------------------------------------------------------------------
 # _graph_from_circuits
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_graph_from_circuits_small_incidence_graph() -> None:
     graph = _graph_from_circuits(
@@ -103,9 +103,11 @@ def test_graph_from_circuits_anchors_empty_color_classes() -> None:
     assert graph.number_of_vertices == 5
     assert graph.vertex_coloring == [{0, 1}, {3}, {2, 4}]
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_peq_css_matroid
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_are_peq_css_matroid_random_smoke() -> None:
     for n in range(3, 6):
@@ -115,6 +117,7 @@ def test_are_peq_css_matroid_random_smoke() -> None:
                 assert isinstance(are_peq_css_matroid(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
 def test_are_peq_css_matroid_random_positive(seed: int) -> None:

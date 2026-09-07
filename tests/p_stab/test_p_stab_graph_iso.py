@@ -5,7 +5,11 @@ from __future__ import annotations
 import pytest
 from pynauty import Graph, certificate
 
-from benchmarks.experiments.utils import RandomizeError, random_permuted_stabilizer_pair, random_non_permuted_stabilizer_pair
+from benchmarks.experiments.utils import (
+    RandomizeError,
+    random_permuted_stabilizer_pair,
+    random_non_permuted_stabilizer_pair,
+)
 from src.core.stabilizer_code import StabilizerCode
 from src.algorithms.p_stb.p_stab_graph_iso import (
     _graph_from_code,
@@ -16,13 +20,14 @@ from src.algorithms.p_stb.p_stab_bruteforce import are_peq_stab_bruteforce
 
 def _adjacency_as_sets(graph: Graph) -> dict[int, set[int]]:
     return {
-        int(vertex): {int(neighbor) for neighbor in neighbors}
-        for vertex, neighbors in graph.adjacency_dict.items()
+        int(vertex): {int(neighbor) for neighbor in neighbors} for vertex, neighbors in graph.adjacency_dict.items()
     }
+
 
 # ----------------------------------------------------------------------------------------------------
 # _graph_from_code
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_graph_from_trivial_code() -> None:
     graph = _graph_from_code(StabilizerCode.get_trivial_code(3))
@@ -58,9 +63,11 @@ def test_anchors_are_isolated() -> None:
     assert not anchors & adjacency.keys()
     assert not any(anchors & neighbors for neighbors in adjacency.values())
 
+
 # ----------------------------------------------------------------------------------------------------
 # are_peq_stab_graph_iso
 # ----------------------------------------------------------------------------------------------------
+
 
 def test_random_smoke() -> None:
     for n in range(3, 6):
@@ -70,6 +77,7 @@ def test_random_smoke() -> None:
                 assert isinstance(are_peq_stab_graph_iso(code1, code2), bool)
             except RandomizeError:
                 pass
+
 
 def _shape(seed: int) -> tuple[int, int]:
     n = 2 + (5 * seed + 1) % 8
@@ -114,11 +122,9 @@ def test_pynauty_drops_empty_colour_classes() -> None:
             adjacency_dict=adjacency,
             vertex_coloring=colouring,
         )
-    
+
     assert certificate(build([{0}, {1}, {2}])) != certificate(build([{2}, {1}, {0}]))
-    assert certificate(build([{0}, {1}, set(), {2}])) == certificate(
-        build([{0}, {1}, {2}, set()])
-    )
+    assert certificate(build([{0}, {1}, set(), {2}])) == certificate(build([{0}, {1}, {2}, set()]))
 
 
 @pytest.mark.parametrize(
@@ -130,9 +136,7 @@ def test_pynauty_drops_empty_colour_classes() -> None:
         (["XXX"], ["ZZZ"]),
     ],
 )
-def test_pure_x_and_pure_z_codes_are_not_isomorphic(
-    first: list[str], second: list[str]
-) -> None:
+def test_pure_x_and_pure_z_codes_are_not_isomorphic(first: list[str], second: list[str]) -> None:
     """A permutation cannot turn X into Z, and the reduction must agree."""
     code1, code2 = StabilizerCode(first), StabilizerCode(second)
     assert are_peq_stab_bruteforce(code1, code2) is False

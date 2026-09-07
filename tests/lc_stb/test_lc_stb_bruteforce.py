@@ -12,6 +12,7 @@ from src.algorithms.lc_stb.lc_stb_bruteforce import are_lceq_bruteforce
 # are_lceq_bruteforce
 # ----------------------------------------------------------------------------------------------------
 
+
 @pytest.mark.parametrize(
     ("code1", "code2", "expected"),
     [
@@ -50,6 +51,7 @@ def test_are_lceq_bruteforce_small_codes(
 ) -> None:
     assert are_lceq_bruteforce(code1, code2) is expected
 
+
 def test_are_lceq_bruteforce_random_smoke() -> None:
     for n in range(1, 6):
         for k in range(n + 1):
@@ -58,6 +60,7 @@ def test_are_lceq_bruteforce_random_smoke() -> None:
 
             assert isinstance(are_lceq_bruteforce(code1, code2), bool)
 
+
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(2, 10)])
 def test_are_lceq_bruteforce_random_positive(seed: int) -> None:
     n = 2 + (3 * seed + 1) % 5
@@ -65,6 +68,7 @@ def test_are_lceq_bruteforce_random_positive(seed: int) -> None:
     code1 = random_stabilizer_code(n, k, seed=1000 + seed)
     code2 = lc_equivalent_code(code1, seed=2000 + seed)
     assert are_lceq_bruteforce(code1, code2) is True
+
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(2, 6)])
 def test_are_lceq_bruteforce_random_negative(seed: int) -> None:

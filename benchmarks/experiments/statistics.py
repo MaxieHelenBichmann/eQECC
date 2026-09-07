@@ -78,9 +78,7 @@ CSV_FIELDS = (
 )
 
 
-def deterministic_seeds(
-    seed: int, nr_seeds: int, *, upper_bound: int = 2**32
-) -> tuple[int, ...]:
+def deterministic_seeds(seed: int, nr_seeds: int, *, upper_bound: int = 2**32) -> tuple[int, ...]:
     """Derive distinct seeds reproducibly from NumPy's seeded generator."""
     if nr_seeds <= 0:
         raise ValueError("nr_seeds must be greater than zero")
@@ -102,9 +100,7 @@ def _callable_name(function: Callable[..., Any]) -> str:
     return getattr(function, "__name__", type(function).__name__)
 
 
-def _case_metadata(
-    generator: Callable[[int], BenchmarkCase], case: BenchmarkCase | None
-) -> dict[str, Any]:
+def _case_metadata(generator: Callable[[int], BenchmarkCase], case: BenchmarkCase | None) -> dict[str, Any]:
     metadata = dict(getattr(generator, "metadata", {}))
     if case is not None:
         metadata.update(case.metadata)
@@ -123,11 +119,7 @@ def _statistic(
 ) -> Statistic:
     # A timeout contributes its capped runtime. Other failures do not describe
     # the algorithm's runtime and are therefore excluded from time statistics.
-    runtimes = tuple(
-        result.runtime
-        for result in results
-        if result.error is None and not result.memory_exceeded
-    )
+    runtimes = tuple(result.runtime for result in results if result.error is None and not result.memory_exceeded)
     mean_seconds = mean(runtimes) if runtimes else math.nan
     stddev_seconds = stdev(runtimes) if len(runtimes) > 1 else 0.0
 

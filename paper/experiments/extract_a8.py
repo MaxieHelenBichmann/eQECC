@@ -14,25 +14,53 @@ OUTPUT = RESULTS_DIR / "a8" / "by_cell.csv"
 
 PROBLEMS = ("pm_stb", "pm_css", "lc_stb")
 CODE_LABELS = (
-    ("bell", "Bell pair"), ("3q_rep", "3-bit repetition"),
-    ("5q_prf", "5-qubit perfect"), ("steane", "Steane"), ("shor", "Shor"),
-    ("carbon", "Carbon"), ("hamming_15", "Hamming-15"),
-    ("15q_optimal", "15-qubit optimal"), ("tetrahedral", "Tetrahedral"),
-    ("golay", "Golay"), ("rot_surf_d5", "Rotated surface d=5"),
-    ("hamming_31", "Hamming-31"), ("coco_488", "CoCo-488"),
-    ("coco_666", "CoCo-666"), ("bb_72", "BB-72"), ("bb_90", "BB-90"),
-    ("bb_108", "BB-108"), ("bb_144", "BB-144"),
+    ("bell", "Bell pair"),
+    ("3q_rep", "3-bit repetition"),
+    ("5q_prf", "5-qubit perfect"),
+    ("steane", "Steane"),
+    ("shor", "Shor"),
+    ("carbon", "Carbon"),
+    ("hamming_15", "Hamming-15"),
+    ("15q_optimal", "15-qubit optimal"),
+    ("tetrahedral", "Tetrahedral"),
+    ("golay", "Golay"),
+    ("rot_surf_d5", "Rotated surface d=5"),
+    ("hamming_31", "Hamming-31"),
+    ("coco_488", "CoCo-488"),
+    ("coco_666", "CoCo-666"),
+    ("bb_72", "BB-72"),
+    ("bb_90", "BB-90"),
+    ("bb_108", "BB-108"),
+    ("bb_144", "BB-144"),
 )
 CODE_ORDER = {name: index for index, (name, _) in enumerate(CODE_LABELS)}
 CODE_LABEL = dict(CODE_LABELS)
 STAGES = ("CI", "EI", "S", "BF", "MI", "GI", "SAT", "LSE", "trivial")
 
 FIELDS = (
-    "problem", "code", "code_label", "n", "k", "r", "positive", "num_cases",
-    "num_successful", "num_unexpected", "num_timeouts", "num_memory_limited",
-    "num_errors", "num_generation_errors", "mean_seconds", "stddev_seconds",
-    "maximum_seconds", "primary_decider", "primary_decider_count",
-    "secondary_decider", "secondary_decider_count", "deciders", "stuck_at",
+    "problem",
+    "code",
+    "code_label",
+    "n",
+    "k",
+    "r",
+    "positive",
+    "num_cases",
+    "num_successful",
+    "num_unexpected",
+    "num_timeouts",
+    "num_memory_limited",
+    "num_errors",
+    "num_generation_errors",
+    "mean_seconds",
+    "stddev_seconds",
+    "maximum_seconds",
+    "primary_decider",
+    "primary_decider_count",
+    "secondary_decider",
+    "secondary_decider_count",
+    "deciders",
+    "stuck_at",
     "timeout_seconds",
 )
 
@@ -64,27 +92,44 @@ def extract(input_directory: Path = INPUT_DIRECTORY, output_file: Path = OUTPUT)
         (primary, primary_count), (secondary, secondary_count) = (deciders + [("", 0), ("", 0)])[:2]
         generated = [row for row in rows if row["status"] != "generation_error"]
         n, k = (int(generated[0]["n"]), int(generated[0]["k"])) if generated else (None, None)
-        output.append({
-            "problem": problem, "code": code, "code_label": CODE_LABEL.get(code, code),
-            "n": n, "k": k, "r": n - k if generated else None,
-            "positive": positive,
-            "num_cases": len(rows),
-            "num_successful": sum(row["status"] == "success" for row in rows),
-            "num_unexpected": sum(row["status"] == "unexpected" for row in rows),
-            "num_timeouts": sum(row["status"] == "timeout" for row in rows),
-            "num_memory_limited": sum(row["status"] == "memory_limited" for row in rows),
-            "num_errors": sum(row["status"] == "error" for row in rows),
-            "num_generation_errors": len(rows) - len(generated),
-            "mean_seconds": mean(timed) if timed else "",
-            "stddev_seconds": stdev(timed) if len(timed) > 1 else (0.0 if timed else ""),
-            "maximum_seconds": max(timed) if timed else "",
-            "primary_decider": primary, "primary_decider_count": primary_count,
-            "secondary_decider": secondary, "secondary_decider_count": secondary_count,
-            "deciders": ";".join(f"{stage}:{count}" for stage, count in deciders),
-            "stuck_at": ";".join(f"{stage}:{count}" for stage, count in distribution([row["stuck_at"] for row in rows])),
-            "timeout_seconds": float(rows[0]["timeout_seconds"]),
-        })
-    output.sort(key=lambda row: (CODE_ORDER.get(row["code"], len(CODE_ORDER)), row["code"], PROBLEMS.index(row["problem"]), not row["positive"]))
+        output.append(
+            {
+                "problem": problem,
+                "code": code,
+                "code_label": CODE_LABEL.get(code, code),
+                "n": n,
+                "k": k,
+                "r": n - k if generated else None,
+                "positive": positive,
+                "num_cases": len(rows),
+                "num_successful": sum(row["status"] == "success" for row in rows),
+                "num_unexpected": sum(row["status"] == "unexpected" for row in rows),
+                "num_timeouts": sum(row["status"] == "timeout" for row in rows),
+                "num_memory_limited": sum(row["status"] == "memory_limited" for row in rows),
+                "num_errors": sum(row["status"] == "error" for row in rows),
+                "num_generation_errors": len(rows) - len(generated),
+                "mean_seconds": mean(timed) if timed else "",
+                "stddev_seconds": stdev(timed) if len(timed) > 1 else (0.0 if timed else ""),
+                "maximum_seconds": max(timed) if timed else "",
+                "primary_decider": primary,
+                "primary_decider_count": primary_count,
+                "secondary_decider": secondary,
+                "secondary_decider_count": secondary_count,
+                "deciders": ";".join(f"{stage}:{count}" for stage, count in deciders),
+                "stuck_at": ";".join(
+                    f"{stage}:{count}" for stage, count in distribution([row["stuck_at"] for row in rows])
+                ),
+                "timeout_seconds": float(rows[0]["timeout_seconds"]),
+            }
+        )
+    output.sort(
+        key=lambda row: (
+            CODE_ORDER.get(row["code"], len(CODE_ORDER)),
+            row["code"],
+            PROBLEMS.index(row["problem"]),
+            not row["positive"],
+        )
+    )
     write_csv(output_file, output, FIELDS)
     return output
 

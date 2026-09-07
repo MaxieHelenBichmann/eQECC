@@ -11,10 +11,23 @@ from matplotlib.patches import Patch, Rectangle
 
 from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.visualizations.common import (
-    COLOR_PAPER_BLUE, COLOR_PAPER_GRAY_DARK, COLOR_PAPER_GRAY_LIGHT, COLOR_PAPER_GRAY_VERY_DARK,
-    COLOR_PAPER_GRAY_VERY_LIGHT, COLOR_PAPER_GREEN_RAMP, COLOR_PAPER_ORANGE_RAMP,
-    COLOR_PAPER_PINK_RAMP, COLOR_PAPER_WHITE, WIDE_TEXT_SCALE,
-    half_cell_key, outline_partition, parameter_axis, partition_cell, save_png, scalar_mappable, use_style,
+    COLOR_PAPER_BLUE,
+    COLOR_PAPER_GRAY_DARK,
+    COLOR_PAPER_GRAY_LIGHT,
+    COLOR_PAPER_GRAY_VERY_DARK,
+    COLOR_PAPER_GRAY_VERY_LIGHT,
+    COLOR_PAPER_GREEN_RAMP,
+    COLOR_PAPER_ORANGE_RAMP,
+    COLOR_PAPER_PINK_RAMP,
+    COLOR_PAPER_WHITE,
+    WIDE_TEXT_SCALE,
+    half_cell_key,
+    outline_partition,
+    parameter_axis,
+    partition_cell,
+    save_png,
+    scalar_mappable,
+    use_style,
 )
 
 INPUT = RESULTS_DIR / "a1" / "by_cell.csv"
@@ -25,7 +38,11 @@ CMAPS = {
     "signatures": LinearSegmentedColormap.from_list("signatures", COLOR_PAPER_PINK_RAMP),
     "local_invariant": LinearSegmentedColormap.from_list("local_invariant", COLOR_PAPER_ORANGE_RAMP),
 }
-LABELS = {"linear_dependency": "Linear column dependencies", "signatures": "Signatures", "local_invariant": "Local invariant"}
+LABELS = {
+    "linear_dependency": "Linear column dependencies",
+    "signatures": "Signatures",
+    "local_invariant": "Local invariant",
+}
 
 
 def _aggregate(rows, problem: str) -> dict[tuple[int, int, str], tuple[int, int]]:
@@ -104,13 +121,27 @@ def _render_overall_table(pm_stb, pm_css, lc, output: Path) -> Path:
         (0.8, 0.2, LABELS["local_invariant"]),
     )
     for x, width, label in major_headers:
-        ax.add_patch(Rectangle(
-            (x, body_height), width, 1 - body_height, transform=ax.transAxes,
-            facecolor=COLOR_PAPER_GRAY_DARK, edgecolor=COLOR_PAPER_WHITE, linewidth=1.0,
-        ))
+        ax.add_patch(
+            Rectangle(
+                (x, body_height),
+                width,
+                1 - body_height,
+                transform=ax.transAxes,
+                facecolor=COLOR_PAPER_GRAY_DARK,
+                edgecolor=COLOR_PAPER_WHITE,
+                linewidth=1.0,
+            )
+        )
         ax.text(
-            x + width / 2, body_height + (1 - body_height) / 2, label, transform=ax.transAxes,
-            ha="center", va="center", color="#202020", fontsize=8, fontweight="bold",
+            x + width / 2,
+            body_height + (1 - body_height) / 2,
+            label,
+            transform=ax.transAxes,
+            ha="center",
+            va="center",
+            color="#202020",
+            fontsize=8,
+            fontweight="bold",
         )
     figure.suptitle("Overall rejection rates", fontsize=11, fontweight="bold", y=0.96)
     return save_png(figure, output)
@@ -133,14 +164,31 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     _draw(axes[2], (lc,), "local_invariant")
 
     handles = [
-        half_cell_key("left", COLOR_PAPER_GRAY_DARK, f"Stabilizer: {_rate(_overall(pm_stb, 'linear_dependency'))} linear, {_rate(_overall(pm_stb, 'signatures'))} signatures"),
-        half_cell_key("right", COLOR_PAPER_GRAY_DARK, f"CSS: {_rate(_overall(pm_css, 'linear_dependency'))} linear, {_rate(_overall(pm_css, 'signatures'))} signatures"),
-        Patch(facecolor=CMAPS["local_invariant"](0.72), label=f"{LABELS['local_invariant']} ({_rate(_overall(lc, 'local_invariant'))} overall)"),
-        Patch(facecolor=CMAPS["linear_dependency"](0), edgecolor=COLOR_PAPER_GRAY_VERY_DARK, label="0% rejected (measured)"),
+        half_cell_key(
+            "left",
+            COLOR_PAPER_GRAY_DARK,
+            f"Stabilizer: {_rate(_overall(pm_stb, 'linear_dependency'))} linear, {_rate(_overall(pm_stb, 'signatures'))} signatures",
+        ),
+        half_cell_key(
+            "right",
+            COLOR_PAPER_GRAY_DARK,
+            f"CSS: {_rate(_overall(pm_css, 'linear_dependency'))} linear, {_rate(_overall(pm_css, 'signatures'))} signatures",
+        ),
+        Patch(
+            facecolor=CMAPS["local_invariant"](0.72),
+            label=f"{LABELS['local_invariant']} ({_rate(_overall(lc, 'local_invariant'))} overall)",
+        ),
+        Patch(
+            facecolor=CMAPS["linear_dependency"](0),
+            edgecolor=COLOR_PAPER_GRAY_VERY_DARK,
+            label="0% rejected (measured)",
+        ),
         Patch(facecolor=COLOR_PAPER_GRAY_VERY_LIGHT, edgecolor="none", label="not measured"),
     ]
     figure.legend(handles=handles, loc="lower center", ncol=3, frameon=False, bbox_to_anchor=(0.5, 0.015), fontsize=9)
-    figure.suptitle("Invariants' Rejection Patterns and Rates of Inequivalent Codes", fontsize=12 * WIDE_TEXT_SCALE, y=0.96)
+    figure.suptitle(
+        "Invariants' Rejection Patterns and Rates of Inequivalent Codes", fontsize=12 * WIDE_TEXT_SCALE, y=0.96
+    )
 
     bar = figure.colorbar(scalar_mappable("Greys", Normalize(0, 1)), ax=axes, fraction=0.025, pad=0.02)
     bar.set_label("Deeper color means\nmore rejected instances")

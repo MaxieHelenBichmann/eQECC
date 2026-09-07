@@ -6,8 +6,13 @@ import math
 from pathlib import Path
 
 from paper.experiments.common import (
-    ALGORITHM_DATA_DIR, COLLECTED_DATA_DIR, RESULTS_DIR,
-    aggregate_statistics, load_algorithm, read_statistics, write_csv,
+    ALGORITHM_DATA_DIR,
+    COLLECTED_DATA_DIR,
+    RESULTS_DIR,
+    aggregate_statistics,
+    load_algorithm,
+    read_statistics,
+    write_csv,
 )
 
 EXTRA_INPUT = COLLECTED_DATA_DIR / "pm_stb_sat_on_css.csv"
@@ -20,10 +25,22 @@ VARIANTS = (
     ("pm_stb_sat_on_css", "pm_stb_sat_on_css", "css"),
 )
 FIELDS = (
-    "variant", "algorithm", "code_family", "n", "k", "r", "num_requested",
-    "num_successful", "mean_seconds", "stddev_seconds", "maximum_seconds",
+    "variant",
+    "algorithm",
+    "code_family",
+    "n",
+    "k",
+    "r",
+    "num_requested",
+    "num_successful",
+    "mean_seconds",
+    "stddev_seconds",
+    "maximum_seconds",
     "hx_hz_log_scale_improvement_percentage",
-    "num_timeouts", "num_memory_limited", "num_errors", "num_unexpected",
+    "num_timeouts",
+    "num_memory_limited",
+    "num_errors",
+    "num_unexpected",
     "num_generation_errors",
 )
 
@@ -46,18 +63,20 @@ def extract(
 
     # improvement of the check-matrix over the tableau encoding as a share of the figure's log runtime range
     displayed_means = [
-        row["mean_seconds"] for row in output
-        if row["n"] <= NMAX and row["mean_seconds"] and row["num_successful"]
+        row["mean_seconds"] for row in output if row["n"] <= NMAX and row["mean_seconds"] and row["num_successful"]
     ]
     log_span = math.log(max(max(displayed_means), TIMEOUT_SECONDS) / min(displayed_means))
     css_means = {
         (row["n"], row["k"]): row["mean_seconds"]
-        for row in output if row["variant"] == "pm_css_sat_on_css" and row["mean_seconds"]
+        for row in output
+        if row["variant"] == "pm_css_sat_on_css" and row["mean_seconds"]
     }
     for row in output:
         css_mean = css_means.get((row["n"], row["k"]))
         if row["variant"] == "pm_stb_sat_on_css" and css_mean and row["mean_seconds"]:
-            row["hx_hz_log_scale_improvement_percentage"] = 100.0 * (math.log(row["mean_seconds"]) - math.log(css_mean)) / log_span
+            row["hx_hz_log_scale_improvement_percentage"] = (
+                100.0 * (math.log(row["mean_seconds"]) - math.log(css_mean)) / log_span
+            )
     write_csv(output_file, output, FIELDS)
     return output
 
