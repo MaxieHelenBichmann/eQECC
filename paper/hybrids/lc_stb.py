@@ -18,6 +18,8 @@ def are_lceq(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
     """Check whether two stabilizer codes are local-clifford-equivalent.
 
     Returns (equivalent, stage) with the tag of the pipeline stage that decided.
+    In case of early external termination, the printed diagnostic stage tag 
+    indicates the point of termination.
     """
     # Refute
     cheap_invariants = (

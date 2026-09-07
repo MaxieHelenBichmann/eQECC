@@ -19,6 +19,8 @@ def are_peq_css(c1: CSSCode, c2: CSSCode) -> tuple[bool, str]:
     """Check whether two CSS codes are permutation-equivalent.
 
     Returns (equivalent, stage) with the tag of the pipeline stage that decided.
+    In case of early external termination, the printed diagnostic stage tag 
+    indicates the point of termination.
     """
     # Refute
     cheap_invariants = (
