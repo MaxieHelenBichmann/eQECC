@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from collections import Counter, defaultdict
-from itertools import permutations
 
 import numpy as np
 import ldpc.mod2.mod2_numpy as mod2
