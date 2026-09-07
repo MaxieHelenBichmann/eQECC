@@ -14,6 +14,7 @@ from src.algorithms.lc_stb.lc_stb_sat import are_lceq_sat
 from src.algorithms.p_css.p_css_matroid import are_peq_css_matroid
 from src.algorithms.p_css.p_css_sat import are_peq_css_sat
 from src.algorithms.p_stb.p_stab_sat import are_peq_stab_sat
+from src.core.css_code import CSSCode
 from src.core.stabilizer_code import StabilizerCode
 from src.hybrids import lc_stb, p_css, p_stab
 
@@ -109,6 +110,7 @@ def certified_negative_pair(
     """
     if problem == "pm_css" and css_certifier(n, k) is None:
         return NonPEqCodePairGenerator.css_codes_cascaded(n, k, attempt_seed(problem, n, k, seed, 0))
+    pair: CodePair
     for attempt in range(max_attempts):
         candidate_seed = attempt_seed(problem, n, k, seed, attempt)
         if problem == "pm_css":
@@ -133,6 +135,7 @@ def certified_negative_pair(
 def invariant_matrices(problem: str, left: StabilizerCode, right: StabilizerCode) -> tuple:
     row_basis = p_stab._row_basis
     if problem == "pm_css":
+        assert isinstance(left, CSSCode) and isinstance(right, CSSCode)
         return row_basis(left.Hx), row_basis(left.Hz), row_basis(right.Hx), row_basis(right.Hz)
     return row_basis(left.symplectic), row_basis(right.symplectic)
 

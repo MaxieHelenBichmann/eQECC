@@ -47,13 +47,13 @@ LABELS = {
 
 def _aggregate(rows, problem: str) -> dict[tuple[int, int, str], tuple[int, int]]:
     """(rejected, valid) per (n, r, invariant)."""
-    values = defaultdict(lambda: [0, 0])
+    values: defaultdict[tuple[int, int, str], list[int]] = defaultdict(lambda: [0, 0])
     for row in rows:
         if row["problem"] == problem and row["invariant"] != "combined":
             key = (int(row["n"]), int(row["r"]), row["invariant"])
             values[key][0] += int(row["num_rejected"])
             values[key][1] += int(row["num_valid"])
-    return {key: tuple(value) for key, value in values.items()}
+    return {key: (value[0], value[1]) for key, value in values.items()}
 
 
 def _draw(ax, families, invariant: str) -> None:

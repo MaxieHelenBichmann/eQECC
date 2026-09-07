@@ -52,8 +52,12 @@ def read_invariant_cells(path: Path) -> list[dict]:
     cells = []
     for (problem, invariant, n, k), group in sorted(grouped.items()):
         positives = sum(as_bool(row["positive"]) for row in group)
-        runtimes = [as_float(row["runtime_seconds"]) for row in group if row["status"] == "success"]
-        if positives != SEEDS_PER_POLARITY or len(runtimes) != 2 * SEEDS_PER_POLARITY or None in runtimes:
+        runtimes = [
+            runtime
+            for row in group
+            if row["status"] == "success" and (runtime := as_float(row["runtime_seconds"])) is not None
+        ]
+        if positives != SEEDS_PER_POLARITY or len(runtimes) != 2 * SEEDS_PER_POLARITY:
             continue
         cells.append(
             {

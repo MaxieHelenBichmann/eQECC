@@ -37,7 +37,7 @@ def extract(input_file: Path = INPUT, output_directory: Path = OUTPUT_DIRECTORY)
                 **group[0],
                 "invariant": "combined",
                 "status": "success" if valid else "censored",
-                "rejected": any(as_bool(row["rejected"]) for row in group) if valid else "",
+                "rejected": str(any(as_bool(row["rejected"]) for row in group)) if valid else "",
             }
         )
 
@@ -64,10 +64,10 @@ def extract(input_file: Path = INPUT, output_directory: Path = OUTPUT_DIRECTORY)
         )
 
     overall = []
-    groups = defaultdict(list)
+    totals = defaultdict(list)
     for row in rows:
-        groups[(row["problem"], row["invariant"])].append(row)
-    for (problem, invariant), group in sorted(groups.items()):
+        totals[(row["problem"], row["invariant"])].append(row)
+    for (problem, invariant), group in sorted(totals.items()):
         valid_rows = [row for row in group if row["status"] == "success"]
         rejected = sum(as_bool(row["rejected"]) for row in valid_rows)
         overall.append(

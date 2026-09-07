@@ -158,7 +158,7 @@ def use_style(scale: float = 1.0) -> None:
 
 def aggregate_cells(rows, value_field: str, count_field: str) -> dict[tuple[int, int], dict[str, float | int]]:
     """Count-weighted mean per (n, r) over the positive and negative rows."""
-    grouped = {}
+    grouped: dict[tuple[int, int], dict[str, float | int]] = {}
     for row in rows:
         cell = grouped.setdefault(
             (int(row["n"]), int(row["r"])),

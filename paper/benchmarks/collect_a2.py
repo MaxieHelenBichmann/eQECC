@@ -8,6 +8,8 @@ signature_space.csv and existing keys are skipped on restart.
 
 from __future__ import annotations
 
+from typing import Any
+
 import numpy as np
 
 from benchmarks.experiments.run import run
@@ -59,6 +61,7 @@ def generate_random_code(problem: str, n: int, k: int, seed: int):
 
 def evaluate_signature_partition(problem: str, code) -> list[int]:
     row_basis = p_stab._row_basis
+    partition: dict[Any, list[int]] | None
     if problem == "pm_css":
         hx, hz = row_basis(code.Hx), row_basis(code.Hz)
         compatible, partition, _ = p_css.preserved_punctured_hull_weight_enumerator(hx, hz, hx, hz)

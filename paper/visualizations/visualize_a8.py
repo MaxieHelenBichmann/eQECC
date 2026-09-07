@@ -62,7 +62,7 @@ def _failures(row) -> int:
 
 def _stages(row) -> list[tuple[str, int]]:
     """Deciding and stuck-in stages together, most frequent first, ties in pipeline order."""
-    counts = Counter()
+    counts: Counter[str] = Counter()
     for column in ("deciders", "stuck_at"):
         for entry in filter(None, row[column].split(";")):
             stage, count = entry.rsplit(":", 1)

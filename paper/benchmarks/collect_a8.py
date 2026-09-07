@@ -144,6 +144,7 @@ def certified_inequivalent(problem: str, left: StabilizerCode, right: Stabilizer
     if problem == "pm_css":
         certifier = css_certifier(left.n, left.k)
         if certifier is None:
+            assert isinstance(left, CSSCode) and isinstance(right, CSSCode)
             return css_certificate(left) != css_certificate(right)
     else:
         certifier = CERTIFIERS[problem]
@@ -159,18 +160,17 @@ def generate_pair(problem: str, code_name: str, positive: bool, seed: int) -> tu
         # PM-STB and PM-CSS receive the identical pair for a CSS code.
         return PEqCodePairGenerator.css_codes_basis_changed(code_name, seed)
 
+    pair: tuple[StabilizerCode, StabilizerCode]
     for attempt in range(NEGATIVE_MAX_ATTEMPTS):
         attempt_seed = seed * NEGATIVE_MAX_ATTEMPTS + attempt
         if problem == "pm_css":
-            code, candidate = NonPEqCodePairGenerator.css_codes_cnot_candidate(
-                code_name, attempt_seed, gate_steps=GATE_STEPS
-            )
+            pair = NonPEqCodePairGenerator.css_codes_cnot_candidate(code_name, attempt_seed, gate_steps=GATE_STEPS)
         else:
-            code, candidate = NonPEqCodePairGenerator.stabilizer_codes_clifford_candidate(
+            pair = NonPEqCodePairGenerator.stabilizer_codes_clifford_candidate(
                 code_name, attempt_seed, gate_steps=GATE_STEPS
             )
-        if certified_inequivalent(problem, code, candidate):
-            return code, candidate
+        if certified_inequivalent(problem, *pair):
+            return pair
     raise RuntimeError(f"no certified {problem} negative for {code_name}, seed {seed}")
 
 

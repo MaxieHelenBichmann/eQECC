@@ -6,6 +6,7 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from statistics import mean, stdev
+from typing import Any
 
 from paper.experiments.common import COLLECTED_DATA_DIR, RESULTS_DIR, as_bool, read_csv, write_csv
 
@@ -84,14 +85,15 @@ def extract(input_directory: Path = INPUT_DIRECTORY, output_file: Path = OUTPUT)
     if not groups:
         raise FileNotFoundError(f"no A8 raw files in {input_directory}")
 
-    output = []
+    output: list[dict[str, Any]] = []
     for (problem, code, positive), rows in groups.items():
         # as in the other experiments: timeouts enter at their budget, memory and execution failures are excluded
         timed = [float(row["runtime_seconds"]) for row in rows if row["status"] in {"success", "unexpected", "timeout"}]
         deciders = distribution([row["decided_by"] for row in rows])
         (primary, primary_count), (secondary, secondary_count) = (deciders + [("", 0), ("", 0)])[:2]
         generated = [row for row in rows if row["status"] != "generation_error"]
-        n, k = (int(generated[0]["n"]), int(generated[0]["k"])) if generated else (None, None)
+        n = int(generated[0]["n"]) if generated else None
+        k = int(generated[0]["k"]) if generated else None
         output.append(
             {
                 "problem": problem,
@@ -99,7 +101,7 @@ def extract(input_directory: Path = INPUT_DIRECTORY, output_file: Path = OUTPUT)
                 "code_label": CODE_LABEL.get(code, code),
                 "n": n,
                 "k": k,
-                "r": n - k if generated else None,
+                "r": n - k if n is not None and k is not None else None,
                 "positive": positive,
                 "num_cases": len(rows),
                 "num_successful": sum(row["status"] == "success" for row in rows),

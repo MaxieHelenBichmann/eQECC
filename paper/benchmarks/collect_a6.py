@@ -19,6 +19,7 @@ from paper.benchmarks.common import (
     MASTER_SEED,
     MEMORY_LIMIT_BYTES,
     TIMEOUT_SECONDS,
+    CodePair,
     certified_negative_pair,
 )
 from src.algorithms.p_stb.p_stab_sat import are_peq_stab_sat
@@ -53,6 +54,7 @@ class CSSCaseGenerator:
         }
 
     def __call__(self, seed: int) -> BenchmarkCase:
+        pair: CodePair
         if self.positive:
             pair = PEqCodePairGenerator.css_codes_basis_changed(self.n, self.k, seed)
         else:
