@@ -1,356 +1,89 @@
-"""Collect raw marginal invariant runtimes.
+"""Collect invariant runtimes (A3).
 
-For each fixed ``(n, k, seed)``, PM-STB and LC-STB apply a small, configurable number of 
-random Clifford gates to one source code, while PM-CSS normally uses two independent 
-codes with matching X- and Z-check ranks, as selection bias does not have a significant impact
-on the runtime of the invariants.
-Each candidate is certified with an admissible exact backend (SAT) before the script
-records whether the relevant invariants reject it. PM-CSS uses a SAT- and 
-matroid-based  verification method, and a scalable certified CSS code pair generator
-due to runtime constraints.
-
-Each seeded result is appended immediately to
-``paper/data/collected/invariant_timings.csv``. Practical feasibility
-(runtime and memory consumption) is measured here, so it should be run on the according platform.
-Restarting skips keys already present, while the A3 experiment performs all aggregation later.
+5 positive and 5 negative pairs per (n, k). Negative instances are certified as 
+in A1, except that PM-CSS negatives are two independent codes with matching 
+check ranks. Only the invariant call is timed; the row-basis reduction of the 
+inputs happens before. Rows are appended to invariant_timings.csv and existing
+keys are skipped on restart.
 """
 
 from __future__ import annotations
 
-import csv
-import hashlib
-from collections.abc import Callable, Mapping, Sequence
-from pathlib import Path
-from typing import Any
-
-from benchmarks.experiments.generators_random import NonPEqCodePairGenerator
-from benchmarks.experiments.run import RunResult, run
+from benchmarks.experiments.run import run
 from benchmarks.experiments.statistics import deterministic_seeds
 from benchmarks.thesis.thesis_prototypes import RandomCaseGenerator, measurement_dimensions
-from src.algorithms.lc_stb.lc_stb_sat import are_lceq_sat
-from src.algorithms.p_css.p_css_matroid import are_peq_css_matroid
-from src.algorithms.p_css.p_css_sat import are_peq_css_sat
-from src.algorithms.p_stb.p_stab_sat import are_peq_stab_sat
-from src.core.css_code import CSSCode
-from src.core.stabilizer_code import StabilizerCode
-from src.hybrids import lc_stb, p_css, p_stab
+from paper.benchmarks.common import (
+    COLLECTED_DIR, INVARIANTS, MASTER_SEED, MEMORY_LIMIT_BYTES, TIMEOUT_SECONDS, CodePair,
+    append_row, certified_negative_pair, completed_keys, evaluate_invariant,
+    execution_status, invariant_matrices,
+)
 
-ROOT = Path(__file__).resolve().parents[2]
-MASTER_SEED = 42
 NUM_SEEDS = 5
 SEEDS = deterministic_seeds(MASTER_SEED, NUM_SEEDS, upper_bound=1_000)
 DIMENSIONS = tuple(measurement_dimensions())
-TIMEOUT_SECONDS = 5_400.0
-CERTIFICATION_TIMEOUT_SECONDS = 600.0
-MEMORY_LIMIT_BYTES = 13 * 1024**3
-CSS_SAT_MAX_R = 9
-CSS_MATROID_MAX_N = 28
-STABILIZER_CLIFFORD_GATE_STEPS = 2
 VERBOSE = True
-
-OUTPUT_FILE = ROOT / "paper" / "data" / "collected" / "invariant_timings.csv"
-INVARIANTS = {
-    "pm_stb": ("linear_dependency", "signatures"),
-    "pm_css": ("linear_dependency", "signatures"),
-    "lc_stb": ("local_invariant",),
-}
-INVARIANT_N_RANGES = {
-    (problem, invariant): (3, 47)
-    for problem, invariants in INVARIANTS.items()
-    for invariant in invariants
-}
+OUTPUT_FILE = COLLECTED_DIR / "invariant_timings.csv"
+KEY_FIELDS = ("problem", "invariant", "n", "k", "positive", "seed")
 FIELDS = (
-    "problem",
-    "invariant",
-    "instance_id",
-    "seed",
-    "n",
-    "k",
-    "r",
-    "positive",
-    "accepted",
-    "runtime_seconds",
-    "status",
-    "timeout",
-    "memory_limited",
-    "error",
+    "problem", "invariant", "instance_id", "seed", "n", "k", "r", "positive",
+    "accepted", "runtime_seconds", "status", "timeout", "memory_limited", "error",
 )
-CodePair = tuple[StabilizerCode, StabilizerCode]
-CERTIFIERS: dict[str, Callable[..., bool]] = {
-    "pm_stb": are_peq_stab_sat,
-    "lc_stb": are_lceq_sat,
-}
-
-
-# CSV persistence -------------------------------------------------------------------------------
-
-def execution_status(result: RunResult) -> str:
-    if result.timed_out:
-        return "timeout"
-    if result.memory_exceeded:
-        return "memory_limited"
-    if result.error is not None:
-        return "error"
-    return "success"
-
-
-def csv_key(*values: Any) -> tuple[str, ...]:
-    return tuple(str(value) for value in values)
-
-
-def completed_csv_keys(path: Path, key_fields: Sequence[str]) -> set[tuple[str, ...]]:
-    if not path.is_file() or path.stat().st_size == 0:
-        return set()
-    with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        missing = set(key_fields) - set(reader.fieldnames or ())
-        if missing:
-            raise ValueError(
-                f"{path} has an incompatible header; missing {sorted(missing)}"
-            )
-        return {
-            tuple(row[field] for field in key_fields)
-            for row in reader
-            if all(row.get(field) is not None for field in key_fields)
-        }
-
-
-def append_csv_row(
-    path: Path,
-    row: Mapping[str, Any],
-    fields: Sequence[str],
-) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    write_header = not path.exists() or path.stat().st_size == 0
-    with path.open("a", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=fields, extrasaction="ignore")
-        if write_header:
-            writer.writeheader()
-        writer.writerow(row)
-
-
-# Input generation ------------------------------------------------------------------------------
-
-def _attempt_seed(problem: str, n: int, k: int, seed: int, attempt: int) -> int:
-    population = f"{problem}_negative_matching=False"
-    value = f"{population}|{n}|{k}|{seed}|{attempt}".encode()
-    return int.from_bytes(hashlib.sha256(value).digest()[:8], "big") % (2**32)
-
-
-def _candidate_pair(problem: str, n: int, k: int, seed: int) -> CodePair:
-    if problem == "pm_css":
-        rx = seed % (n - k + 1)
-        return NonPEqCodePairGenerator.css_codes_independent_candidate(
-            n, k, seed, rx=rx
-        )
-    return NonPEqCodePairGenerator.stabilizer_codes_clifford_candidate(
-        n,
-        k,
-        seed,
-        gate_steps=STABILIZER_CLIFFORD_GATE_STEPS,
-    )
-
-
-def _css_certifier(n: int, k: int) -> Callable[..., bool] | None:
-    if n - k <= CSS_SAT_MAX_R:
-        return are_peq_css_sat
-    if n <= CSS_MATROID_MAX_N:
-        return are_peq_css_matroid
-    return None
-
-
-def _certified_inequivalent(problem: str, pair: CodePair, n: int, k: int) -> bool:
-    certifier = _css_certifier(n, k) if problem == "pm_css" else CERTIFIERS[problem]
-    if certifier is None:
-        raise RuntimeError(f"no independent CSS certifier configured for [[{n},{k}]]")
-    result = run(
-        certifier,
-        pair,
-        False,
-        timeout=CERTIFICATION_TIMEOUT_SECONDS,
-        max_memory_bytes=MEMORY_LIMIT_BYTES,
-    )
-    if result.timed_out:
-        raise RuntimeError("inequivalence certification timed out")
-    if result.memory_exceeded:
-        raise RuntimeError("inequivalence certification exceeded memory limit")
-    if result.error is not None:
-        raise RuntimeError(f"inequivalence certification failed: {result.error}")
-    return result.result is False
-
-
-def certified_negative_pair(
-    problem: str,
-    n: int,
-    k: int,
-    seed: int,
-    *,
-    max_attempts: int = 1_000,
-) -> CodePair:
-    use_css_fallback = problem == "pm_css" and _css_certifier(n, k) is None
-    for attempt in range(max_attempts):
-        attempt_seed = _attempt_seed(problem, n, k, seed, attempt)
-        pair = (
-            NonPEqCodePairGenerator.css_codes_cascaded(n, k, attempt_seed)
-            if use_css_fallback
-            else _candidate_pair(problem, n, k, attempt_seed)
-        )
-        if use_css_fallback or _certified_inequivalent(problem, pair, n, k):
-            return pair
-    raise RuntimeError(
-        f"could not generate a certified {problem} negative for [[{n},{k}]], "
-        f"seed {seed}"
-    )
 
 
 def generate_pair(problem: str, n: int, k: int, positive: bool, seed: int) -> CodePair:
     if positive:
-        case = RandomCaseGenerator(f"{problem}_sat", n, k, True)(seed)
-        left, right = case.inputs
-        if not isinstance(left, StabilizerCode) or not isinstance(
-            right, StabilizerCode
-        ):
-            raise TypeError("invariant timing cases require stabilizer-code inputs")
-        return left, right
+        return RandomCaseGenerator(f"{problem}_sat", n, k, True)(seed).inputs
     return certified_negative_pair(problem, n, k, seed)
 
 
-# Invariants ------------------------------------------------------------------------------------
-
-def _prepared(problem: str, left: StabilizerCode, right: StabilizerCode) -> tuple:
-    row_basis = p_stab._row_basis
-    if problem == "pm_css":
-        if not isinstance(left, CSSCode) or not isinstance(right, CSSCode):
-            raise TypeError("pm_css invariants require CSSCode inputs")
-        return (
-            row_basis(left.Hx),
-            row_basis(left.Hz),
-            row_basis(right.Hx),
-            row_basis(right.Hz),
-        )
-    return row_basis(left.symplectic), row_basis(right.symplectic)
-
-
-def evaluate_invariant(name: str, problem: str, *matrices: Any) -> bool:
-    if name == "linear_dependency" and problem == "pm_stb":
-        return bool(p_stab.preserved_linear_dependencies(*matrices))
-    if name == "linear_dependency" and problem == "pm_css":
-        return bool(p_css.preserved_linear_dependencies(*matrices))
-    if name == "signatures" and problem == "pm_stb":
-        compatible, _, _ = p_stab.preserved_punctured_hull_weight_enumerator(
-            *matrices
-        )
-        return bool(compatible)
-    if name == "signatures" and problem == "pm_css":
-        compatible, _, _ = p_css.preserved_punctured_hull_weight_enumerator(
-            *matrices
-        )
-        return bool(compatible)
-    if name == "local_invariant" and problem == "lc_stb":
-        return bool(lc_stb.preserved_low_degree_local_invariant(*matrices))
-    raise ValueError(f"unknown invariant {name!r} for {problem!r}")
-
-
-# Collection ------------------------------------------------------------------------------------
-
-def collect(
-    *,
-    dimensions: Sequence[tuple[int, int]] = DIMENSIONS,
-    seeds: Sequence[int] = SEEDS,
-    output_file: Path = OUTPUT_FILE,
-) -> list[dict[str, Any]]:
-    key_fields = ("problem", "invariant", "n", "k", "positive", "seed")
-    completed = completed_csv_keys(output_file, key_fields)
-    rows: list[dict[str, Any]] = []
-
+def collect(dimensions=DIMENSIONS, seeds=SEEDS, output_file=OUTPUT_FILE) -> list[dict]:
+    completed = completed_keys(output_file, KEY_FIELDS)
+    rows = []
     for problem, invariants in INVARIANTS.items():
         print(f"invariant timings: {problem}", flush=True)
         for n, k in dimensions:
-            active = [
-                invariant
-                for invariant in invariants
-                if INVARIANT_N_RANGES[(problem, invariant)][0]
-                <= n
-                <= INVARIANT_N_RANGES[(problem, invariant)][1]
-            ]
-            if not active:
-                continue
             for positive in (True, False):
                 label = "positive" if positive else "negative"
                 for seed in seeds:
                     missing = [
-                        invariant
-                        for invariant in active
-                        if csv_key(problem, invariant, n, k, positive, seed)
-                        not in completed
+                        invariant for invariant in invariants
+                        if (problem, invariant, str(n), str(k), str(positive), str(seed)) not in completed
                     ]
                     if not missing:
                         continue
-
-                    instance_id = f"{problem}-n{n}k{k}-s{seed}-{label}"
                     if VERBOSE:
                         print(f"    [[{n},{k}]] {label} seed={seed}", flush=True)
-
+                    base = {
+                        "problem": problem, "instance_id": f"{problem}-n{n}k{k}-s{seed}-{label}",
+                        "seed": seed, "n": n, "k": k, "r": n - k, "positive": positive,
+                    }
                     try:
-                        pair = generate_pair(problem, n, k, positive, seed)
-                        matrices = _prepared(problem, *pair)
-                    except Exception as exc:  # noqa: BLE001 - recorded benchmark data
-                        for invariant in missing:
-                            row = {
-                                "problem": problem,
-                                "invariant": invariant,
-                                "instance_id": instance_id,
-                                "seed": seed,
-                                "n": n,
-                                "k": k,
-                                "r": n - k,
-                                "positive": positive,
-                                "accepted": None,
-                                "runtime_seconds": None,
-                                "status": "generation_error",
-                                "timeout": False,
-                                "memory_limited": False,
-                                "error": f"{type(exc).__name__}: {exc}",
-                            }
-                            append_csv_row(output_file, row, FIELDS)
-                            rows.append(row)
-                            completed.add(
-                                csv_key(problem, invariant, n, k, positive, seed)
-                            )
-                        continue
-
+                        matrices = invariant_matrices(problem, *generate_pair(problem, n, k, positive, seed))
+                    except Exception as exc:
+                        matrices = None
+                        error = f"{type(exc).__name__}: {exc}"
                     for invariant in missing:
-                        result = run(
-                            evaluate_invariant,
-                            (invariant, problem, *matrices),
-                            None,
-                            timeout=TIMEOUT_SECONDS,
-                            max_memory_bytes=MEMORY_LIMIT_BYTES,
-                        )
-                        status = execution_status(result)
-                        row = {
-                            "problem": problem,
-                            "invariant": invariant,
-                            "instance_id": instance_id,
-                            "seed": seed,
-                            "n": n,
-                            "k": k,
-                            "r": n - k,
-                            "positive": positive,
-                            "accepted": result.result if status == "success" else None,
-                            "runtime_seconds": result.runtime,
-                            "status": status,
-                            "timeout": result.timed_out,
-                            "memory_limited": result.memory_exceeded,
-                            "error": result.error or "",
-                        }
-                        append_csv_row(output_file, row, FIELDS)
+                        row = {**base, "invariant": invariant}
+                        if matrices is None:
+                            row.update(
+                                accepted=None, runtime_seconds=None, status="generation_error",
+                                timeout=False, memory_limited=False, error=error,
+                            )
+                        else:
+                            result = run(
+                                evaluate_invariant, (invariant, problem, *matrices), None,
+                                timeout=TIMEOUT_SECONDS, max_memory_bytes=MEMORY_LIMIT_BYTES,
+                            )
+                            status = execution_status(result)
+                            row.update(
+                                accepted=result.result if status == "success" else None,
+                                runtime_seconds=result.runtime, status=status, timeout=result.timed_out,
+                                memory_limited=result.memory_exceeded, error=result.error or "",
+                            )
+                        append_row(output_file, row, FIELDS)
                         rows.append(row)
-                        completed.add(
-                            csv_key(problem, invariant, n, k, positive, seed)
-                        )
-
-    print(f"appended {len(rows)} raw timings to {output_file}", flush=True)
+                        completed.add((problem, invariant, str(n), str(k), str(positive), str(seed)))
+    print(f"appended {len(rows)} rows to {output_file}", flush=True)
     return rows
 
 

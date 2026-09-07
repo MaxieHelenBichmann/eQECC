@@ -1,23 +1,14 @@
-"""Pair invariant timings with the fastest valid backend in each cell."""
+"""Invariant runtime relative to the best backend of the same cell (A3)."""
 
 from __future__ import annotations
 
 from collections import defaultdict
-from collections.abc import Sequence
 from pathlib import Path
 from statistics import mean, stdev
-from typing import Any
 
 from paper.experiments.common import (
-    ALGORITHM_DATA_DIR,
-    COLLECTED_DATA_DIR,
-    RESULTS_DIR,
-    aggregate_statistics,
-    as_bool,
-    as_float,
-    load_algorithm,
-    read_csv,
-    write_csv,
+    ALGORITHM_DATA_DIR, COLLECTED_DATA_DIR, RESULTS_DIR,
+    aggregate_statistics, as_bool, as_float, load_algorithm, read_csv, write_csv,
 )
 from paper.experiments.extract_a5 import A5_ALGORITHMS, select_winners
 
@@ -29,65 +20,29 @@ FIELDS = (
     "backend_selection", "backend_num_timeouts", "relative_runtime",
     "num_invariant_requested", "num_invariant_successful",
 )
-EXPECTED_SEEDS_PER_POLARITY = 5
+SEEDS_PER_POLARITY = 5
 
 
-def read_invariant_cells(path: Path) -> list[dict[str, Any]]:
-    rows = read_csv(
-        path,
-        (
-            "problem",
-            "invariant",
-            "seed",
-            "n",
-            "k",
-            "positive",
-            "runtime_seconds",
-            "status",
-        ),
-    )
-    latest: dict[tuple[str, ...], dict[str, str]] = {}
-    for row in rows:
-        key = tuple(
-            row[field]
-            for field in ("problem", "invariant", "n", "k", "positive", "seed")
-        )
-        latest[key] = row
-
-    grouped: dict[tuple[str, str, int, int], list[dict[str, str]]] = defaultdict(list)
+def read_invariant_cells(path: Path) -> list[dict]:
+    # latest row per key wins; a cell needs all 5 + 5 runs to have succeeded
+    latest = {}
+    for row in read_csv(path):
+        latest[tuple(row[field] for field in ("problem", "invariant", "n", "k", "positive", "seed"))] = row
+    grouped = defaultdict(list)
     for row in latest.values():
-        grouped[
-            (row["problem"], row["invariant"], int(row["n"]), int(row["k"]))
-        ].append(row)
+        grouped[(row["problem"], row["invariant"], int(row["n"]), int(row["k"]))].append(row)
 
     cells = []
     for (problem, invariant, n, k), group in sorted(grouped.items()):
-        positive = [row for row in group if as_bool(row["positive"])]
-        negative = [row for row in group if not as_bool(row["positive"])]
-        complete = (
-            len(positive) == EXPECTED_SEEDS_PER_POLARITY
-            and len(negative) == EXPECTED_SEEDS_PER_POLARITY
-            and all(row["status"] == "success" for row in group)
-        )
-        if not complete:
+        positives = sum(as_bool(row["positive"]) for row in group)
+        runtimes = [as_float(row["runtime_seconds"]) for row in group if row["status"] == "success"]
+        if positives != SEEDS_PER_POLARITY or len(runtimes) != 2 * SEEDS_PER_POLARITY or None in runtimes:
             continue
-        runtimes = [as_float(row["runtime_seconds"]) for row in group]
-        if any(runtime is None for runtime in runtimes):
-            continue
-        values = [runtime for runtime in runtimes if runtime is not None]
-        cells.append(
-            {
-                "problem": problem,
-                "invariant": invariant,
-                "n": n,
-                "k": k,
-                "r": n - k,
-                "mean_seconds": mean(values),
-                "stddev_seconds": stdev(values) if len(values) > 1 else 0.0,
-                "num_requested": len(group),
-                "num_successful": len(values),
-            }
-        )
+        cells.append({
+            "problem": problem, "invariant": invariant, "n": n, "k": k, "r": n - k,
+            "mean_seconds": mean(runtimes), "stddev_seconds": stdev(runtimes),
+            "num_requested": len(group), "num_successful": len(runtimes),
+        })
     return cells
 
 
@@ -95,52 +50,31 @@ def extract(
     invariant_input: Path = INVARIANT_INPUT,
     algorithm_directory: Path = ALGORITHM_DATA_DIR,
     output_file: Path = OUTPUT,
-    algorithm_names: Sequence[str] = A5_ALGORITHMS,
-) -> list[dict[str, Any]]:
-    invariant_cells = read_invariant_cells(invariant_input)
-    algorithm_rows = [
-        row
-        for algorithm in algorithm_names
-        for row in load_algorithm(algorithm, algorithm_directory)
-    ]
-    backend_statistics = aggregate_statistics(algorithm_rows)
-    # The comparison baseline is A5's winner, including its timeout fallback: a
-    # backend that only finishes by timing out still bounds what the invariant
-    # has to beat, and dropping those cells would silently hide the region
-    # where invariants matter most.
+    algorithm_names=A5_ALGORITHMS,
+) -> list[dict]:
+    algorithm_rows = [row for algorithm in algorithm_names for row in load_algorithm(algorithm, algorithm_directory)]
+    # the baseline is A5's winner, including timeout fallbacks
     backends = {
         (winner["problem"], winner["n"], winner["k"]): winner
-        for winner in select_winners(backend_statistics)
+        for winner in select_winners(aggregate_statistics(algorithm_rows))
     }
-
     output = []
-    for invariant_cell in invariant_cells:
-        key = (
-            invariant_cell["problem"],
-            invariant_cell["n"],
-            invariant_cell["k"],
-        )
-        backend = backends.get(key)
-        if (
-            backend is None
-            or not backend["mean_seconds"]
-            or invariant_cell["mean_seconds"] is None
-        ):
+    for cell in read_invariant_cells(invariant_input):
+        backend = backends.get((cell["problem"], cell["n"], cell["k"]))
+        if backend is None or not backend["mean_seconds"]:
             continue
         output.append({
-            "problem": invariant_cell["problem"],
-            "invariant": invariant_cell["invariant"],
-            "n": invariant_cell["n"], "k": invariant_cell["k"],
-            "r": invariant_cell["r"],
-            "invariant_mean_seconds": invariant_cell["mean_seconds"],
-            "invariant_stddev_seconds": invariant_cell["stddev_seconds"],
+            "problem": cell["problem"], "invariant": cell["invariant"],
+            "n": cell["n"], "k": cell["k"], "r": cell["r"],
+            "invariant_mean_seconds": cell["mean_seconds"],
+            "invariant_stddev_seconds": cell["stddev_seconds"],
             "backend_algorithm": backend["winner"],
             "backend_mean_seconds": backend["mean_seconds"],
             "backend_selection": backend["selection"],
             "backend_num_timeouts": backend["winner_num_timeouts"],
-            "relative_runtime": invariant_cell["mean_seconds"] / backend["mean_seconds"],
-            "num_invariant_requested": invariant_cell["num_requested"],
-            "num_invariant_successful": invariant_cell["num_successful"],
+            "relative_runtime": cell["mean_seconds"] / backend["mean_seconds"],
+            "num_invariant_requested": cell["num_requested"],
+            "num_invariant_successful": cell["num_successful"],
         })
     write_csv(output_file, output, FIELDS)
     return output
