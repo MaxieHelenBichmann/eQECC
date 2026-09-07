@@ -1,20 +1,12 @@
-"""Choose the fastest completed algorithm with no memory or general errors, with a timeout-only fallback."""
+"""Fastest algorithm per cell (A5)."""
 
 from __future__ import annotations
 
-from collections import defaultdict
-from collections.abc import Sequence
-from pathlib import Path
 import sys
-from typing import Any
+from collections import defaultdict
+from pathlib import Path
 
-from paper.experiments.common import (
-    ALGORITHM_DATA_DIR,
-    RESULTS_DIR,
-    aggregate_statistics,
-    load_algorithm,
-    write_csv,
-)
+from paper.experiments.common import ALGORITHM_DATA_DIR, RESULTS_DIR, aggregate_statistics, load_algorithm, write_csv
 
 A5_ALGORITHMS = (
     "pm_stb_aut",
@@ -43,60 +35,33 @@ METHOD_FIELDS = (
 WINNER_FIELDS = (
     "problem", "n", "k", "r", "winner", "mean_seconds", "runner_up",
     "runner_up_mean_seconds", "speed_ratio", "num_eligible_algorithms",
-    "selection", "winner_num_timeouts",
-    "excluded_algorithms",
+    "selection", "winner_num_timeouts", "excluded_algorithms",
 )
 
 
-def timeout_candidate(cell: dict[str, Any]) -> bool:
-    """Whether a paired cell failed only by reaching the runtime limit."""
+def timeout_candidate(cell: dict) -> bool:
     return (
         cell["has_positive"]
         and cell["has_negative"]
         and cell["mean_seconds"] is not None
         and cell["num_timeouts"] > 0
         and cell["num_successful"] + cell["num_timeouts"] == cell["num_requested"]
-        and not any(
-            cell[field]
-            for field in (
-                "num_unexpected",
-                "num_memory_limited",
-                "num_errors",
-                "num_generation_errors",
-            )
-        )
+        and not (cell["num_unexpected"] or cell["num_memory_limited"] or cell["num_errors"] or cell["num_generation_errors"])
     )
 
 
-def select_winners(
-    methods: Sequence[dict[str, Any]],
-    missing_algorithms: Sequence[str] = (),
-) -> list[dict[str, Any]]:
-    """Pick the fastest backend per parameter cell, as A5 defines "best".
-
-    A3 pairs invariants against exactly these winners, so the choice lives here
-    rather than being reimplemented against a slightly different rule.
-    """
-    groups: dict[tuple[str, int, int], list[dict[str, Any]]] = defaultdict(list)
+def select_winners(methods, missing_algorithms=()) -> list[dict]:
+    """Lowest mean among the complete methods of a cell; if none completed, among those that failed only by timeout."""
+    groups = defaultdict(list)
     for cell in methods:
         groups[(cell["problem"], cell["n"], cell["k"])].append(cell)
     winners = []
     for (problem, n, k), methods_in_cell in sorted(groups.items()):
-        exclusions = {
-            f"{algorithm} (missing data)"
-            for algorithm in missing_algorithms
-            if algorithm.startswith(f"{problem}_")
-        }
+        exclusions = {f"{algorithm} (missing data)" for algorithm in missing_algorithms if algorithm.startswith(f"{problem}_")}
         exclusions.update(
-            f"{cell['algorithm']} (errors)"
-            for cell in methods_in_cell
-            if cell["num_errors"] or cell["num_generation_errors"]
+            f"{cell['algorithm']} (errors)" for cell in methods_in_cell if cell["num_errors"] or cell["num_generation_errors"]
         )
-        completed = [
-            cell
-            for cell in methods_in_cell
-            if cell["complete"] and cell["mean_seconds"] is not None
-        ]
+        completed = [cell for cell in methods_in_cell if cell["complete"] and cell["mean_seconds"] is not None]
         if completed:
             ordered = sorted(completed, key=lambda cell: cell["mean_seconds"])
             selection = "completed"
@@ -125,21 +90,11 @@ def select_winners(
 def extract(
     algorithm_directory: Path = ALGORITHM_DATA_DIR,
     output_directory: Path = OUTPUT_DIRECTORY,
-    algorithm_names: Sequence[str] = A5_ALGORITHMS,
-) -> list[dict[str, Any]]:
-    missing = [
-        algorithm
-        for algorithm in algorithm_names
-        if not (algorithm_directory / f"{algorithm}.csv").is_file()
-    ]
+    algorithm_names=A5_ALGORITHMS,
+) -> list[dict]:
+    missing = [algorithm for algorithm in algorithm_names if not (algorithm_directory / f"{algorithm}.csv").is_file()]
     if missing:
-        print(
-            "warning: A5 is excluding algorithms with missing collected data: "
-            f"{', '.join(missing)}; run paper.benchmarks.collect_algorithm "
-            "for those methods (pm_stb_aut additionally requires GAP + Guava)",
-            file=sys.stderr,
-            flush=True,
-        )
+        print(f"warning: A5 is excluding algorithms with missing collected data: {', '.join(missing)}", file=sys.stderr)
     rows = [
         row
         for algorithm in algorithm_names
@@ -147,11 +102,7 @@ def extract(
         for row in load_algorithm(algorithm, algorithm_directory)
     ]
     if not rows:
-        paths = ", ".join(str(algorithm_directory / f"{name}.csv") for name in missing)
-        raise FileNotFoundError(
-            f"missing all A5 collected data files: {paths}; run "
-            "python3 -m paper.benchmarks.collect_algorithm first"
-        )
+        raise FileNotFoundError(f"no A5 collected data in {algorithm_directory}")
     methods = aggregate_statistics(rows)
     winners = select_winners(methods, missing)
     write_csv(output_directory / "by_method.csv", methods, METHOD_FIELDS)
