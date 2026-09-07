@@ -282,20 +282,6 @@ def preserved_punctured_hull_weight_enumerator(c1: np.ndarray, c2: np.ndarray) -
 # algorithms
 # ----------------------------------------------------------------------------------------------------
 
-def _bruteforce(c1: np.ndarray, c2: np.ndarray) -> tuple[bool, str]:
-    """p_stab_bruteforce.py"""
-    print("BF")
-    c1_rank = _rank(c1)
-    n = c1.shape[1] // 2
-
-    for perm in permutations(range(n)):
-        perm_symplectic = perm + tuple(q + n for q in perm)
-
-        if c1_rank == _rank(np.vstack([c1, c2[:, perm_symplectic]])):
-            return True, "BF"
-
-    return False, "BF"
-
 def _sat(c1: np.ndarray, partition1: dict[tuple[int, ...], list[int]], c2: np.ndarray, partition2: dict[tuple[int, ...], list[int]]) -> tuple[bool, str]:
     """p_stab_sat.py"""
     print("SAT")
