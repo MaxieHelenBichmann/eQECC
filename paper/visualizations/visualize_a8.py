@@ -5,11 +5,14 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
+from collections import Counter
+
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
+from matplotlib.offsetbox import AnnotationBbox, HPacker, TextArea, VPacker
 from matplotlib.patches import Rectangle
 
-from paper.experiments.extract_a8 import CODE_ORDER, PROBLEMS
+from paper.experiments.extract_a8 import CODE_ORDER, PROBLEMS, STAGES
 from paper.visualizations.common import (
     COLOR_PAPER_GRAY_DARK, COLOR_PAPER_GRAY_LIGHT, COLOR_PAPER_GRAY_VERY_LIGHT,
     COLOR_PAPER_GRAY_VERY_VERY_DARK, COLOR_PAPER_WHITE, RESULTS_DIR, RUNTIME_CMAP,
@@ -28,11 +31,13 @@ STAGE_LEGEND = (
     ("SAT", "SAT solver"), ("LSE", "graph-state LSE"),
 )
 REQUIRED = (
-    "problem", "code", "code_label", "positive", "mean_seconds", "primary_decider",
-    "primary_decider_count", "secondary_decider", "secondary_decider_count", "num_cases",
-    "num_timeouts", "num_memory_limited", "num_errors", "num_unexpected",
+    "problem", "code", "code_label", "positive", "mean_seconds", "deciders", "stuck_at",
+    "num_cases", "num_memory_limited", "num_errors", "num_unexpected",
     "num_generation_errors", "timeout_seconds",
 )
+#: (label size, count size) of the winner line and the runner-up line.
+WINNER_SIZES = (7.4, 4.6)
+RUNNER_UP_SIZES = (5.6, 4.0)
 
 
 def _text_color(color: Any) -> str:
@@ -43,6 +48,29 @@ def _text_color(color: Any) -> str:
 def _failures(row: dict[str, str]) -> int:
     return sum(int(row[field] or 0) for field in
                ("num_memory_limited", "num_errors", "num_unexpected", "num_generation_errors"))
+
+
+def _stages(row: dict[str, str]) -> list[tuple[str, int]]:
+    """Merge deciding and stuck-in stages, most frequent first, ties in pipeline order.
+
+    A killed run never prints a decision, so its stage only appears in ``stuck_at``;
+    counting both columns is what gives timed-out cells a label at all.
+    """
+    counts: Counter[str] = Counter()
+    for column in ("deciders", "stuck_at"):
+        for entry in filter(None, row[column].split(";")):
+            stage, count = entry.rsplit(":", 1)
+            counts[stage] += int(count)
+    order = {stage: index for index, stage in enumerate(STAGES)}
+    return sorted(counts.items(), key=lambda item: (-item[1], order.get(item[0], len(order))))
+
+
+def _stage_line(stage: str, count: int, total: int, sizes: tuple[float, float],
+                color: str, *, bold: bool) -> HPacker:
+    label = TextArea(stage, textprops={"fontsize": sizes[0], "color": color,
+                                       "fontweight": "bold" if bold else "normal"})
+    share = TextArea(f"{count}/{total}", textprops={"fontsize": sizes[1], "color": color})
+    return HPacker(children=[label, share], align="baseline", pad=0, sep=2.2)
 
 
 def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
@@ -59,7 +87,7 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
     use_style()
     figure = plt.figure(figsize=(11.4, max(6.4, 0.39 * len(codes) + 1.9)))
     ax = figure.add_axes([0.035, 0.055, 0.78, 0.88])
-    code_width, cell_width, header_rows = 3.0, 1.08, 2
+    code_width, cell_width, header_rows = 1.7, 1.08, 2
     columns = [(problem, positive) for problem in PROBLEMS for positive, _ in LABELS]
     total_width = code_width + len(columns) * cell_width
     total_height = header_rows + len(codes)
@@ -88,32 +116,30 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
             cell = cells.get((code, problem, positive))
             runtime = float(cell["mean_seconds"]) if cell and cell["mean_seconds"] else None
             color = RUNTIME_CMAP(norm(runtime)) if runtime else COLOR_PAPER_GRAY_VERY_LIGHT
-            timeouts = int(cell["num_timeouts"] or 0) if cell else 0
             failures = _failures(cell) if cell else 0
-            box(x, y, cell_width, 1, color, hatch="///" if timeouts or failures else None)
-            if cell is None:
-                text, note = "N/A", ""
-            else:
-                text = cell["primary_decider"] or "—"
-                if cell["secondary_decider"]:
-                    text += f" ({cell['secondary_decider']} {cell['secondary_decider_count']})"
-                note = " ".join(part for part in (
-                    f"t{timeouts}" if timeouts else "", f"f{failures}" if failures else "",
-                    f"/{cell['num_cases']}",
-                ) if part)
+            box(x, y, cell_width, 1, color, hatch="///" if failures else None)
             text_color = _text_color(color)
-            ax.text(x + cell_width / 2, y + (0.40 if note else 0.5), text, ha="center",
-                    va="center", fontsize=6.6, fontweight="bold", color=text_color)
-            if note:
-                ax.text(x + cell_width / 2, y + 0.72, note, ha="center", va="center",
-                        fontsize=5.3, color=text_color)
+            if cell is None:
+                ax.text(x + cell_width / 2, y + 0.5, "N/A", ha="center", va="center",
+                        fontsize=6.6, fontweight="bold", color=text_color)
+                continue
+            stages, total = _stages(cell), int(cell["num_cases"])
+            lines = [_stage_line(stage, count, total, sizes, text_color, bold=index == 0)
+                     for index, ((stage, count), sizes)
+                     in enumerate(zip(stages[:2], (WINNER_SIZES, RUNNER_UP_SIZES)))]
+            if not lines:
+                lines = [_stage_line("\u2014", 0, total, WINNER_SIZES, text_color, bold=True)]
+            ax.add_artist(AnnotationBbox(
+                VPacker(children=lines, align="center", pad=0, sep=1.6),
+                (x + cell_width / 2, y + 0.5), frameon=False, pad=0, box_alignment=(0.5, 0.5),
+            ))
 
     ax.add_patch(Rectangle((0, 0), total_width, total_height, facecolor="none",
                            edgecolor=COLOR_PAPER_GRAY_VERY_VERY_DARK, linewidth=0.7))
     ax.set_xlim(0, total_width)
     ax.set_ylim(total_height, 0)
     ax.axis("off")
-    figure.suptitle("A8 Hybrid Runtime and Deciding Stage", x=0.43, y=0.98, fontsize=12)
+    figure.suptitle("Hybrid Runtime and Deciding Stage", x=0.43, y=0.98, fontsize=12)
 
     bar = figure.colorbar(scalar_mappable(RUNTIME_CMAP, norm),
                           cax=figure.add_axes([0.855, 0.72, 0.021, 0.16]))
@@ -125,8 +151,8 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
     legend_ax.axis("off")
     legend_ax.text(0, 1.0, "Deciding stage", ha="left", va="top", fontsize=9, fontweight="bold")
     lines = [f"{tag:<4} {label}" for tag, label in STAGE_LEGEND]
-    lines += ["", "(X n) second most frequent stage", "t#   timeouts", "f#   other failures",
-              "/#   instances", "///  cell has a timeout/failure", "N/A  PM-CSS on non-CSS code"]
+    lines += ["", "X a/b   stage X ended a of b runs", "        (decided or hit the budget)",
+              "line 1  most frequent stage", "line 2  second most frequent"]
     legend_ax.text(0, 0.95, "\n".join(lines), ha="left", va="top", fontsize=6.7,
                    linespacing=1.35, family="monospace", color="#202020")
     return save_png(figure, output_file)
