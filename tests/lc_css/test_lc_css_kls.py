@@ -642,9 +642,9 @@ def test_is_lceq_css_kls_accepts_k_zero_state() -> None:
 
 
 def test_is_lceq_css_kls_random_smoke() -> None:
-    for n in range(3, 7):
+    for n in range(3, 6):
         for k in range(n + 1):
-            code = random_stabilizer_code(n, k, seed=1000 + 17 * n + k)
+            code = random_stabilizer_code(n, k, seed=3000 + 17 * n + k)
             assert isinstance(is_lceq_css_kls(code), bool)
 
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(5)])

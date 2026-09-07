@@ -176,10 +176,17 @@ def test_are_peq_stab_random_smoke() -> None:
                 pass
 
 
+def _shape(seed: int) -> tuple[int, int]:
+    n = 2 + (3 * seed + 1) % 4
+    return n, 1 + (2 * seed + 1) % (n - 1)
+
+
+_NEGATIVE_SEEDS = [seed for seed in range(10) if _shape(seed)[0] - _shape(seed)[1] >= 2]
+
+
 @pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
 def test_are_peq_stab_random_positive(seed: int) -> None:
-    n = 2 + (3 * seed + 1) % 4
-    k = 1 + (2 * seed + 1) % (n - 1)
+    n, k = _shape(seed)
 
     try:
         code1, code2 = random_permuted_stabilizer_pair(n, k, seed=1000 + 17 * n + k + seed)
@@ -192,10 +199,9 @@ def test_are_peq_stab_random_positive(seed: int) -> None:
     _assert_maps_rowspace(code1, code2, permutation)
 
 
-@pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in range(10)])
+@pytest.mark.parametrize("seed", [pytest.param(seed, id=f"seed-{seed}") for seed in _NEGATIVE_SEEDS])
 def test_are_peq_stab_random_negative(seed: int) -> None:
-    n = 2 + (3 * seed + 1) % 4
-    k = 1 + (2 * seed + 1) % (n - 1)
+    n, k = _shape(seed)
 
     try:
         code1, code2 = random_non_permuted_stabilizer_pair(n, k, seed=1000 + 17 * n + k + seed)

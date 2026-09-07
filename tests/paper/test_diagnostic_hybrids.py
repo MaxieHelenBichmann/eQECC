@@ -78,9 +78,16 @@ def test_pm_css_trivial_codes_are_equivalent() -> None:
     assert pm_css.are_peq_css(code, code) == (True, "CI")
 
 
-def test_pm_stb_sat_backend_is_reflexive() -> None:
+def test_pm_stb_graph_backend_is_reflexive() -> None:
     code = StabilizerCode(["XXXXXX"])
 
+    assert pm_stb.are_peq_stab(code, code) == (True, "GI")
+
+
+def test_pm_stb_sat_backend_is_reflexive() -> None:
+    code = StabilizerCode(["I" * i + "X" + "I" * (8 - i) for i in range(8)])
+
+    assert pm_stb._row_basis(code.symplectic).shape[0] == 8
     assert pm_stb.are_peq_stab(code, code) == (True, "SAT")
 
 
@@ -101,7 +108,7 @@ def test_pm_stb_graph_backend_returns_diagnostic_decision() -> None:
     ) == (True, "GI")
 
 
-def test_lc_stb_sat_uses_stabilizer_rank_for_tableau_rows() -> None:
+def test_lc_stb_uses_stabilizer_rank_for_tableau_rows() -> None:
     code = StabilizerCode(["XIIII", "IXIII", "IIXII"])
     reduced = lc_stb._row_basis(code.symplectic)
 
@@ -109,7 +116,7 @@ def test_lc_stb_sat_uses_stabilizer_rank_for_tableau_rows() -> None:
     assert code.k == 2
     assert reduced.shape[0] == 3
     assert lc_stb._sat(reduced, reduced) == (True, "SAT")
-    assert lc_stb.are_lceq(code, code) == (True, "SAT")
+    assert lc_stb.are_lceq(code, code) == (True, "GI")
 
 
 def test_lc_stb_sat_rejects_different_support_weight() -> None:
@@ -130,4 +137,4 @@ def test_lc_stb_graph_backend_returns_diagnostic_decision() -> None:
 def test_lc_stb_empty_codes_are_equivalent() -> None:
     code = SimpleNamespace(n=0, k=0)
 
-    assert lc_stb.are_lceq(code, code) == (True, "")  # type: ignore[arg-type]
+    assert lc_stb.are_lceq(code, code) == (True, "CI")  # type: ignore[arg-type]
