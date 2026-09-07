@@ -1,36 +1,23 @@
-"""Collect raw SAT decision statistics for the A7 CSS-structure experiment.
+"""Collect z3 decision counts for the SAT encodings on CSS structure (A7).
 
-For each configured ``(n, k, seed)``, the first part generates positive pairs
-for four conditions: 
-    unrestricted general stabilizer codes (A), 
-    general codes with two actual but hidden row-operation blocks (B1), 
-    the same B1 pair with the two blocks exposed as ``R1`` and ``R2`` (B2), 
-    and balanced CSS codes with independent ``Rx`` and ``Rz`` (C). 
-    
-Both B2 blocks contain X and Z information, whereas each C block sees only one Pauli component. 
+Experiment 1 builds positive pairs in four conditions: unrestricted general
+codes (A), general codes whose row transformation has two hidden blocks (B1),
+the same pairs with both blocks exposed to the encoding (B2), and balanced CSS
+codes with independent Rx and Rz (C). Besides the plain solve, each condition
+is solved again with a few qubit mappings forced off the known witness
+permutation, which measures how long a wrong mapping survives before UNSAT.
+Experiment 2 solves clean CSS tableaus and fully row-mixed presentations of the
+same stabilizer groups, both with the tableau encoding.
 
-In addition to the ordinary positive solve, fresh formulas force mappings outside the known witness
-permutation. UNSAT decision counts measure how long these wrong mappings survive before contradiction. 
-
-The second part compares clean (separated) CSS tableaus with independently row-mixed presentations 
-of the same stabilizer groups. Both are solved with the full-tableau encoding, so
-this isolates the effect of hiding the CSS generator split through invertible row transformations.
-
-Every solve is appended immediately to
-``paper/data/collected/a7_sat_css_structure.csv``. Practical feasibility
-(runtime and memory consumption) is not important here, so it can be run on any platform.
-Restarting skips keys already present, while the A7 extractor performs all
-aggregation later.
+Rows are appended to a7_sat_css_structure.csv and existing keys are skipped on
+restart.
 """
 
 from __future__ import annotations
 
-import argparse
-import csv
 import hashlib
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from pathlib import Path
 from time import perf_counter
 from typing import Any
 
@@ -44,16 +31,14 @@ from benchmarks.experiments.utils import (
     random_css_code,
     random_stabilizer_code,
 )
+from paper.benchmarks.common import COLLECTED_DIR, MASTER_SEED, append_row, completed_keys
 from src.algorithms.p_css.p_css_sat import _build_peq_css_sat_solver
 from src.algorithms.p_stb.p_stab_sat import _build_peq_stab_sat_solver
 from src.core.css_code import CSSCode
 from src.core.pauli import StabilizerTableau
 from src.core.stabilizer_code import StabilizerCode
 
-ROOT = Path(__file__).resolve().parents[2]
-OUTPUT = ROOT / "paper" / "data" / "collected" / "a7_sat_css_structure.csv"
-
-MASTER_SEED = 42
+OUTPUT = COLLECTED_DIR / "a7_sat_css_structure.csv"
 K = 2
 NUM_SAMPLES = 10
 NUM_PROBES = 3
@@ -114,30 +99,7 @@ class Condition:
     probe_mappings: bool
 
 
-def _append_csv_row(path: Path, row: Mapping[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    write_header = not path.exists() or path.stat().st_size == 0
-    with path.open("a", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=RAW_FIELDS)
-        if write_header:
-            writer.writeheader()
-        writer.writerow(row)
-
-
-def _completed_keys(path: Path) -> set[tuple[str, ...]]:
-    if not path.is_file() or path.stat().st_size == 0:
-        return set()
-    with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        missing = set(KEY_FIELDS) - set(reader.fieldnames or ())
-        if missing:
-            raise ValueError(
-                f"{path} has an obsolete schema; missing {sorted(missing)}"
-            )
-        return {tuple(row[field] for field in KEY_FIELDS) for row in reader}
-
-
-def _row_key(row: Mapping[str, Any]) -> tuple[str, ...]:
+def _row_key(row) -> tuple[str, ...]:
     return tuple(str(row[field]) for field in KEY_FIELDS)
 
 
@@ -393,11 +355,6 @@ def _experiment2_conditions(n: int, k: int, seed: int) -> list[Condition]:
     ]
 
 
-def _solver_statistics(solver: z3.Solver) -> dict[str, int | float]:
-    statistics = solver.statistics()
-    return {key: statistics.get_key_value(key) for key in statistics.keys()}
-
-
 def _measure(
     condition: Condition,
     *,
@@ -421,7 +378,8 @@ def _measure(
     solve_start = perf_counter()
     result = solver.check()
     solve_seconds = perf_counter() - solve_start
-    statistics = _solver_statistics(solver)
+    z3_statistics = solver.statistics()
+    statistics = {key: z3_statistics.get_key_value(key) for key in z3_statistics.keys()}
     timed_out = result == z3.unknown and solver.reason_unknown() == "timeout"
     r = n - k
     rx = r // 2
@@ -478,7 +436,7 @@ def _collect_conditions(
     k: int,
     probes: int,
     timeout_seconds: float,
-    output: Path,
+    output,
     completed: set[tuple[str, ...]],
     verbose: bool,
 ) -> None:
@@ -517,7 +475,7 @@ def _collect_conditions(
                 source=source,
                 target=target,
             )
-            _append_csv_row(output, row)
+            append_row(output, row, RAW_FIELDS)
             completed.add(_row_key(row))
             if verbose:
                 print(
@@ -528,78 +486,22 @@ def _collect_conditions(
                 )
 
 
-def collect(
-    *,
-    experiment1_n: Sequence[int] = EXPERIMENT1_N,
-    experiment2_n: Sequence[int] = EXPERIMENT2_N,
-    k: int = K,
-    samples: int = NUM_SAMPLES,
-    probes: int = NUM_PROBES,
-    master_seed: int = MASTER_SEED,
-    timeout_seconds: float = TIMEOUT_SECONDS,
-    output: Path = OUTPUT,
-    verbose: bool = VERBOSE,
-) -> None:
-    if samples < 1 or probes < 0 or timeout_seconds <= 0:
-        raise ValueError("samples and timeout must be positive; probes cannot be negative")
-    completed = _completed_keys(output)
+def collect() -> None:
+    completed = completed_keys(OUTPUT, KEY_FIELDS)
     experiments = (
-        (EXPERIMENT1, experiment1_n, _experiment1_conditions),
-        (EXPERIMENT2, experiment2_n, _experiment2_conditions),
+        (EXPERIMENT1, EXPERIMENT1_N, _experiment1_conditions),
+        (EXPERIMENT2, EXPERIMENT2_N, _experiment2_conditions),
     )
-    for experiment, ns, factory in experiments:
+    for experiment, ns, conditions in experiments:
         for n in ns:
-            if not 0 <= k <= n - 2:
-                raise ValueError(f"require 0 <= k <= n-2, got [[{n},{k}]]")
-            if experiment == EXPERIMENT1 and (n - k) % 2:
-                raise ValueError(
-                    f"Experiment 1 requires balanced CSS ranks; n-k must be even, "
-                    f"got [[{n},{k}]]"
-                )
-            for sample in range(samples):
-                seed = _sample_seed(master_seed, experiment, n, sample)
+            for sample in range(NUM_SAMPLES):
+                seed = _sample_seed(MASTER_SEED, experiment, n, sample)
                 _collect_conditions(
-                    factory(n, k, seed),
-                    sample=sample,
-                    seed=seed,
-                    n=n,
-                    k=k,
-                    probes=probes,
-                    timeout_seconds=timeout_seconds,
-                    output=output,
-                    completed=completed,
-                    verbose=verbose,
+                    conditions(n, K, seed), sample=sample, seed=seed, n=n, k=K,
+                    probes=NUM_PROBES, timeout_seconds=TIMEOUT_SECONDS, output=OUTPUT,
+                    completed=completed, verbose=VERBOSE,
                 )
-
-
-def _parse_args(argv: Sequence[str] | None = None) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--experiment1-n", nargs="+", type=int, default=EXPERIMENT1_N
-    )
-    parser.add_argument(
-        "--experiment2-n", nargs="+", type=int, default=EXPERIMENT2_N
-    )
-    parser.add_argument("--k", type=int, default=K)
-    parser.add_argument("--samples", type=int, default=NUM_SAMPLES)
-    parser.add_argument("--probes", type=int, default=NUM_PROBES)
-    parser.add_argument("--seed", type=int, default=MASTER_SEED)
-    parser.add_argument("--timeout", type=float, default=TIMEOUT_SECONDS)
-    parser.add_argument("--output", type=Path, default=OUTPUT)
-    parser.add_argument("--quiet", action="store_true")
-    return parser.parse_args(argv)
 
 
 if __name__ == "__main__":
-    arguments = _parse_args()
-    collect(
-        experiment1_n=arguments.experiment1_n,
-        experiment2_n=arguments.experiment2_n,
-        k=arguments.k,
-        samples=arguments.samples,
-        probes=arguments.probes,
-        master_seed=arguments.seed,
-        timeout_seconds=arguments.timeout,
-        output=arguments.output,
-        verbose=not arguments.quiet,
-    )
+    collect()

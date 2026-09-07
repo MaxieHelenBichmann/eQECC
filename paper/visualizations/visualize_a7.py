@@ -1,15 +1,14 @@
-"""Render A7 as two decision-count tables."""
+"""Decision-count tables of both experiments (A7)."""
 
 from __future__ import annotations
 
-import argparse
 from pathlib import Path
-from typing import Any
 
 import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
 
 from paper.experiments.extract_a7 import EXPERIMENT1, EXPERIMENT2
+from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.visualizations.common import (
     COLOR_PAPER_BLUE,
     COLOR_PAPER_GRAY_DARK,
@@ -19,8 +18,6 @@ from paper.visualizations.common import (
     COLOR_PAPER_GRAY_VERY_VERY_DARK,
     COLOR_PAPER_LIGHT_BLUE,
     COLOR_PAPER_WHITE,
-    RESULTS_DIR,
-    load_rows,
     save_png,
     use_style,
 )
@@ -29,17 +26,8 @@ INPUT = RESULTS_DIR / "a7" / "by_cell.csv"
 OUTPUT = RESULTS_DIR / "a7" / "a7.png"
 CONDITIONS = ("A", "B1", "B2", "C")
 
-REQUIRED = (
-    "experiment",
-    "condition",
-    "n",
-    "r",
-    "median_base_decisions",
-    "median_invalid_mapping_decisions",
-)
 
-
-def _format_decisions(value: str | int | float | None) -> str:
+def _format_decisions(value) -> str:
     if value is None or str(value).strip() == "":
         return "—"
     number = float(value)
@@ -49,7 +37,7 @@ def _format_decisions(value: str | int | float | None) -> str:
 
 
 def _cell(
-    ax: Any,
+    ax,
     x: float,
     y: float,
     width: float,
@@ -83,7 +71,7 @@ def _cell(
     )
 
 
-def _finish_table(ax: Any, total_height: float) -> None:
+def _finish_table(ax, total_height: float) -> None:
     ax.add_patch(
         Rectangle(
             (0, 0),
@@ -99,15 +87,13 @@ def _finish_table(ax: Any, total_height: float) -> None:
     ax.axis("off")
 
 
-def _render_experiment1(ax: Any, rows: list[dict[str, str]]) -> None:
+def _render_experiment1(ax, rows) -> None:
     cells = {
         (int(row["n"]), row["condition"]): row
         for row in rows
         if row["experiment"] == EXPERIMENT1
     }
     ns = sorted({n for n, _ in cells})
-    if not ns:
-        raise ValueError("A7 extraction contains no Experiment-1 rows")
 
     widths = (0.10, 0.10, 0.12, 0.28, 0.40)
     positions = [0.0]
@@ -132,17 +118,13 @@ def _render_experiment1(ax: Any, rows: list[dict[str, str]]) -> None:
 
     y = header_height
     for group, n in enumerate(ns):
-        group_rows = [cells.get((n, condition)) for condition in CONDITIONS]
-        if any(row is None for row in group_rows):
-            raise ValueError(f"A7 Experiment 1 is incomplete for n={n}")
+        group_rows = [cells[(n, condition)] for condition in CONDITIONS]
         base_color = (
             COLOR_PAPER_GRAY_VERY_LIGHT
             if group % 2 == 0
             else COLOR_PAPER_GRAY_LIGHT
         )
         group_height = len(CONDITIONS) * row_height
-        first_row = group_rows[0]
-        assert first_row is not None
         _cell(
             ax,
             positions[0],
@@ -158,11 +140,10 @@ def _render_experiment1(ax: Any, rows: list[dict[str, str]]) -> None:
             y,
             widths[1],
             group_height,
-            first_row["r"],
+            group_rows[0]["r"],
             facecolor=base_color,
         )
         for index, row in enumerate(group_rows):
-            assert row is not None
             row_y = y + index * row_height
             row_color = COLOR_PAPER_LIGHT_BLUE if row["condition"] == "C" else base_color
             text_color = COLOR_PAPER_BLUE if row["condition"] == "C" else "#202020"
@@ -195,15 +176,13 @@ def _render_experiment1(ax: Any, rows: list[dict[str, str]]) -> None:
     )
 
 
-def _render_experiment2(ax: Any, rows: list[dict[str, str]]) -> None:
+def _render_experiment2(ax, rows) -> None:
     cells = {
         (int(row["n"]), row["condition"]): row
         for row in rows
         if row["experiment"] == EXPERIMENT2
     }
     ns = sorted({n for n, _ in cells})
-    if not ns:
-        raise ValueError("A7 extraction contains no Experiment-2 rows")
 
     widths = (0.18, 0.18, 0.32, 0.32)
     positions = [0.0]
@@ -256,10 +235,7 @@ def _render_experiment2(ax: Any, rows: list[dict[str, str]]) -> None:
 
     y = 2 * header_height
     for index, n in enumerate(ns):
-        clean = cells.get((n, "clean"))
-        mixed = cells.get((n, "mixed"))
-        if clean is None or mixed is None:
-            raise ValueError(f"A7 Experiment 2 is incomplete for n={n}")
+        clean, mixed = cells[(n, "clean")], cells[(n, "mixed")]
         color = (
             COLOR_PAPER_GRAY_VERY_LIGHT
             if index % 2 == 0
@@ -293,7 +269,7 @@ def _render_experiment2(ax: Any, rows: list[dict[str, str]]) -> None:
 
 
 def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
-    rows = load_rows(input_file, REQUIRED)
+    rows = read_csv(input_file)
     use_style()
     figure = plt.figure(figsize=(12.4, 7.0))
     experiment1_ax = figure.add_axes([0.045, 0.31, 0.61, 0.56])
@@ -325,8 +301,4 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input-file", type=Path, default=INPUT)
-    parser.add_argument("--output", type=Path, default=OUTPUT)
-    arguments = parser.parse_args()
-    render(arguments.input_file, arguments.output)
+    render()
