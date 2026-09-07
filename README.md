@@ -2,9 +2,11 @@
 
 This repository benchmarks different approaches to equivalence checking for quantum error-correcting codes (QECCs) under different equivalence notions. It is part of the implementation for my Bachelor's thesis, "Automated Equivalence Checking of Stabilizer Codes", which contributes to [MQT QECC](https://github.com/munich-quantum-toolkit/qecc). The required infrastructure and code representation classes are taken from that project.
 
-This README does not discuss the examined equivalence notions or their theoretical foundations in depth; those are covered in the thesis. References for the implemented algorithms are cited in the corresponding source files.
+Additionally, it functions as a replication package for data and methodology in the paper "Methods for Automated Equivalence Checking of Stabilizer Codes", which is written on the basis of my thesis.
 
-This repository is currently not intended to be installed as a package, or be a professionally polished replication package. Its final hybrid algorithms are contributed to [MQT QECC](https://github.com/munich-quantum-toolkit/qecc).
+This README does not discuss the examined equivalence notions or their theoretical foundations in depth; those are covered in the thesis or paper. References for the implemented algorithms are cited in the corresponding source files.
+
+This repository is currently not intended to be installed as a package. Its final hybrid algorithms are contributed to [MQT QECC](https://github.com/munich-quantum-toolkit/qecc).
 
 ## Problems
 
@@ -123,11 +125,11 @@ $$
 
 ## Scope
 
-Here, a benchmark measures the runtime of the Python algorithms on the expected workload: input codes $[[n,k,d]]$ with $n$ ranging from 2 to approximately 50, plus some larger structured cases.
+Here, we measure the runtime of the Python algorithms on the expected workload: input codes $[[n,k,d]]$ with $n$ ranging from 2 to approximately 50, plus some larger structured cases.
 
 This repository is not currently intended for detailed benchmarking or profiling analyses.[^1] The goal is to understand the algorithms' different complexity classes and make a more informed decision about the hybrid implementations.
 
-Inputs are guaranteed to be valid, so the core algorithms do not need to verify basic validity conditions. Simple and more involved invariants for the different equivalence notions are collected separately.
+Inputs are guaranteed to be valid and of same dimensions, so the prototype and hybrid algorithms in do not need to verify basic validity conditions.
 
 [^1]: A future C++ implementation could support more rigorous benchmarks, but that is currently outside the scope of the thesis.
 
@@ -185,108 +187,40 @@ results/             # plotting tools; generated result artifacts are ignored by
 paper/               # replication package for the subsequent paper 
 ```
 
-## Running the benchmarks
+## Running the Thesis Benchmarks
 
-Requires Linux or macOS with a C compiler and Python 3.13 or newer; Python 3.13
-is the tested version in CI and for the paper replication package. The
-compiler is needed because `pynauty` is built from source on these versions;
-Windows is not supported by `pynauty` and by the benchmark supervision.
-The project is managed with [uv](https://docs.astral.sh/uv/). Create the
-environment with the exact locked dependencies first:
+The project is managed with [uv](https://docs.astral.sh/uv/). Create the environment with the exact locked dependencies first:
 
 ```bash
 uv sync
 ```
 
-This creates `.venv` from `uv.lock`. Every command below runs inside that
-environment, either with `uv run <command>` or after `source .venv/bin/activate`.
+This creates virtual environment, which every command below runs inside, either with `uv run <command>` or after `source .venv/bin/activate`.
 
-The benchmark infrastructure has four layers:
+The benchmark infrastructure offers resource-restriction and measurement infrastructure (`benchmarks.experiments.run.run(...)` `benchmarks.experiments.statistics.run_statistics(...)`). 
 
-- `benchmarks.experiments.run.run(...)` executes exactly one function call. The caller
-  supplies the function, positional inputs, exact expected value, timeout, and
-  memory limit. Its `RunResult` separately reports runtime, whether the result
-  matched, timeout, memory exhaustion, and any other execution error.
-- `benchmarks.experiments.statistics.run_statistics(...)` accepts an algorithm, a seeded
-  generator, a master seed, number of seeds, and output file. It derives
-  distinct seeds deterministically and appends one aggregate row, including a
-  CSV header when the file is empty.
-- `benchmarks.thesis.thesis_prototypes` is the user-facing CLI for random cases and
-  prototype algorithms.
-- `benchmarks.thesis.thesis_hybrids` and
-  `benchmarks.thesis.thesis_invariants` own the
-  structured hybrid and fixed invariant suites, respectively.
+The thesis benchmarks (`benchmarks.thesis.thesis_prototypes`, `benchmarks.thesis.thesis_hybrids`, `benchmarks.thesis.thesis_invariants` ) are rather extensive and customizable, meant to provide a whole picture of the practical performance of prototype implementations, hybrids and invariants.
 
-Run a random prototype benchmark from the repository root:
+For example, running a random prototype benchmark from the repository root:
 
 ```bash
 python3 -m benchmarks.thesis.thesis_prototypes \
   --algorithm pm_css_sat --nmin 5 --nmax 8 \
+  --timeout 200 --memory-limit 4GiB \
   --nr-seeds 10 --output results/pm_css_sat_random.csv
 ```
 
-`--algorithm` is repeatable and accepts exact names, shell wildcards, or regular
-expressions. `--nmin` and `--nmax` select the inclusive randomized parameter
-range. Raw-case benchmarking has been removed.
-
-Two optional resource guards are available:
-
-- `--timeout` limits the execution time of each repeat in seconds.
-- `--memory-limit` limits the memory available to each benchmark child process. Accepted forms include `4096M`, `32G`, and `16GiB`.
-
-Common parameters include `--output`, `--seed`, `--nr-seeds`, and `--verbose`.
-Statistics files are append-only, so separate invocations can intentionally
-contribute rows to the same file. For example:
-
-```bash
-python3 -m benchmarks.thesis.thesis_prototypes \
-  --algorithm pm_css_bruteforce --algorithm lc_stb_lse \
-  --seed 69 --nmin 3 --nmax 12 --timeout 200 --verbose \
-  --output results/prototypes.csv
-
-python3 -m benchmarks.thesis.thesis_prototypes \
-  --algorithm 'pm_css*' --memory-limit 4GiB \
-  --output results/pm_css_random.csv
-
-python3 -m benchmarks.thesis.thesis_hybrids \
-  --nmin 2 --nmax 144 --nr-seeds 10 --verbose \
-  --output results/hybrids.csv
-
-python3 -m benchmarks.thesis.thesis_invariants \
-  --family both --timeout 20 --memory-limit 512M --verbose \
-  --output results/invariants.csv
-```
-
-Optionally, record a flamegraph for more detailed analysis:
-
-On macOS, `py-spy` must be run with `sudo` so it can attach to the Python
-process.
-
-```bash
-py-spy record \
-  --format flamegraph \
-  --output results/pm_css_matroid_flame.svg \
-  -- python -m benchmarks.thesis.thesis_prototypes --algorithm pm_css_matroid \
-     --nmin 10 --nmax 10 --nr-seeds 1 \
-     --output results/pm_css_matroid_profile.csv
-```
-
-The Bash scripts have intentionally not yet been migrated to the new dedicated
-entry points; this cleanup only changes the Python benchmark infrastructure.
-
-### Tests
+### Tests, Linter, Formatter
 
 [![Tests](https://github.com/MaxieHelenBichmann/bm_qecc/actions/workflows/tests.yml/badge.svg)](https://github.com/MaxieHelenBichmann/bm_qecc/actions/workflows/tests.yml)
 
-The test suite is located in `tests/`. They include unit, regression and randomized tests. Some algorithm sections do not yet have comprehensive coverage.
+The test suite is located in `tests/`. They include unit, regression and randomized tests.
 
 ```bash
 uv run pytest
 ```
 
-The linter, the formatter and the type checker for the replication package run
-the same way; `ruff format` rewrites files in place, `ruff format --check` only
-reports:
+The linter, the formatter and the type checker for the replication package run the same way; `ruff format` rewrites files in place, `ruff format --check` only reports:
 
 ```bash
 uv run ruff check
@@ -294,12 +228,9 @@ uv run ruff format
 uv run mypy paper/
 ```
 
-For reference, the complete suite took 527 seconds (8 minutes 47 seconds) in
-the Python 3.13 development environment on 5 September 2026: 760 tests passed
-and 41 optional-dependency or inapplicable-case tests were skipped. Most of
-that wall time is spent in the exhaustive LC-CSS/KLS coverage.
-
 ### Dependencies
+
+Requires Linux or macOS with a C compiler and Python 3.13 or newer; Python 3.13 is the tested version in CI and for the paper replication package. The compiler is needed because `pynauty` is built from source on these versions; Windows is not supported by `pynauty` and by the benchmark supervision.
 
 Apart from the Python dependencies declared in `pyproject.toml` and locked in `uv.lock`, the automorphism-group algorithm uses [GAP and Guava](https://docs.gap-system.org/pkg/guava/doc/manual.pdf), so a GAP executable and Guava's dependencies are required. Place the Guava dependencies in `bm_qecc/.gap` and set the path to the GAP executable before running this algorithm:
 
