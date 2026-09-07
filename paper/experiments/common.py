@@ -1,10 +1,9 @@
-"""Shared CSV operations for the six paper experiment extractors."""
+"""CSV helpers shared by the extractors."""
 
 from __future__ import annotations
 
 import csv
 import math
-import sys
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -15,19 +14,17 @@ COLLECTED_DATA_DIR = ROOT / "paper" / "data" / "collected"
 ALGORITHM_DATA_DIR = COLLECTED_DATA_DIR / "algorithms"
 RESULTS_DIR = ROOT / "paper" / "results"
 
+STATISTICS_FIELDS = (
+    "algorithm", "n", "k", "positive", "seed", "nr_seeds", "mean_seconds",
+    "stddev_seconds", "maximum_seconds", "num_cases", "num_successful",
+    "num_unexpected", "num_timeouts", "num_memory_limited", "num_errors",
+    "num_generation_errors",
+)
 
-def read_csv(path: Path, required: Sequence[str] = ()) -> list[dict[str, str]]:
-    if not path.is_file():
-        raise FileNotFoundError(
-            f"missing collected data: {path}; run its paper collector first "
-            "(see the collector table in paper/README.md)"
-        )
+
+def read_csv(path: Path) -> list[dict[str, str]]:
     with path.open(newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        missing = set(required) - set(reader.fieldnames or ())
-        if missing:
-            raise ValueError(f"{path} is missing columns: {', '.join(sorted(missing))}")
-        return list(reader)
+        return list(csv.DictReader(handle))
 
 
 def write_csv(path: Path, rows: Iterable[Mapping[str, Any]], fields: Sequence[str]) -> None:
@@ -38,15 +35,15 @@ def write_csv(path: Path, rows: Iterable[Mapping[str, Any]], fields: Sequence[st
         writer.writerows(rows)
 
 
-def as_bool(value: str | bool | None) -> bool:
+def as_bool(value) -> bool:
     return value is True or str(value).strip().lower() in {"true", "1", "yes"}
 
 
-def as_int(value: str | int | None) -> int:
+def as_int(value) -> int:
     return int(value or 0)
 
 
-def as_float(value: str | float | None) -> float | None:
+def as_float(value) -> float | None:
     if value is None or str(value).strip() == "":
         return None
     result = float(value)
@@ -60,35 +57,12 @@ def problem_for_algorithm(algorithm: str) -> str:
     raise ValueError(f"cannot infer problem family from algorithm {algorithm!r}")
 
 
-STAT_REQUIRED = (
-    "algorithm", "n", "k", "positive", "seed", "nr_seeds", "mean_seconds",
-    "stddev_seconds", "maximum_seconds", "num_cases", "num_successful",
-    "num_unexpected", "num_timeouts", "num_memory_limited", "num_errors",
-    "num_generation_errors",
-)
-
-
 def read_statistics(path: Path) -> list[dict[str, str]]:
-    """Read append-only statistics, keeping the latest duplicate invocation."""
-    rows = read_csv(path, STAT_REQUIRED)
-    unique: dict[tuple[str, ...], dict[str, str]] = {}
-    for row in rows:
-        key = tuple(
-            row[field]
-            for field in ("algorithm", "n", "k", "positive", "seed")
-        )
-        previous = unique.get(key)
-        if previous is not None and previous["nr_seeds"] != row["nr_seeds"]:
-            print(
-                "warning: superseding statistics row in "
-                f"{path} for (algorithm={row['algorithm']}, n={row['n']}, "
-                f"k={row['k']}, positive={row['positive']}, seed={row['seed']}): "
-                f"nr_seeds changed from {previous['nr_seeds']} to {row['nr_seeds']}",
-                file=sys.stderr,
-                flush=True,
-            )
-        unique[key] = row
-    return list(unique.values())
+    # the collectors append; the latest row per invocation key wins
+    latest = {}
+    for row in read_csv(path):
+        latest[tuple(row[field] for field in ("algorithm", "n", "k", "positive", "seed"))] = row
+    return list(latest.values())
 
 
 def _pooled(values: Sequence[tuple[int, float, float]]) -> tuple[float | None, float | None]:
@@ -106,25 +80,21 @@ def _pooled(values: Sequence[tuple[int, float, float]]) -> tuple[float | None, f
 
 
 def combine_statistic_rows(rows: Sequence[Mapping[str, str]]) -> dict[str, Any]:
-    """Pool positive/negative standard-statistics rows for one parameter cell."""
-    if not rows:
-        raise ValueError("cannot combine an empty statistics group")
-    distributions: list[tuple[int, float, float]] = []
-    maxima: list[float] = []
+    """Pool the positive and negative statistics rows of one parameter cell."""
+    distributions = []
+    maxima = []
     for row in rows:
-        # statistics.py includes successful, unexpected, and timed-out calls in
-        # runtime aggregates, while excluding execution and memory failures.
+        # runtimes cover successful, unexpected, and timed-out calls; memory and execution failures are excluded
         observed = as_int(row["num_cases"]) - as_int(row["num_memory_limited"]) - as_int(row["num_errors"])
         average = as_float(row["mean_seconds"])
-        deviation = as_float(row["stddev_seconds"])
         maximum = as_float(row["maximum_seconds"])
         if observed and average is not None:
-            distributions.append((observed, average, deviation or 0.0))
+            distributions.append((observed, average, as_float(row["stddev_seconds"]) or 0.0))
         if maximum is not None:
             maxima.append(maximum)
     mean_seconds, stddev_seconds = _pooled(distributions)
     sample = rows[0]
-    result: dict[str, Any] = {
+    result = {
         "algorithm": sample["algorithm"],
         "problem": problem_for_algorithm(sample["algorithm"]),
         "n": as_int(sample["n"]),
@@ -149,19 +119,16 @@ def combine_statistic_rows(rows: Sequence[Mapping[str, str]]) -> dict[str, Any]:
         result["has_positive"]
         and result["has_negative"]
         and result["num_successful"] == result["num_requested"]
-        and not any(
-            result[field]
-            for field in (
-                "num_unexpected", "num_timeouts", "num_memory_limited",
-                "num_errors", "num_generation_errors",
-            )
+        and not (
+            result["num_unexpected"] or result["num_timeouts"] or result["num_memory_limited"]
+            or result["num_errors"] or result["num_generation_errors"]
         )
     )
     return result
 
 
 def aggregate_statistics(rows: Sequence[Mapping[str, str]]) -> list[dict[str, Any]]:
-    grouped: dict[tuple[str, int, int], list[Mapping[str, str]]] = defaultdict(list)
+    grouped = defaultdict(list)
     for row in rows:
         grouped[(row["algorithm"], as_int(row["n"]), as_int(row["k"]))].append(row)
     return [combine_statistic_rows(group) for _, group in sorted(grouped.items())]
@@ -169,10 +136,3 @@ def aggregate_statistics(rows: Sequence[Mapping[str, str]]) -> list[dict[str, An
 
 def load_algorithm(algorithm: str, directory: Path = ALGORITHM_DATA_DIR) -> list[dict[str, str]]:
     return read_statistics(directory / f"{algorithm}.csv")
-
-
-def load_all_algorithms(directory: Path = ALGORITHM_DATA_DIR) -> list[dict[str, str]]:
-    paths = sorted(directory.glob("*.csv"))
-    if not paths:
-        raise FileNotFoundError(f"no complete algorithm CSVs found in {directory}")
-    return [row for path in paths for row in read_statistics(path)]

@@ -86,9 +86,7 @@ Writes CSV data into `paper/data/collected/`.
 #### Optional dependency for `pm_stb_aut`
 
 The automorphism-group method requires a GAP executable with the Guava package.
-The exact GAP and Guava versions used for the original measurements cannot be
-recovered from the collected outputs; this missing provenance is stated here
-rather than replaced with an inferred version.
+The GAP and Guava versions used for the original measurements were not recorded.
 Install GAP and Guava, place any Guava dependencies under the repository's
 `.gap/` directory as described in the top-level README, and set
 `GAP_EXECUTABLE` if GAP is not on `PATH`. Without it,
@@ -136,8 +134,8 @@ The aggregated table shows the percentage of rejected instances per invariant an
 > Additionally, the certification method of their inequivalence might introduce a selection bias. When certifying their inequivalence by a mismatched invariant due to runtime constraints, this must not be the invariant whose rejection rate is being measured, or the estimate is circular and the pair will be rejected by construction.
 >
 > Therefore:
-> - general stabilizer codes: apply a short random Clifford circuit (`STABILIZER_CLIFFORD_GATE_STEPS`) to one source code, then keep the candidate only if the corresponding exact SAT backend proves inequivalence. This yields structurally related negatives selected by an exact backend rather than by a measured invariant.
-> - CSS codes: apply a short physical-CNOT circuit (`CSS_CNOT_GATE_STEPS`) to one source code, then retain the candidate only when SAT or matroid isomorphism proves inequivalence. The perturbation preserves the CSS form and both check ranks without consulting a measured invariant. Parameter sizes outside this exact-certifier region keep using `css_codes_cascaded`, which emits a negative carrying its own permutation-invariant certificate; that certificate can correlate with a measured invariant.
+> - general stabilizer codes: apply a short random Clifford circuit (`GATE_STEPS`) to one source code, then keep the candidate only if the corresponding exact SAT backend proves inequivalence. This yields structurally related negatives selected by an exact backend rather than by a measured invariant.
+> - CSS codes: apply a short physical-CNOT circuit (`GATE_STEPS`) to one source code, then retain the candidate only when SAT or matroid isomorphism proves inequivalence. The perturbation preserves the CSS form and both check ranks without consulting a measured invariant. Parameter sizes outside this exact-certifier region keep using `css_codes_cascaded`, which emits a negative carrying its own permutation-invariant certificate; that certificate can correlate with a measured invariant.
 
 ### A2 — Signature Space
 
@@ -288,12 +286,6 @@ counts of timeouts (`t#`) and other failures (`f#`); such cells are hatched.
 Stage tags are `CI` (cheap invariants), `EI` (expensive invariants), `S`
 (signatures), and the decision procedures `BF` (brute force), `MI` (matroid
 isomorphism), `GI` (graph isomorphism), `SAT`, and `LSE`.
-
----
-
-## Design Rules
-
-Collector-specific constants, input populations, certification choices, and output paths are kept close to each collection entry point. Most collectors also expose their resume keys and CSV persistence directly; shared generators, supervision/statistics utilities, and the diagnostic paper hybrids are reused where appropriate.
 
 ---
 
