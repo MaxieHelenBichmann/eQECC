@@ -39,6 +39,7 @@ ignore_missing_imports = true
 no_site_packages = true
 
 [tool.ruff]
+line-length = 120
 extend-exclude = ["data", "playground", ".gap"]
 
 [tool.ruff.lint]

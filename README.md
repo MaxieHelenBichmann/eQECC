@@ -284,10 +284,13 @@ The test suite is located in `tests/`. They include unit, regression and randomi
 uv run pytest
 ```
 
-The linter and the type checker for the replication package run the same way:
+The linter, the formatter and the type checker for the replication package run
+the same way; `ruff format` rewrites files in place, `ruff format --check` only
+reports:
 
 ```bash
 uv run ruff check
+uv run ruff format
 uv run mypy paper/
 ```
 
