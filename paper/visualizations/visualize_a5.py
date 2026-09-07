@@ -78,12 +78,6 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
                 overlay_runner_up(ax, n, r, method(row["runner_up"])[1])
 
     figure.suptitle("Best-Performing Prototype per Parameter Setting", fontsize=12 * WIDE_TEXT_SCALE, y=0.96)
-    exclusions = sorted({
-        item.strip() for row in rows for item in row.get("excluded_algorithms", "").split(";") if item.strip()
-    })
-    if exclusions:
-        figure.text(0.5, 0.84, "Excluded for missing data or errors: " + ", ".join(exclusions), ha="center", va="center", fontsize=8)
-
     algorithms = {row["winner"] for row in rows} | {row["runner_up"] for row in rows if row["runner_up"]}
     present = {method(algorithm)[0] for algorithm in algorithms}
     split_key = Patch(label="top/bottom: within 5%")

@@ -94,7 +94,7 @@ Install GAP and Guava, place any Guava dependencies under the repository's
 `.gap/` directory as described in the top-level README, and set
 `GAP_EXECUTABLE` if GAP is not on `PATH`. Without it,
 `collect_algorithm` skips `pm_stb_aut`; A5 extraction warns and produces the
-figure from the remaining methods, with the exclusion stated on the figure.
+figure from the remaining methods.
 
 ### Phase 2 — Information Extraction
 
@@ -207,8 +207,6 @@ rendered with the selected method's normal color and remains identified by the
 `selection` column in `by_cell.csv`. A censored fallback ordering can be
 uncertain, but cases where multiple timeout-only methods actually compete are
 too few in the reported data to warrant a separate marker in the figure.
-Methods excluded because data is missing or calls errored are named on the
-figure.
 
 Negative instances use the same constructions and large-parameter CSS fallback
 described under A4: short Clifford perturbations for stabilizer codes,
