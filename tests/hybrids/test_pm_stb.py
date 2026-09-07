@@ -153,7 +153,7 @@ def test_hybrid_routes_large_codes_to_sat(monkeypatch: pytest.MonkeyPatch) -> No
 def test_sat_backend_accepts_six_qubit_permutation() -> None:
     code1 = random_stabilizer_code(6, 3, seed=1234)
     code2 = permutation_equivalent_code(code1, seed=5678)
-    partition = {(): list(range(code1.n))}
+    partition: dict[tuple[int, ...], list[int]] = {(): list(range(code1.n))}
 
     permutation = p_stab._sat(
         p_stab._row_basis(code1.symplectic),

@@ -104,13 +104,13 @@ def test_every_public_generator_has_the_common_prefix_signature() -> None:
 
 @pytest.mark.parametrize(
     "method",
-    [
+    (
         PEqCodePairGenerator.stabilizer_codes_permuted,
         PEqCodePairGenerator.stabilizer_codes_basis_changed,
         PEqCodePairGenerator.stabilizer_codes_with_logicals,
         LCEqCodePairGenerator.stabilizer_codes_local_clifford,
         LCEqCodePairGenerator.stabilizer_codes_with_logicals,
-    ],
+    ),
 )
 def test_seeded_stabilizer_generators_are_deterministic(method) -> None:
     first = method(5, 2, 123)
@@ -191,10 +191,10 @@ def test_independent_css_candidate_draws_ranks_independently_by_default() -> Non
 
 @pytest.mark.parametrize(
     "method",
-    [
+    (
         NonPEqCodePairGenerator.stabilizer_codes_independent_candidate,
         NonPEqCodePairGenerator.css_codes_independent_candidate,
-    ],
+    ),
 )
 def test_independent_candidates_do_not_claim_a_negative_for_trivial_codes(method) -> None:
     left, right = method(3, 3, 5)

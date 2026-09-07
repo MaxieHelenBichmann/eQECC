@@ -5,6 +5,7 @@ from __future__ import annotations
 import csv
 import time
 from pathlib import Path
+from typing import Any, cast
 
 import pytest
 
@@ -81,7 +82,7 @@ def test_worker_reports_call_runtime_without_supervisor_overhead(
     monkeypatch.setattr(run_module.os, "setsid", lambda: None)
     monkeypatch.setattr(run_module, "perf_counter", lambda: next(times))
 
-    run_module._worker(_identity, (3,), queue, None)
+    run_module._worker(_identity, (3,), cast(Any, queue), None)
 
     assert queue.item == ("result", 3, 0.25)
 
@@ -111,5 +112,5 @@ def test_statistics_uses_distinct_deterministic_seeds_and_appends_header_once(
     with output.open(newline="", encoding="utf-8") as file:
         rows = list(csv.reader(file))
     assert rows[0][0] == "algorithm"
-    assert sum(row and row[0] == "algorithm" for row in rows) == 1
+    assert sum(bool(row) and row[0] == "algorithm" for row in rows) == 1
     assert len(rows) == 3

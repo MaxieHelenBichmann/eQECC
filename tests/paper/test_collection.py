@@ -72,17 +72,19 @@ def test_independent_css_negative_has_a_complete_certificate() -> None:
 def test_cnot_perturbed_css_negative_keeps_check_ranks() -> None:
     for seed in range(3):
         left, right = certified_negative_pair("pm_css", 7, 3, seed, css_cnots=True)
+        assert isinstance(left, CSSCode) and isinstance(right, CSSCode)
         assert (left.Hx.shape[0], left.Hz.shape[0]) == (right.Hx.shape[0], right.Hz.shape[0])
 
 
 def test_stabilizer_candidates_use_clifford_perturbations(monkeypatch: pytest.MonkeyPatch) -> None:
     pair = (object(), object())
     calls = []
-    monkeypatch.setattr(
-        common.NonPEqCodePairGenerator,
-        "stabilizer_codes_clifford_candidate",
-        lambda *args, **kwargs: calls.append((args, kwargs)) or pair,
-    )
+
+    def candidate(*args, **kwargs):
+        calls.append((args, kwargs))
+        return pair
+
+    monkeypatch.setattr(common.NonPEqCodePairGenerator, "stabilizer_codes_clifford_candidate", candidate)
     monkeypatch.setattr(common, "certified_inequivalent", lambda *args: True)
     assert certified_negative_pair("pm_stb", 7, 3, 89) is pair
     assert certified_negative_pair("lc_stb", 7, 3, 89) is pair
@@ -134,9 +136,14 @@ def test_signature_collector_covers_both_families_and_full_grid() -> None:
 def test_signature_collector_generates_one_code_per_seed(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     output = tmp_path / "signatures.csv"
     generated = []
+
+    def generate_random_code(*args):
+        generated.append(args)
+        return object(), 1
+
     assert not hasattr(collect_a2, "NonPEqCodePairGenerator")
     monkeypatch.setattr(collect_a2, "PROBLEMS", ("pm_css",))
-    monkeypatch.setattr(collect_a2, "generate_random_code", lambda *args: generated.append(args) or (object(), 1))
+    monkeypatch.setattr(collect_a2, "generate_random_code", generate_random_code)
     monkeypatch.setattr(collect_a2, "run", lambda *args, **kwargs: _run_result([2, 1]))
 
     first = collect_a2.collect(dimensions=[(3, 1)], seeds=[89], output_file=output)
@@ -162,8 +169,16 @@ def test_invariant_timing_generator_certifies_locally_before_preparing(monkeypat
     pair = (StabilizerCode.get_trivial_code(3), StabilizerCode.get_trivial_code(3))
     prepared = (object(), object())
     events: list[str] = []
-    monkeypatch.setattr(collect_a3, "certified_negative_pair", lambda *args: events.append("certify") or pair)
-    monkeypatch.setattr(collect_a3, "invariant_matrices", lambda *inputs: events.append("prepare") or prepared)
+
+    def recording(event: str, result):
+        def stub(*args):
+            events.append(event)
+            return result
+
+        return stub
+
+    monkeypatch.setattr(collect_a3, "certified_negative_pair", recording("certify", pair))
+    monkeypatch.setattr(collect_a3, "invariant_matrices", recording("prepare", prepared))
 
     generated = collect_a3.generate_pair("lc_stb", 3, 0, False, 89)
 
@@ -206,7 +221,12 @@ def test_prepared_matrix_arity_matches_each_invariant_family() -> None:
 def test_runtime_negative_uses_local_a1_style_generator(monkeypatch: pytest.MonkeyPatch) -> None:
     pair = (object(), object())
     calls: list[tuple[object, ...]] = []
-    monkeypatch.setattr(collect_algorithm, "certified_negative_pair", lambda *args: calls.append(args) or pair)
+
+    def certified_negative_pair(*args):
+        calls.append(args)
+        return pair
+
+    monkeypatch.setattr(collect_algorithm, "certified_negative_pair", certified_negative_pair)
 
     first = collect_algorithm.CertifiedRandomCaseGenerator("pm_stb_sat", 7, 3, False)(89)
     second = collect_algorithm.CertifiedRandomCaseGenerator("pm_stb_graph_iso", 7, 3, False)(89)

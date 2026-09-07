@@ -88,14 +88,14 @@ def test_pm_stb_sat_backend_is_reflexive() -> None:
 def test_pm_stb_sat_backend_rejects_different_support_weight() -> None:
     c1 = np.array([[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.uint8)
     c2 = np.array([[1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]], dtype=np.uint8)
-    partition = {(0,): list(range(6))}
+    partition: dict[tuple[int, ...], list[int]] = {(0,): list(range(6))}
 
     assert pm_stb._sat(c1, partition, c2, partition) == (False, "SAT")
 
 
 def test_pm_stb_graph_backend_returns_diagnostic_decision() -> None:
     tableau = np.array([[1, 0, 0, 1]], dtype=np.uint8)
-    partition = {(0,): [0, 1]}
+    partition: dict[tuple[int, ...], list[int]] = {(0,): [0, 1]}
 
     assert pm_stb._graph_iso(tableau, partition, tableau, partition) == (True, "GI")
 

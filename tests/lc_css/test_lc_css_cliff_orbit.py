@@ -29,7 +29,7 @@ def _red_graph(
     graph.n = len(vertices) - k
     graph.k = k
     graph.vertices = vertices.copy()
-    graph.edges = {tuple(sorted(edge)) for edge in edges}
+    graph.edges = {(min(edge), max(edge)) for edge in edges}
     return graph
 
 
