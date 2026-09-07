@@ -26,7 +26,8 @@ results/*
 
 # Paper replication package: the collected measurement CSVs are tracked;
 # their logs and backups and the extracted results are not
-paper/results/
+paper/results/*
+!paper/results/.gitkeep
 paper/data/collected/**
 !paper/data/collected/**/
 !paper/data/collected/**/*.csv
