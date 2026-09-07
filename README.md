@@ -187,8 +187,11 @@ paper/               # replication package for the subsequent paper
 
 ## Running the benchmarks
 
-Requires Python 3.13 or newer; Python 3.13 is the tested version in CI and for
-the paper replication package. Install the local runtime dependencies first:
+Requires Linux or macOS with a C compiler and Python 3.13 or newer; Python 3.13
+is the tested version in CI and for the paper replication package. The
+compiler is needed because `pynauty` is built from source on these versions;
+Windows is not supported by `pynauty` and by the benchmark supervision.
+Install the local runtime dependencies first:
 
 ```bash
 python3 -m venv .venv

@@ -23,6 +23,8 @@ The artifacts of this pipeline are not the exact same figures used in the paper,
 | | | py-spy | 0.4.2 |
 | | | GAP + Guava | exact measurement versions were not recorded; see below |
 
+Replication requires Linux or macOS with a C compiler (`pynauty` is built from
+source on Python 3.13; Windows is not supported).
 `requirements.txt` pins every direct Python dependency. For the exact resolved
 transitive environment, install `requirements.lock.txt` instead.
 
@@ -71,6 +73,7 @@ This pipeline has three phases for each experiment, with strict boundaries, maki
 - Phase 3 primarily draws the figures from `paper/results/`. Visualizers may apply presentation-specific grouping, range restrictions, or annotations, but never read from `paper/data/collected/`.
 
 Phase 1 normally runs on a benchmark server; phases 2 and 3 run locally. The transfer between machines is exactly the contents of `paper/data/collected/`.
+The measurements used for the paper are committed in `paper/data/collected/`, so phases 2 and 3 can be run directly from a checkout.
 
 ### Phase 1 — Data Collection
 
