@@ -1,12 +1,14 @@
-"""Combine normal SAT files with the extra PM-STB-on-CSS collection and extract normalized difference."""
+"""SAT runtimes with both encodings on both code families (A6)."""
 
 from __future__ import annotations
 
 import math
 from pathlib import Path
-from typing import Any
 
-from paper.experiments.common import ALGORITHM_DATA_DIR, COLLECTED_DATA_DIR, RESULTS_DIR, aggregate_statistics, load_algorithm, read_statistics, write_csv
+from paper.experiments.common import (
+    ALGORITHM_DATA_DIR, COLLECTED_DATA_DIR, RESULTS_DIR,
+    aggregate_statistics, load_algorithm, read_statistics, write_csv,
+)
 
 EXTRA_INPUT = COLLECTED_DATA_DIR / "pm_stb_sat_on_css.csv"
 OUTPUT = RESULTS_DIR / "a6" / "by_cell.csv"
@@ -30,55 +32,32 @@ def extract(
     algorithm_directory: Path = ALGORITHM_DATA_DIR,
     extra_input: Path = EXTRA_INPUT,
     output_file: Path = OUTPUT,
-) -> list[dict[str, Any]]:
-    sources = {
-        "pm_stb_sat": load_algorithm("pm_stb_sat", algorithm_directory),
-        "pm_css_sat": load_algorithm("pm_css_sat", algorithm_directory),
-        "pm_stb_sat_on_css": read_statistics(extra_input),
-    }
+) -> list[dict]:
     aggregated = {
-        algorithm: aggregate_statistics(rows)
-        for algorithm, rows in sources.items()
+        "pm_stb_sat": aggregate_statistics(load_algorithm("pm_stb_sat", algorithm_directory)),
+        "pm_css_sat": aggregate_statistics(load_algorithm("pm_css_sat", algorithm_directory)),
+        "pm_stb_sat_on_css": aggregate_statistics(read_statistics(extra_input)),
     }
-    output = []
-    for variant, algorithm, family in VARIANTS:
-        for cell in aggregated[algorithm]:
-            output.append(
-                {
-                    **cell,
-                    "variant": variant,
-                    "code_family": family,
-                    "hx_hz_log_scale_improvement_percentage": "",
-                }
-            )
-
-    displayed_means = [
-        float(row["mean_seconds"])
-        for row in output
-        if row["n"] <= NMAX
-        and row["mean_seconds"] is not None
-        and row["mean_seconds"] > 0
-        and row["num_successful"]
+    output = [
+        {**cell, "variant": variant, "code_family": family, "hx_hz_log_scale_improvement_percentage": ""}
+        for variant, algorithm, family in VARIANTS
+        for cell in aggregated[algorithm]
     ]
-    scale_min = min(displayed_means)
-    scale_max = max(max(displayed_means), TIMEOUT_SECONDS)
-    log_span = math.log(scale_max / scale_min)
+
+    # improvement of the check-matrix over the tableau encoding as a share of the figure's log runtime range
+    displayed_means = [
+        row["mean_seconds"] for row in output
+        if row["n"] <= NMAX and row["mean_seconds"] and row["num_successful"]
+    ]
+    log_span = math.log(max(max(displayed_means), TIMEOUT_SECONDS) / min(displayed_means))
     css_means = {
-        (row["n"], row["k"]): float(row["mean_seconds"])
-        for row in output
-        if row["variant"] == "pm_css_sat_on_css"
-        and row["mean_seconds"] is not None
-        and row["mean_seconds"] > 0
+        (row["n"], row["k"]): row["mean_seconds"]
+        for row in output if row["variant"] == "pm_css_sat_on_css" and row["mean_seconds"]
     }
     for row in output:
-        if row["variant"] != "pm_stb_sat_on_css":
-            continue
         css_mean = css_means.get((row["n"], row["k"]))
-        stb_mean = row["mean_seconds"]
-        if css_mean is not None and stb_mean is not None and stb_mean > 0:
-            row["hx_hz_log_scale_improvement_percentage"] = (
-                100.0 * (math.log(stb_mean) - math.log(css_mean)) / log_span
-            )
+        if row["variant"] == "pm_stb_sat_on_css" and css_mean and row["mean_seconds"]:
+            row["hx_hz_log_scale_improvement_percentage"] = 100.0 * (math.log(row["mean_seconds"]) - math.log(css_mean)) / log_span
     write_csv(output_file, output, FIELDS)
     return output
 
