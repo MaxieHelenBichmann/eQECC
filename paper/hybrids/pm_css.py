@@ -18,7 +18,7 @@ from src.core.css_code import CSSCode
 def are_peq_css(c1: CSSCode, c2: CSSCode) -> tuple[bool, str]:
     """Check whether two CSS codes are permutation-equivalent.
 
-    Returns: A tuple of (is_equivalent, diagnostic_info) where is_equivalent is a boolean indicating whether the codes are equivalent, and diagnostic_info is a string providing information about the equivalence check.
+    Returns (equivalent, stage) with the tag of the pipeline stage that decided.
     """
     # Refute
     cheap_invariants = (

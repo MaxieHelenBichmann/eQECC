@@ -17,7 +17,7 @@ from src.core.stabilizer_code import StabilizerCode
 def are_lceq(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
     """Check whether two stabilizer codes are local-clifford-equivalent.
 
-    Returns: A tuple of (is_equivalent, diagnostic_info) where is_equivalent is a boolean indicating whether the codes are equivalent, and diagnostic_info is a string providing information about the equivalence check.
+    Returns (equivalent, stage) with the tag of the pipeline stage that decided.
     """
     # Refute
     cheap_invariants = (
