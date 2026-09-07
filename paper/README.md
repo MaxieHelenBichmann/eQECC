@@ -73,11 +73,11 @@ This pipeline has three phases for each experiment, with strict boundaries, maki
 - Phase 3 primarily draws the figures from `paper/results/`. Visualizers may apply presentation-specific grouping, range restrictions, or annotations, but never read from `paper/data/collected/`.
 
 Phase 1 normally runs on a benchmark server; phases 2 and 3 run locally. The transfer between machines is exactly the contents of `paper/data/collected/`.
-The measurements used for the paper are committed in `paper/data/collected/`, so phases 2 and 3 can be run directly from a checkout.
+The measurements collected for the paper are committed in `paper/data/collected/` for replication, so phases 2 and 3 can be run directly from a checkout. To collect your own measurements, delete the contents of `paper/data/collected/` first: the collectors resume from existing files and would otherwise skip everything already present.
 
 ### Phase 1 — Data Collection
 
-Long-running. Run under `tmux` or an equivalent. Almost every collector appends incrementally and resumes by skipping keys already present. Collectors based on shared batch statistics instead append one summary row per completed batch; re-running such a batch may repeat its computation, while extraction keeps its latest row. Delete the relevant output file or files only to deliberately restart a collection from scratch.
+Long-running. Run under `tmux` or an equivalent. Almost every collector appends incrementally and resumes by skipping keys already present. Collectors based on shared batch statistics instead append one summary row per completed batch; re-running such a batch may repeat its computation, while extraction keeps its latest row. Delete the relevant output file or files only to deliberately restart a collection from scratch. This includes the committed measurements from the paper: remove them from `paper/data/collected/` before collecting your own, or the collectors will treat them as already done.
 Collected data from `collect_algorithm.py` is not figure-specific, but used by multiple aggregators in the next steps.
 
 ```bash
