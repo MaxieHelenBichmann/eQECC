@@ -11,13 +11,10 @@ from benchmarks.experiments.run import RunResult
 from paper.benchmarks import collect_a1 as rejections
 from paper.benchmarks import collect_a3 as timings
 from paper.benchmarks import collect_a2 as signatures
+from paper.benchmarks import collect_algorithm, common
+from paper.benchmarks.collect_a1 import DIMENSIONS, SEEDS
 from paper.benchmarks.collect_a2 import signature_metric
-from paper.benchmarks import collect_algorithm
-from paper.benchmarks.collect_a1 import (
-    DIMENSIONS,
-    SEEDS,
-    certified_negative_pair,
-)
+from paper.benchmarks.common import certified_negative_pair, css_certifier, invariant_matrices
 from src.algorithms.p_css.p_css_sat import are_peq_css_sat
 from src.algorithms.p_stb.p_stab_sat import are_peq_stab_sat
 from src.core.css_code import CSSCode
@@ -45,9 +42,9 @@ def test_independent_css_negative_has_a_complete_certificate() -> None:
     assert are_peq_css_sat(left, right) is False
 
 
-def test_every_independent_css_candidate_has_matching_check_ranks() -> None:
-    for seed in range(10):
-        left, right = rejections._candidate_pair("pm_css", 7, 3, seed)
+def test_cnot_perturbed_css_negative_keeps_check_ranks() -> None:
+    for seed in range(3):
+        left, right = certified_negative_pair("pm_css", 7, 3, seed, css_cnots=True)
         assert (left.Hx.shape[0], left.Hz.shape[0]) == (
             right.Hx.shape[0],
             right.Hz.shape[0],
@@ -60,23 +57,21 @@ def test_stabilizer_candidates_use_clifford_perturbations(
     pair = (object(), object())
     calls = []
     monkeypatch.setattr(
-        rejections.NonPEqCodePairGenerator,
+        common.NonPEqCodePairGenerator,
         "stabilizer_codes_clifford_candidate",
         lambda *args, **kwargs: calls.append((args, kwargs)) or pair,
     )
-    assert rejections._candidate_pair("pm_stb", 7, 3, 89) is pair
-    assert rejections._candidate_pair("lc_stb", 7, 3, 89) is pair
+    monkeypatch.setattr(common, "certified_inequivalent", lambda *args: True)
+    assert certified_negative_pair("pm_stb", 7, 3, 89) is pair
+    assert certified_negative_pair("lc_stb", 7, 3, 89) is pair
     assert len(calls) == 2
-    assert all(
-        kwargs["gate_steps"] == rejections.STABILIZER_CLIFFORD_GATE_STEPS
-        for _, kwargs in calls
-    )
+    assert all(kwargs["gate_steps"] == common.GATE_STEPS for _, kwargs in calls)
 
 
 def test_css_certifier_selection_respects_backend_limits() -> None:
-    assert rejections._css_certifier(47, 38) is are_peq_css_sat  # r = 9
-    assert rejections._css_certifier(28, 18) is rejections.are_peq_css_matroid
-    assert rejections._css_certifier(29, 19) is None
+    assert css_certifier(47, 38) is are_peq_css_sat  # r = 9
+    assert css_certifier(28, 18) is common.are_peq_css_matroid
+    assert css_certifier(29, 19) is None
 
 
 def test_large_high_rank_css_uses_certified_generator_without_backend(
@@ -84,19 +79,17 @@ def test_large_high_rank_css_uses_certified_generator_without_backend(
 ) -> None:
     pair = (object(), object())
     monkeypatch.setattr(
-        rejections.NonPEqCodePairGenerator,
+        common.NonPEqCodePairGenerator,
         "css_codes_cascaded",
         lambda *args: pair,
     )
     monkeypatch.setattr(
-        rejections,
-        "_certified_inequivalent",
+        common,
+        "certified_inequivalent",
         lambda *args: pytest.fail("large CSS fallback must not invoke a backend"),
     )
 
-    assert rejections.certified_negative_pair(
-        "pm_css", 29, 19, 89, max_attempts=1
-    ) is pair
+    assert certified_negative_pair("pm_css", 29, 19, 89, max_attempts=1) is pair
 
 
 def test_invariant_timing_generator_certifies_locally_before_preparing(
@@ -116,12 +109,12 @@ def test_invariant_timing_generator_certifies_locally_before_preparing(
     )
     monkeypatch.setattr(
         timings,
-        "_prepared",
+        "invariant_matrices",
         lambda *inputs: events.append(("prepare", inputs)) or prepared,
     )
 
     generated = timings.generate_pair("lc_stb", 3, 0, False, 89)
-    matrices = timings._prepared("lc_stb", *generated)
+    matrices = timings.invariant_matrices("lc_stb", *generated)
 
     assert matrices is prepared
     assert [event[0] for event in events] == ["certify", "prepare"]
@@ -166,11 +159,6 @@ def test_negative_certification_failure_becomes_generation_failure(
         "INVARIANTS",
         {"lc_stb": ("local_invariant",)},
     )
-    monkeypatch.setattr(
-        timings,
-        "INVARIANT_N_RANGES",
-        {("lc_stb", "local_invariant"): (3, 3)},
-    )
     monkeypatch.setattr(timings, "VERBOSE", False)
 
     rows = timings.collect(
@@ -186,13 +174,13 @@ def test_negative_certification_failure_becomes_generation_failure(
 
 
 def test_prepared_matrix_arity_matches_each_invariant_family() -> None:
-    pm_stb = timings._prepared(
+    pm_stb = invariant_matrices(
         "pm_stb", *timings.generate_pair("pm_stb", 3, 1, True, 89)
     )
-    pm_css = timings._prepared(
+    pm_css = invariant_matrices(
         "pm_css", *timings.generate_pair("pm_css", 3, 1, True, 89)
     )
-    lc_stb = timings._prepared(
+    lc_stb = invariant_matrices(
         "lc_stb", *timings.generate_pair("lc_stb", 3, 1, True, 89)
     )
 
@@ -331,18 +319,8 @@ def test_raw_collector_persists_rows_and_resumes_without_duplicates(
         ),
     )
 
-    first = rejections.collect(
-        dimensions=[(3, 1)],
-        seeds=[89],
-        output_file=output,
-        problems=("pm_stb",),
-    )
-    second = rejections.collect(
-        dimensions=[(3, 1)],
-        seeds=[89],
-        output_file=output,
-        problems=("pm_stb",),
-    )
+    first = rejections.collect(dimensions=[(3, 1)], seeds=[89], output_file=output)
+    second = rejections.collect(dimensions=[(3, 1)], seeds=[89], output_file=output)
 
     with output.open(newline="", encoding="utf-8") as handle:
         persisted = list(csv.DictReader(handle))

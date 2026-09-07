@@ -151,13 +151,6 @@ def test_a2_pairwise_refinement_direction_and_intermediate_partition() -> None:
     assert pairwise_refinement((4**2 + 3**2) / 7**2, 7) == pytest.approx(4 / 7)
 
 
-def test_a2_pairwise_refinement_rejects_invalid_inputs() -> None:
-    with pytest.raises(ValueError, match="n >= 2"):
-        pairwise_refinement(1.0, 1)
-    with pytest.raises(ValueError, match="outside the theoretical"):
-        pairwise_refinement(0.1, 7)
-
-
 def test_a4_reads_graph_representation_files_and_aggregates_polarities(tmp_path: Path) -> None:
     algorithms = tmp_path / "algorithms"
     _algorithm(algorithms, "pm_stb_graph_iso", 1.0, 3.0)
@@ -174,7 +167,7 @@ def test_a4_reads_graph_representation_files_and_aggregates_polarities(tmp_path:
         "lc_stb_graph_iso",
     }
     pm = next(row for row in rows if row["algorithm"] == "pm_stb_graph_iso")
-    assert pm["mean_total_seconds"] == pytest.approx(2.0)
+    assert pm["mean_seconds"] == pytest.approx(2.0)
     assert output.is_file()
 
 

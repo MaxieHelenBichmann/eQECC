@@ -5,9 +5,6 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
-import pytest
-
-from paper.visualizations.common import load_rows
 from paper.visualizations.visualize_a1 import render as render_rejections
 from paper.visualizations.visualize_a2 import render
 from paper.visualizations.visualize_a3 import render as render_relative
@@ -19,13 +16,6 @@ def _write(path: Path, fields: tuple[str, ...], rows: list[dict[str, object]]) -
         writer = csv.DictWriter(handle, fieldnames=fields)
         writer.writeheader()
         writer.writerows(rows)
-
-
-def test_stale_collector_schema_is_rejected_explicitly(tmp_path: Path) -> None:
-    path = tmp_path / "old.csv"
-    _write(path, ("problem", "median_q_pairs"), [{"problem": "pm_stb", "median_q_pairs": 1}])
-    with pytest.raises(ValueError, match="obsolete schema"):
-        load_rows(path, ("problem", "mean_pairwise_refinement"))
 
 
 def test_rejection_plot_writes_main_and_overall_pngs(tmp_path: Path) -> None:

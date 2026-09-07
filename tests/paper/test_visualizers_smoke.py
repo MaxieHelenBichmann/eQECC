@@ -95,7 +95,7 @@ def test_all_paper_visualizers_write_pngs_from_synthetic_csvs(tmp_path: Path) ->
                 "algorithm": algorithm,
                 "n": 3,
                 "r": 2,
-                "mean_total_seconds": 1.0,
+                "mean_seconds": 1.0,
                 "num_successful": 1,
                 "num_timeouts": 0,
                 "num_memory_limited": 0,

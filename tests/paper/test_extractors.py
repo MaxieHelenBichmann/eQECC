@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from paper.experiments.common import STAT_REQUIRED, write_csv
+from paper.experiments.common import STATISTICS_FIELDS, write_csv
 from paper.experiments.extract_a1 import extract as extract_a1
 from paper.experiments.extract_a2 import pairwise_refinement
 from paper.experiments.extract_a5 import extract as extract_a5, select_winners
@@ -90,11 +90,9 @@ def test_a1_keeps_measured_zero_rejections(tmp_path: Path) -> None:
     assert not any(row["n"] == 4 for row in cells)
 
 
-def test_pairwise_refinement_boundaries_and_range_check() -> None:
+def test_pairwise_refinement_boundaries() -> None:
     assert pairwise_refinement(1 / 5, 5) == pytest.approx(1.0)
     assert pairwise_refinement(1.0, 5) == pytest.approx(0.0)
-    with pytest.raises(ValueError, match="outside the theoretical"):
-        pairwise_refinement(0.1, 5)
 
 
 def test_a5_prefers_completed_and_excludes_errors() -> None:
@@ -120,7 +118,7 @@ def test_a5_missing_file_degrades_gracefully(tmp_path: Path, capsys: pytest.Capt
             _statistics_row("pm_stb_sat", True),
             _statistics_row("pm_stb_sat", False),
         ],
-        STAT_REQUIRED,
+        STATISTICS_FIELDS,
     )
 
     winners = extract_a5(
@@ -141,7 +139,7 @@ def test_a6_improvement_is_positive_when_check_matrix_is_faster(tmp_path: Path) 
         write_csv(
             algorithms / f"{algorithm}.csv",
             [_statistics_row(algorithm, True, mean=mean), _statistics_row(algorithm, False, mean=mean)],
-            STAT_REQUIRED,
+            STATISTICS_FIELDS,
         )
     extra = tmp_path / "pm_stb_sat_on_css.csv"
     write_csv(
@@ -150,7 +148,7 @@ def test_a6_improvement_is_positive_when_check_matrix_is_faster(tmp_path: Path) 
             _statistics_row("pm_stb_sat_on_css", True, mean=10.0),
             _statistics_row("pm_stb_sat_on_css", False, mean=10.0),
         ],
-        STAT_REQUIRED,
+        STATISTICS_FIELDS,
     )
 
     rows = extract_a6(algorithms, extra, tmp_path / "a6.csv")

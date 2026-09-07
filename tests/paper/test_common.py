@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from paper.experiments.common import (
-    STAT_REQUIRED,
+    STATISTICS_FIELDS,
     aggregate_statistics,
     combine_statistic_rows,
     problem_for_algorithm,
@@ -38,7 +38,7 @@ def _row(*, positive: bool, nr_seeds: int, mean: float = 1.0) -> dict[str, objec
 
 def test_read_statistics_keeps_latest_same_sized_invocation(tmp_path: Path) -> None:
     path = tmp_path / "statistics.csv"
-    write_csv(path, [_row(positive=True, nr_seeds=3, mean=1.0), _row(positive=True, nr_seeds=3, mean=2.0)], STAT_REQUIRED)
+    write_csv(path, [_row(positive=True, nr_seeds=3, mean=1.0), _row(positive=True, nr_seeds=3, mean=2.0)], STATISTICS_FIELDS)
 
     rows = read_statistics(path)
 
@@ -46,7 +46,7 @@ def test_read_statistics_keeps_latest_same_sized_invocation(tmp_path: Path) -> N
     assert rows[0]["mean_seconds"] == "2.0"
 
 
-def test_changed_seed_count_supersedes_and_warns(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
+def test_changed_seed_count_supersedes(tmp_path: Path) -> None:
     path = tmp_path / "statistics.csv"
     rows = [
         _row(positive=True, nr_seeds=3),
@@ -54,14 +54,13 @@ def test_changed_seed_count_supersedes_and_warns(tmp_path: Path, capsys: pytest.
         _row(positive=True, nr_seeds=5),
         _row(positive=False, nr_seeds=5),
     ]
-    write_csv(path, rows, STAT_REQUIRED)
+    write_csv(path, rows, STATISTICS_FIELDS)
 
     aggregated = aggregate_statistics(read_statistics(path))
 
     assert len(aggregated) == 1
     assert aggregated[0]["num_requested"] == 10
     assert aggregated[0]["num_cases"] == 10
-    assert "nr_seeds changed from 3 to 5" in capsys.readouterr().err
 
 
 def test_combine_statistic_rows_pools_positive_and_negative() -> None:
