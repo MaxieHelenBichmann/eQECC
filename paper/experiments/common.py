@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import math
+import sys
 from collections import defaultdict
 from collections.abc import Iterable, Mapping, Sequence
 from pathlib import Path
@@ -23,6 +24,8 @@ STATISTICS_FIELDS = (
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
+    if not path.is_file():
+        sys.exit(f"missing input {path.relative_to(ROOT)}: run the collector or extractor that writes it first")
     with path.open(newline="", encoding="utf-8") as handle:
         return list(csv.DictReader(handle))
 
