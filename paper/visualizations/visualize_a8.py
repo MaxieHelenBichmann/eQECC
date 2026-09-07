@@ -1,23 +1,21 @@
-"""Render A8 as a table: mean hybrid runtime per named code and the deciding stage."""
+"""Runtime and deciding-stage table of the hybrids (A8)."""
 
 from __future__ import annotations
 
-from pathlib import Path
-from typing import Any
-
 from collections import Counter
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib.colors import to_rgb
 from matplotlib.offsetbox import AnnotationBbox, HPacker, TextArea, VPacker
 from matplotlib.patches import Rectangle
 
+from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.experiments.extract_a8 import CODE_ORDER, PROBLEMS, STAGES
 from paper.visualizations.common import (
     COLOR_PAPER_GRAY_DARK, COLOR_PAPER_GRAY_LIGHT, COLOR_PAPER_GRAY_VERY_LIGHT,
-    COLOR_PAPER_GRAY_VERY_VERY_DARK, COLOR_PAPER_WHITE, RESULTS_DIR, RUNTIME_CMAP,
-    TIMEOUT_SECONDS, decimal_ticks, load_rows, mark_timeout, runtime_norm, save_png,
-    scalar_mappable, use_style,
+    COLOR_PAPER_GRAY_VERY_VERY_DARK, COLOR_PAPER_WHITE, RUNTIME_CMAP, TIMEOUT_SECONDS,
+    decimal_ticks, mark_timeout, runtime_norm, save_png, scalar_mappable, use_style,
 )
 
 INPUT = RESULTS_DIR / "a8" / "by_cell.csv"
@@ -30,33 +28,24 @@ STAGE_LEGEND = (
     ("BF", "brute force"), ("MI", "matroid isomorphism"), ("GI", "graph isomorphism"),
     ("SAT", "SAT solver"), ("LSE", "graph-state LSE"),
 )
-REQUIRED = (
-    "problem", "code", "code_label", "positive", "mean_seconds", "deciders", "stuck_at",
-    "num_cases", "num_memory_limited", "num_errors", "num_unexpected",
-    "num_generation_errors", "timeout_seconds",
-)
-#: (label size, count size) of the winner line and the runner-up line.
+# font sizes (stage label, count) of the first and second line in a cell
 WINNER_SIZES = (7.4, 4.6)
 RUNNER_UP_SIZES = (5.6, 4.0)
 
 
-def _text_color(color: Any) -> str:
+def _text_color(color) -> str:
     red, green, blue = to_rgb(color)
     return COLOR_PAPER_WHITE if 0.2126 * red + 0.7152 * green + 0.0722 * blue < 0.46 else "#202020"
 
 
-def _failures(row: dict[str, str]) -> int:
+def _failures(row) -> int:
     return sum(int(row[field] or 0) for field in
                ("num_memory_limited", "num_errors", "num_unexpected", "num_generation_errors"))
 
 
-def _stages(row: dict[str, str]) -> list[tuple[str, int]]:
-    """Merge deciding and stuck-in stages, most frequent first, ties in pipeline order.
-
-    A killed run never prints a decision, so its stage only appears in ``stuck_at``;
-    counting both columns is what gives timed-out cells a label at all.
-    """
-    counts: Counter[str] = Counter()
+def _stages(row) -> list[tuple[str, int]]:
+    """Deciding and stuck-in stages together, most frequent first, ties in pipeline order."""
+    counts = Counter()
     for column in ("deciders", "stuck_at"):
         for entry in filter(None, row[column].split(";")):
             stage, count = entry.rsplit(":", 1)
@@ -74,9 +63,7 @@ def _stage_line(stage: str, count: int, total: int, sizes: tuple[float, float],
 
 
 def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
-    rows = load_rows(input_file, REQUIRED)
-    if not rows:
-        raise ValueError(f"{input_file} contains no A8 rows")
+    rows = read_csv(input_file)
     cells = {(row["code"], row["problem"], row["positive"] == "True"): row for row in rows}
     labels = {row["code"]: row["code_label"] for row in rows}
     codes = sorted(labels, key=lambda code: (CODE_ORDER.get(code, len(CODE_ORDER)), code))
@@ -92,7 +79,7 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
     total_width = code_width + len(columns) * cell_width
     total_height = header_rows + len(codes)
 
-    def box(x: float, y: float, width: float, height: float, color: Any, **kwargs: Any) -> None:
+    def box(x, y, width, height, color, **kwargs) -> None:
         ax.add_patch(Rectangle((x, y), width, height, facecolor=color,
                                edgecolor=COLOR_PAPER_WHITE, linewidth=0.7, **kwargs))
 

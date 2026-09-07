@@ -1,4 +1,4 @@
-"""Aggregate the raw A8 hybrid rows into one row per (problem, code, label)."""
+"""Runtime statistics and deciding stages (A8)."""
 
 from __future__ import annotations
 
@@ -6,7 +6,6 @@ import sys
 from collections import Counter, defaultdict
 from pathlib import Path
 from statistics import mean, stdev
-from typing import Any
 
 from paper.experiments.common import COLLECTED_DATA_DIR, RESULTS_DIR, as_bool, read_csv, write_csv
 
@@ -28,10 +27,6 @@ CODE_ORDER = {name: index for index, (name, _) in enumerate(CODE_LABELS)}
 CODE_LABEL = dict(CODE_LABELS)
 STAGES = ("CI", "EI", "S", "BF", "MI", "GI", "SAT", "LSE", "trivial")
 
-REQUIRED = (
-    "problem", "code", "positive", "seed", "n", "k", "status", "runtime_seconds",
-    "decided_by", "stuck_at", "timeout_seconds",
-)
 FIELDS = (
     "problem", "code", "code_label", "n", "k", "r", "positive", "num_cases",
     "num_successful", "num_unexpected", "num_timeouts", "num_memory_limited",
@@ -42,38 +37,36 @@ FIELDS = (
 )
 
 
-def distribution(values: list[str]) -> list[tuple[str, int]]:
-    """Count stage tags, most frequent first, ties in pipeline order."""
+def distribution(values) -> list[tuple[str, int]]:
+    """Stage counts, most frequent first, ties in pipeline order."""
     counts = Counter(value for value in values if value)
     order = {stage: index for index, stage in enumerate(STAGES)}
     return sorted(counts.items(), key=lambda item: (-item[1], order.get(item[0], len(order))))
 
 
-def extract(input_directory: Path = INPUT_DIRECTORY, output_file: Path = OUTPUT) -> list[dict[str, Any]]:
-    groups: dict[tuple[str, str, bool], list[dict[str, str]]] = defaultdict(list)
+def extract(input_directory: Path = INPUT_DIRECTORY, output_file: Path = OUTPUT) -> list[dict]:
+    groups = defaultdict(list)
     for problem in PROBLEMS:
         path = input_directory / f"{problem}_raw.csv"
         if not path.is_file():
             print(f"warning: {path} is missing; run collect_a8 for {problem}", file=sys.stderr)
             continue
-        for row in read_csv(path, REQUIRED):
+        for row in read_csv(path):
             groups[(row["problem"], row["code"], as_bool(row["positive"]))].append(row)
     if not groups:
         raise FileNotFoundError(f"no A8 raw files in {input_directory}")
 
-    output: list[dict[str, Any]] = []
+    output = []
     for (problem, code, positive), rows in groups.items():
-        # Runtime statistics follow the other collectors: completed calls and
-        # timeouts (capped at the budget) count, memory and execution errors do not.
-        timed = [float(row["runtime_seconds"]) for row in rows
-                 if row["status"] in {"success", "unexpected", "timeout"}]
+        # as in the other experiments: timeouts enter at their budget, memory and execution failures are excluded
+        timed = [float(row["runtime_seconds"]) for row in rows if row["status"] in {"success", "unexpected", "timeout"}]
         deciders = distribution([row["decided_by"] for row in rows])
         (primary, primary_count), (secondary, secondary_count) = (deciders + [("", 0), ("", 0)])[:2]
         generated = [row for row in rows if row["status"] != "generation_error"]
         n, k = (int(generated[0]["n"]), int(generated[0]["k"])) if generated else (None, None)
         output.append({
             "problem": problem, "code": code, "code_label": CODE_LABEL.get(code, code),
-            "n": n, "k": k, "r": n - k if n is not None and k is not None else None,
+            "n": n, "k": k, "r": n - k if generated else None,
             "positive": positive,
             "num_cases": len(rows),
             "num_successful": sum(row["status"] == "success" for row in rows),
@@ -88,12 +81,10 @@ def extract(input_directory: Path = INPUT_DIRECTORY, output_file: Path = OUTPUT)
             "primary_decider": primary, "primary_decider_count": primary_count,
             "secondary_decider": secondary, "secondary_decider_count": secondary_count,
             "deciders": ";".join(f"{stage}:{count}" for stage, count in deciders),
-            "stuck_at": ";".join(f"{stage}:{count}" for stage, count in
-                                 distribution([row["stuck_at"] for row in rows])),
+            "stuck_at": ";".join(f"{stage}:{count}" for stage, count in distribution([row["stuck_at"] for row in rows])),
             "timeout_seconds": float(rows[0]["timeout_seconds"]),
         })
-    output.sort(key=lambda row: (CODE_ORDER.get(row["code"], len(CODE_ORDER)), row["code"],
-                                 PROBLEMS.index(row["problem"]), not row["positive"]))
+    output.sort(key=lambda row: (CODE_ORDER.get(row["code"], len(CODE_ORDER)), row["code"], PROBLEMS.index(row["problem"]), not row["positive"]))
     write_csv(output_file, output, FIELDS)
     return output
 
