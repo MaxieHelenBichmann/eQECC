@@ -319,3 +319,18 @@ pm_stb,bb_90,False,85,90,8,success,0.003814005,CI,,5400.0,
 pm_stb,bb_90,False,697,90,8,success,0.007621000,CI,,5400.0,
 pm_stb,bb_90,False,201,90,8,success,0.008619584,CI,,5400.0,
 pm_stb,bb_90,False,94,90,8,success,0.008003056,CI,,5400.0,
+pm_stb,bb_108,True,89,108,8,timeout,5400.013964907,,SAT,5400.0,
+pm_stb,bb_108,True,773,108,8,timeout,5400.011913344,,SAT,5400.0,
+pm_stb,bb_108,True,654,108,8,timeout,5400.014253269,,SAT,5400.0,
+pm_stb,bb_108,True,438,108,8,timeout,5400.017274042,,SAT,5400.0,
+pm_stb,bb_108,True,433,108,8,timeout,5400.012485623,,SAT,5400.0,
+pm_stb,bb_108,True,858,108,8,timeout,5400.016179876,,SAT,5400.0,
+pm_stb,bb_108,True,85,108,8,timeout,5400.013278044,,SAT,5400.0,
+pm_stb,bb_108,True,697,108,8,timeout,5400.004672322,,SAT,5400.0,
+pm_stb,bb_108,True,201,108,8,timeout,5400.014035706,,SAT,5400.0,
+pm_stb,bb_108,True,94,108,8,timeout,5400.013381423,,SAT,5400.0,
+pm_stb,bb_108,False,89,108,8,success,0.007285628,CI,,5400.0,
+pm_stb,bb_108,False,773,108,8,success,0.012480712,CI,,5400.0,
+pm_stb,bb_108,False,654,,,generation_error,,,,5400.0,generation timeout
+pm_stb,bb_108,False,438,,,generation_error,,,,5400.0,generation timeout
+pm_stb,bb_108,False,433,,,generation_error,,,,5400.0,generation timeout
