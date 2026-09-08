@@ -216,7 +216,7 @@ uv run python -m benchmarks.thesis.thesis_prototypes \
 
 ### Tests, Linter, Formatter
 
-[![Tests](https://github.com/MaxieHelenBichmann/bm_qecc/actions/workflows/tests.yml/badge.svg)](https://github.com/MaxieHelenBichmann/bm_qecc/actions/workflows/tests.yml)
+[![CI](https://github.com/MaxieHelenBichmann/eQECC/actions/workflows/ci.yml/badge.svg)](https://github.com/MaxieHelenBichmann/eQECC/actions/workflows/ci.yml)
 
 The test suite is located in `tests/`. They include unit, regression and randomized tests.
 
