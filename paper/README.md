@@ -3,7 +3,7 @@
 Everything needed to reproduce the figures of the associated paper lives in the directory `paper/`. 
 It contains server-side measurement scripts, the deterministic aggregation step, and plotting entry points.
 
-Nothing here is a library. Every stage is a runnable entry point, run from the **repository root** inside the `uv` environment (`uv sync` once, then `uv run ...`, as described in the top-level README).
+Nothing here is a library. Every stage is a runnable entry point, run from the **repository root** inside the `uv` environment.
 The artifacts of this pipeline are not the exact same figures used in the paper, as those are LaTeX-native, but they represent the data in the same way. The measurements in the paper were collected on a server with the following hardware and software configuration:
 
 
@@ -31,12 +31,12 @@ Figures and Tables are referred to everywhere in this package as **A1 … A8**, 
 
 | ID | Related Question | Collector(s) | Collected file(s) | Figure(s) |
 |---|---|---|---|---|
-| **A1** | Are invariants even useful? | `collect_a1` | `invariant_rejections.csv` | `paper/results/a1/a1.png`<br>`paper/results/a1/a1_overall.png` (overall rejection-rate table) |
+| **A1** | Are invariants even useful? | `collect_a1` | `invariant_rejections.csv` | `paper/results/a1/a1.png`<br>`paper/results/a1/a1_overall.png` |
 | **A2** | Are signatures even useful? | `collect_a2` | `signature_space.csv` | `paper/results/a2/a2.png` |
 | **A3** | When are invariants useful? | `collect_a3` + `collect_algorithm` | `invariant_timings.csv`, `algorithms/*.csv` | `paper/results/a3/a3.png` |
-| **A4** | How do methods eliminating the representation degree of freedom perform? | `collect_algorithm` | `algorithms/{pm_stb_graph_iso,lc_stb_graph_iso,pm_css_matroid}.csv` | `paper/results/a4/a4.png` |
-| **A5** | Which exact method performs best? | `collect_algorithm` | `algorithms/*.csv` (all configured methods) | `paper/results/a5/a5.png` |
-| **A6** | Is SAT's poor CSS behavior caused by the encoding or by the CSS inputs? | `collect_a6` + `collect_algorithm` | `pm_stb_sat_on_css.csv`, `algorithms/pm_{stb,css}_sat.csv` | `paper/results/a6/a6.png`<br>`paper/results/a6/a6_css.png` (direct CSS-encoding comparison) |
+| **A4** | How do methods eliminating the representation degree of freedom perform? | `collect_algorithm` | `algorithms/pm_stb_graph_iso.csv`, `algorithms/lc_stb_graph_iso.csv`, `algorithms/pm_css_matroid.csv`| `paper/results/a4/a4.png` |
+| **A5** | Which exact method performs best? | `collect_algorithm` | `algorithms/*.csv` | `paper/results/a5/a5.png` |
+| **A6** | Is SAT's poor CSS behavior caused by the encoding or by the CSS inputs? | `collect_a6` + `collect_algorithm` | `pm_stb_sat_on_css.csv`, `algorithms/pm_stb_sat.csv`, `algorithms/pm_css_sat.csv` | `paper/results/a6/a6.png`<br>`paper/results/a6/a6_css.png` |
 | **A7** | Why does SAT perform so poorly on CSS Permutations? | `collect_a7` | `a7_sat_css_structure.csv` | `paper/results/a7/a7.png` |
 | **A8** | How do the hybrids perform? | `collect_a8` | `hybrids/{pm_stb,pm_css,lc_stb}_{instances,raw}.csv` | `paper/results/a8/a8.png` |
 
@@ -52,14 +52,14 @@ As the paper focuses on pairwise equivalence checking, only three problems from 
   PHASE 1  collect                 PHASE 2  extract              PHASE 3  visualize
   benchmarks/collect_*.py          experiments/extract_a<N>.py   visualizations/visualize_a<N>.py
   - primarily collection,          - deterministic, local,       - primarily plotting
-    hours-to-days, server            seconds, CSV→CSV
+    hours-to-days, server            seconds, CSV-only
          │                                   │                             │
          ▼                                   ▼                             ▼
   paper/data/collected/ ───────────►  paper/results/a<N>/by_cell.csv ─────► paper/results/a<N>/a<N>.png
    (raw or batch summaries)             (figure-ready, per cell)
 ```
 
-This pipeline has three phases for each experiment, with strict boundaries, making the package replicable:
+This pipeline has three phases for each experiment:
 
 - Phase 1 primarily collects measurements and is the only phase that generates codes, runs algorithms, or consumes meaningful compute time. Depending on the collector, it stores either per-instance rows or summaries of a seeded batch.
 - Phase 2 performs deterministic extraction, including the main selection and aggregation steps (winner choice, backend choice, eligibility rules, and normalization). It never generates inputs or runs a benchmark algorithm.
@@ -189,10 +189,7 @@ Negative instances use the same constructions and large-parameter CSS fallback d
 The result value for a parameter setting is the mean runtime of the instances.
 
 Negative general-stabilizer instances use A1's short Clifford perturbation.
-Negative CSS instances use `css_codes_independent_candidate` with pinned `rx`
-and exact SAT/matroid certification. Beyond the exact-certifier region they use
-`css_codes_cascaded`, so the negative-family composition changes across cells
-as described under A4.
+Negative CSS instances use `css_codes_independent_candidate` with pinned `rx` and exact SAT/matroid certification. Beyond the exact-certifier region they use `css_codes_cascaded`, so the negative-family composition changes across cells as described under A4.
 
 ### A7 — SAT Encodings on CSS-Code Permutation Equivalence
 
@@ -211,17 +208,13 @@ The second compares clean/separated and fully row-mixed presentations of the sam
 |---|---|
 | **Question** | What runtimes do the hybrids achieve on structured codes, and which stage actually decides each input? |
 | **Algorithms measured** | Paper hybrids in `paper/hybrids/` (`pm_stb`, `pm_css`, `lc_stb`), rather than the thesis hybrids whose MQT-QECC integration follows a maintainability-oriented design strategy |
-| **Method** | 10 positive and 10 certified-negative instances per named code and problem; mean runtime and the distribution of deciding stages |
+| **Method** | 10 positive and 10 certified-negative structured instances per named code and problem; mean runtime and the distribution of deciding stages |
 
-The named codes are `bell`, `3q_rep`, `5q_prf`, `steane`, `shor`, `carbon`, `hamming_15`, `15q_optimal`, `tetrahedral`, `golay`, `rot_surf_d5`, `hamming_31`, `coco_488`, `coco_666`, `bb_72`, `bb_90`, `bb_108`, and `bb_144`. PM-STB and LC-STB run on all 18; PM-CSS skips the two non-CSS codes (`5q_prf`, `15q_optimal`), which the figure shows as `N/A`.
+Positive instances pair the named code with an equivalent presentation, constructed like all previous other equivalent partners. Negative instances follow A1's short Clifford perturbation followed by exact certification.
 
-Positive instances pair the named code with an equivalent presentation of it: a random qubit permutation plus generator-basis change for PM (PM-STB and PM-CSS receive the identical pair on a CSS code), a random local Clifford plus generator-basis change for LC. Negative instances follow A1: two random Clifford gates (PM-STB, LC-STB) or two random CNOTs preserving CSS form and check ranks (PM-CSS) are applied to the named code, and the candidate is kept once an exact backend certifies inequivalence, otherwise the next seeded candidate is tried. Certification uses SAT, matroid isomorphism for PM-CSS with `n-k > 9` and `n <= 28`, and a sound permutation-invariant mismatch for larger PM-CSS codes. Instance generation including certification runs under its own time limit (`GENERATION_TIMEOUT_SECONDS`); an instance that cannot be generated is recorded as `generation_error` and is not retried.
+The collector caches the generated instances, but an instance's result value is primarily its runtime and the stage that decided it (`decided_by`), or (for a timed-out or memory-killed call) the stage it was stuck in (`stuck_at`).
 
-The collector writes two flat files per problem to `paper/data/collected/hybrids/`: `<problem>_instances.csv` caches the generated pairs (check matrices serialized as bit strings) and `<problem>_raw.csv` holds one row per instance with its status, runtime, the stage that decided it (`decided_by`), and, for a timed-out or memory-killed call, the stage it was stuck in (`stuck_at`). Restarting skips keys already in the raw file and reads cached instances instead of regenerating them; use `--problem` to collect one problem at a time.
-
-The extractor computes per (problem, code, label) the mean, standard deviation, and maximum runtime over completed and timed-out calls (timeouts enter at their budget, memory and execution failures are excluded, as in the other experiments), the full `deciders` distribution, and its two most frequent stages. The figure colors each cell by mean runtime and prints the primary deciding stage, the second most frequent one in parentheses, and the counts of timeouts (`t#`) and other failures (`f#`); such cells are hatched.
-
-Stage tags are `CI` (cheap invariants), `EI` (expensive invariants), `S` (signatures), and the decision procedures `BF` (brute force), `MI` (matroid isomorphism), `GI` (graph isomorphism), `SAT`, and `LSE`.
+Stage tags are `CI` (cheap invariants), `EI` (expensive invariants), `S` (signatures), and the decision procedures `BF` (brute force), `MI` (matroid isomorphism), `GI` (graph isomorphism), `SAT`, and `LSE` (polynomial graph-state approach).
 
 ---
 

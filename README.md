@@ -2,15 +2,19 @@
 
 This repository benchmarks different approaches to equivalence checking for quantum error-correcting codes (QECCs) under different equivalence notions. It is part of the implementation for my Bachelor's thesis, "Automated Equivalence Checking of Stabilizer Codes", which contributes to [MQT QECC](https://github.com/munich-quantum-toolkit/qecc). The required infrastructure and code representation classes are taken from that project.
 
-Additionally, it functions as a replication package for data and methodology in the paper "Methods for Automated Equivalence Checking of Stabilizer Codes", which is written on the basis of my thesis.
+Additionally, it functions as a replication package for data and methodology in the paper "Methods for Automated Equivalence Checking of Stabilizer Codes", which is written on the basis of my thesis. Specific information about that can be found in [README](./paper/README.md).
 
 This README does not discuss the examined equivalence notions or their theoretical foundations in depth; those are covered in the thesis or paper. References for the implemented algorithms are cited in the corresponding source files.
 
-This repository is currently not intended to be installed as a package. Its final hybrid algorithms are contributed to [MQT QECC](https://github.com/munich-quantum-toolkit/qecc).
+This repository is currently not intended to be installed as a package. Its final hybrid algorithms are contributed to MQT QECC in a slightly adapted and maintainable form.
 
 ## Problems
 
-The following problems are benchmarked. They are expressed using the repository's input representation for a QECC $C$: a binary symplectic stabilizer matrix $\text{S}(C) \in \mathbb{F}_2^{r \times 2n}$, or the parity-check matrices $\text{H}_x(C) \in \mathbb{F}_2^{r_x \times n}$ and $\text{H}_z(C) \in \mathbb{F}_2^{r_z \times n}$ when the code is CSS.
+The following problems are benchmarked. 
+
+They are expressed using the repository's input representation for a QECC $C$: a binary symplectic stabilizer matrix $\text{S}(C) \in \mathbb{F}_2^{r \times 2n}$, or the check matrices $\text{H}_x(C) \in \mathbb{F}_2^{r_x \times n}$ and $\text{H}_z(C) \in \mathbb{F}_2^{r_z \times n}$ when the code is CSS.
+
+$\mathfrak{S}_n$ is the symmetric group, $\mathrm{GL}(r, \mathbb{F}_2)$ the general linear group of degree $r$, and $\text{Sp}(2n, \mathbb{F}_2)$ is the symplectic group.
 
 ### Permutation Equivalence
 
@@ -34,13 +38,13 @@ $$
 &\exists P \in \mathfrak{S}_n,\quad
 \exists R_x \in \mathrm{GL}(r_x, \mathbb{F}_2),\quad
 \exists R_z \in \mathrm{GL}(r_z, \mathbb{F}_2): \\
-&\text{H}_x(C') = R_x \text{H}_x(C) P \enspace \text{ and } \enspace\text{H}_z(C') = R_z \cdot \text{H}_z(C) \cdot P
+&\text{H}_x(C') = R_x \cdot \text{H}_x(C) \cdot P \enspace \text{ and } \enspace\text{H}_z(C') = R_z \cdot \text{H}_z(C) \cdot P
 \end{aligned}
 $$
 
 ### Local-Clifford Equivalence
 
-- **LC-STB**: Are two given stabilizer codes $C$ and $C'$ local-Clifford equivalent, meaning that they define the same codespace up to local Clifford gates on the output qubits?
+- **LC-STB**: Are two given stabilizer codes $C$ and $C'$ equivalent up to a local Clifford operation on the output qubits?
 
 $$
 \begin{aligned}
@@ -125,13 +129,13 @@ $$
 
 ## Scope
 
-Here, we measure the runtime of the Python algorithms on the expected workload: input codes $[[n,k,d]]$ with $n$ ranging from 2 to approximately 50, plus some larger structured cases.
+Here, we measure the runtime of the Python algorithms on an expected workload: input codes $[[n,k,d]]$ with $n$ ranging from 2 to approximately 50, plus some larger structured cases.
 
 This repository is not currently intended for detailed benchmarking or profiling analyses.[^1] The goal is to understand the algorithms' different complexity classes and make a more informed decision about the hybrid implementations.
 
 Inputs are guaranteed to be valid and of same dimensions, so the prototype and hybrid algorithms in do not need to verify basic validity conditions.
 
-[^1]: A future C++ implementation could support more rigorous benchmarks, but that is currently outside the scope of the thesis.
+[^1]: A future C++ implementation could support more rigorous benchmarks, but that is currently outside the scope of the work.
 
 ## Repository Structure
 
