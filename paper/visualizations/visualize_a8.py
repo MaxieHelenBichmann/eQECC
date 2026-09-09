@@ -46,6 +46,7 @@ STAGE_LEGEND = (
 # font sizes (stage label, count) of the first and second line in a cell
 WINNER_SIZES = (7.4, 4.6)
 RUNNER_UP_SIZES = (5.6, 4.0)
+RUNTIME_SIZE = 4.6
 
 
 def _text_color(color) -> str:
@@ -70,6 +71,10 @@ def _stages(row) -> list[tuple[str, int]]:
             counts[stage] += int(count)
     order = {stage: index for index, stage in enumerate(STAGES)}
     return sorted(counts.items(), key=lambda item: (-item[1], order.get(item[0], len(order))))
+
+
+def _runtime_text(seconds: float) -> str:
+    return f"{seconds:.0f} s" if seconds >= 1000 else f"{seconds:.3g} s"
 
 
 def _stage_line(stage: str, count: int, total: int, sizes: tuple[float, float], color: str, *, bold: bool) -> HPacker:
@@ -143,6 +148,8 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
             ]
             if not lines:
                 lines = [_stage_line("\u2014", 0, total, WINNER_SIZES, text_color, bold=True)]
+            if runtime:
+                lines.insert(0, TextArea(_runtime_text(runtime), textprops={"fontsize": RUNTIME_SIZE, "color": text_color}))
             ax.add_artist(
                 AnnotationBbox(
                     VPacker(children=lines, align="center", pad=0, sep=1.6),
@@ -179,6 +186,7 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
     lines = [f"{tag:<4} {label}" for tag, label in STAGE_LEGEND]
     lines += [
         "",
+        "top     mean runtime",
         "X a/b   stage X ended a of b runs",
         "        (decided or hit the budget)",
         "line 1  most frequent stage",
