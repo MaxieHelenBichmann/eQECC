@@ -54,10 +54,11 @@ def _text_color(color) -> str:
 
 
 def _failures(row) -> int:
-    return sum(
-        int(row[field] or 0)
-        for field in ("num_memory_limited", "num_errors", "num_unexpected", "num_generation_errors")
-    )
+    return sum(int(row[field] or 0) for field in ("num_memory_limited", "num_errors", "num_unexpected"))
+
+
+def _runs(row) -> int:
+    return int(row["num_cases"]) - int(row["num_generation_errors"] or 0)
 
 
 def _stages(row) -> list[tuple[str, int]]:
@@ -135,7 +136,7 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
                     color=text_color,
                 )
                 continue
-            stages, total = _stages(cell), int(cell["num_cases"])
+            stages, total = _stages(cell), _runs(cell)
             lines = [
                 _stage_line(stage, count, total, sizes, text_color, bold=index == 0)
                 for index, ((stage, count), sizes) in enumerate(zip(stages[:2], (WINNER_SIZES, RUNNER_UP_SIZES)))

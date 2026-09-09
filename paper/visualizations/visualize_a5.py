@@ -46,6 +46,14 @@ METHODS = (
     ("classical", "Classical Approaches", COLOR_PAPER_LILA),
     ("aut", "Automorphism Group", COLOR_PAPER_CYAN_STRONG),
 )
+GROUPS = (
+    ("Group-Action Search", ("bruteforce", "kls", "classical", "aut"), 2),
+    ("Isomorphism Reductions", ("graph_iso", "matroid"), 1),
+    ("Constraint Solving", ("sat", "lse"), 1),
+)
+LEGEND_Y = 0.02
+LEGEND_GAP = 0.012
+GROUP_COLOR = COLOR_PAPER_GRAY_VERY_VERY_DARK
 
 
 def method(algorithm: str) -> tuple[str, str]:
@@ -88,7 +96,7 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
 
     use_style(scale=WIDE_TEXT_SCALE)
     figure, axes = plt.subplots(1, 3, figsize=(14.4, 5.7))
-    figure.subplots_adjust(left=0.055, right=0.985, bottom=0.22, top=0.80, wspace=0.18)
+    figure.subplots_adjust(left=0.055, right=0.985, bottom=0.26, top=0.81, wspace=0.18)
     for ax, (problem, title) in zip(axes, PANELS):
         parameter_axis(ax, title)
         for row in rows:
@@ -103,17 +111,42 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     figure.suptitle("Best-Performing Prototype per Parameter Setting", fontsize=12 * WIDE_TEXT_SCALE, y=0.96)
     algorithms = {row["winner"] for row in rows} | {row["runner_up"] for row in rows if row["runner_up"]}
     present = {method(algorithm)[0] for algorithm in algorithms}
+    legends = []
+    for title, suffixes, ncol in GROUPS:
+        handles = [
+            Patch(facecolor=color, edgecolor="none", label=label)
+            for suffix, label, color in METHODS
+            if suffix in suffixes and label in present
+        ]
+        legends.append(
+            figure.legend(
+                handles=handles,
+                title=title,
+                title_fontsize=9,
+                ncol=ncol,
+                loc="lower left",
+                fontsize=11,
+                frameon=True,
+                fancybox=False,
+                edgecolor=GROUP_COLOR,
+                framealpha=1.0,
+                borderpad=0.6,
+            )
+        )
+        legends[-1].get_title().set(color=GROUP_COLOR, fontweight="bold")
     split_key = Patch(label="top/bottom: within 5%")
-    handles = [Patch(facecolor=color, edgecolor="none", label=label) for _, label, color in METHODS if label in present]
-    figure.legend(
-        handles=[*handles, split_key],
-        handler_map={split_key: SplitCellHandler()},
-        loc="lower center",
-        ncol=5,
-        frameon=False,
-        fontsize=11,
-        bbox_to_anchor=(0.5, 0.025),
+    legends.append(
+        figure.legend(
+            handles=[split_key], handler_map={split_key: SplitCellHandler()}, loc="lower left", frameon=False, fontsize=11
+        )
     )
+    figure.canvas.draw()
+    extents = [legend.get_window_extent().transformed(figure.transFigure.inverted()) for legend in legends]
+    x = 0.5 - (sum(extent.width for extent in extents) + LEGEND_GAP * (len(legends) - 1)) / 2
+    for legend, extent in zip(legends, extents):
+        y = LEGEND_Y if legend.get_title().get_text() else LEGEND_Y + (max(e.height for e in extents) - extent.height) / 2
+        legend.set_bbox_to_anchor((x, y), transform=figure.transFigure)
+        x += extent.width + LEGEND_GAP
     return save_png(figure, output)
 
 
