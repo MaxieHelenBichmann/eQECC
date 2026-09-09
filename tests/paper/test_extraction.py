@@ -16,7 +16,7 @@ from paper.experiments.common import (
     write_csv,
 )
 from paper.experiments.extract_a1 import extract as extract_a1
-from paper.experiments.extract_a2 import extract as extract_a2, pairwise_refinement
+from paper.experiments.extract_a2 import extract as extract_a2, overall as overall_a2, pairwise_refinement
 from paper.experiments.extract_a3 import extract as extract_a3
 from paper.experiments.extract_a4 import extract as extract_a4
 from paper.experiments.extract_a5 import extract as extract_a5, select_winners
@@ -224,6 +224,28 @@ def test_a2_aggregates_random_code_instances(tmp_path: Path) -> None:
     # For n=3, q=1 maps to 0 and q=1/2 maps to 3/4 after removing
     # unavoidable self-pairs and complementing; the two codes are averaged.
     assert cells[0]["mean_pairwise_refinement"] == pytest.approx(0.375)
+
+
+def test_a2_overall_mean_is_instance_weighted_and_skips_censored_cells(tmp_path: Path) -> None:
+    cells = [
+        {"problem": "pm_stb", "num_requested": 3, "num_valid": 3, "num_censored": 0, "mean_pairwise_refinement": 1.0},
+        {"problem": "pm_stb", "num_requested": 1, "num_valid": 1, "num_censored": 0, "mean_pairwise_refinement": 0.0},
+        {"problem": "pm_stb", "num_requested": 2, "num_valid": 0, "num_censored": 2, "mean_pairwise_refinement": ""},
+    ]
+
+    (summary,) = overall_a2(cells)
+
+    assert summary["num_valid"] == 4
+    assert summary["num_censored"] == 2
+    assert summary["mean_pairwise_refinement"] == pytest.approx(0.75)
+
+    write_csv(
+        tmp_path / "signatures.csv",
+        [{"problem": "pm_css", "seed": 1, "n": 3, "k": 1, "q_pairs": 0.5, "status": "success"}],
+        ("problem", "seed", "n", "k", "q_pairs", "status"),
+    )
+    extract_a2(tmp_path / "signatures.csv", tmp_path / "by_cell.csv")
+    assert (tmp_path / "by_problem.csv").exists()
 
 
 def test_a2_pairwise_refinement_boundaries_and_intermediate_partition() -> None:

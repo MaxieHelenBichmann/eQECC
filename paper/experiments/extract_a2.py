@@ -10,6 +10,7 @@ from paper.experiments.common import COLLECTED_DATA_DIR, RESULTS_DIR, read_csv, 
 
 INPUT = COLLECTED_DATA_DIR / "signature_space.csv"
 OUTPUT = RESULTS_DIR / "a2" / "by_cell.csv"
+PROBLEM_FIELDS = ("problem", "num_cells", "num_requested", "num_valid", "num_censored", "mean_pairwise_refinement")
 FIELDS = (
     "problem",
     "n",
@@ -26,6 +27,28 @@ FIELDS = (
 def pairwise_refinement(q_pairs: float, n: int) -> float:
     """Normalize fraction of distinct qubit pairs separated by the signature: 0 for one class, 1 for all singletons."""
     return (1 - q_pairs) / (1 - 1 / n)
+
+
+def overall(cells: list[dict]) -> list[dict]:
+    """Instance-weighted mean over every valid seed of a problem, across all parameter settings."""
+    rows = []
+    for problem in sorted({cell["problem"] for cell in cells}):
+        group = [cell for cell in cells if cell["problem"] == problem]
+        valid = sum(int(cell["num_valid"]) for cell in group)
+        weighted = sum(
+            float(cell["mean_pairwise_refinement"]) * int(cell["num_valid"]) for cell in group if int(cell["num_valid"])
+        )
+        rows.append(
+            {
+                "problem": problem,
+                "num_cells": len(group),
+                "num_requested": sum(int(cell["num_requested"]) for cell in group),
+                "num_valid": valid,
+                "num_censored": sum(int(cell["num_censored"]) for cell in group),
+                "mean_pairwise_refinement": weighted / valid if valid else "",
+            }
+        )
+    return rows
 
 
 def extract(input_file: Path = INPUT, output_file: Path = OUTPUT) -> list[dict]:
@@ -49,6 +72,7 @@ def extract(input_file: Path = INPUT, output_file: Path = OUTPUT) -> list[dict]:
             }
         )
     write_csv(output_file, cells, FIELDS)
+    write_csv(output_file.with_name("by_problem.csv"), overall(cells), PROBLEM_FIELDS)
     return cells
 
 

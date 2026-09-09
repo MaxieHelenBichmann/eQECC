@@ -78,6 +78,7 @@ def test_a2_signature_space(tmp_path: Path) -> None:
                 "n": 3,
                 "k": 1,
                 "r": 2,
+                "num_requested": 20,
                 "num_valid": 20,
                 "num_censored": 0,
                 "mean_pairwise_refinement": 0.5,

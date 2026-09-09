@@ -9,6 +9,7 @@ from matplotlib.colors import Normalize
 from matplotlib.patches import Patch
 
 from paper.experiments.common import RESULTS_DIR, read_csv
+from paper.experiments.extract_a2 import overall
 from paper.visualizations.common import (
     COLOR_PAPER_GRAY_VERY_LIGHT,
     COLOR_PAPER_GRAY_VERY_VERY_DARK,
@@ -44,6 +45,18 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
                 partition_cell(ax, n, r, 0, 1, SIGNATURE_CMAP(norm(float(cell["mean_value"]))))
             elif (n, r) in censored:
                 outline_partition(ax, n, r, 0, 1, COLOR_PAPER_GRAY_VERY_VERY_DARK)
+        (summary,) = overall(problem_rows)
+        if summary["mean_pairwise_refinement"] != "":
+            ax.text(
+                0.04,
+                0.96,
+                f"Mean over all instances: {summary['mean_pairwise_refinement']:.2f}",
+                transform=ax.transAxes,
+                ha="left",
+                va="top",
+                fontsize=8,
+                color="#202020",
+            )
     figure.suptitle("Pairwise Refinement Induced by Permutation Signatures", fontsize=12)
     figure.legend(
         handles=[
