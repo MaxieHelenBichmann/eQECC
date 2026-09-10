@@ -7,10 +7,10 @@ hybrids/<problem>_instances.csv, then the hybrid runs on it under supervision
 and hybrids/<problem>_raw.csv receives its status, runtime, the stage that
 decided, and for a killed call the stage it was stuck in. Positives pair the
 code with an equivalent presentation (random permutation or local Clifford plus
-a generator basis change); negatives follow A1 with two random Clifford gates or
-CNOTs, certified by SAT, matroid isomorphism, or a permutation-invariant
-mismatch for the largest CSS codes. Restarting skips keys present in the raw
-file and reuses cached instances.
+a generator basis change); negatives follow A1 with two random CNOTs for a CSS
+code and two random Clifford gates otherwise, certified by SAT, matroid
+isomorphism, or a permutation-invariant mismatch for the largest CSS codes.
+Restarting skips keys present in the raw file and reuses cached instances.
 """
 
 from __future__ import annotations
@@ -160,15 +160,17 @@ def generate_pair(problem: str, code_name: str, positive: bool, seed: int) -> tu
         # PM-STB and PM-CSS receive the identical pair for a CSS code.
         return PEqCodePairGenerator.css_codes_basis_changed(code_name, seed)
 
+    # A CSS code always receives a CSS partner (CNOTs preserve the CSS form), so
+    # negatives cannot be refuted by the X/Z projection ranks alone.
     pair: tuple[StabilizerCode, StabilizerCode]
     for attempt in range(NEGATIVE_MAX_ATTEMPTS):
         attempt_seed = seed * NEGATIVE_MAX_ATTEMPTS + attempt
-        if problem == "pm_css":
-            pair = NonPEqCodePairGenerator.css_codes_cnot_candidate(code_name, attempt_seed, gate_steps=GATE_STEPS)
-        else:
+        if code_name in NON_CSS_CODES:
             pair = NonPEqCodePairGenerator.stabilizer_codes_clifford_candidate(
                 code_name, attempt_seed, gate_steps=GATE_STEPS
             )
+        else:
+            pair = NonPEqCodePairGenerator.css_codes_cnot_candidate(code_name, attempt_seed, gate_steps=GATE_STEPS)
         if certified_inequivalent(problem, *pair):
             return pair
     raise RuntimeError(f"no certified {problem} negative for {code_name}, seed {seed}")
