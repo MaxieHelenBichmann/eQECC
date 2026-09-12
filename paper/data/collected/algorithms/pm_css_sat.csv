@@ -375,3 +375,4 @@ pm_css_sat,random_pm_css_sat_47_5_independent_certified_negative,,47,5,False,,,4
 pm_css_sat,random_pm_css_sat_47_4_positive,,47,4,True,,,42,5,5400.0,13958643712,4959.806757321,984.336073296,5400.020193571,5,1,0,4,0,0,0
 pm_css_sat,random_pm_css_sat_47_4_independent_certified_negative,,47,4,False,,,42,5,5400.0,13958643712,2268.940956892,2863.504149289,5400.013788716,5,3,0,2,0,0,0
 pm_css_sat,random_pm_css_sat_47_0_positive,,47,0,True,,,42,5,5400.0,13958643712,5400.012098176,0.004344606,5400.014403138,5,0,0,5,0,0,0
+pm_css_sat,random_pm_css_sat_47_0_independent_certified_negative,,47,0,False,,,42,5,5400.0,13958643712,2529.594508354,2649.501012049,5400.015502669,5,3,0,2,0,0,0
