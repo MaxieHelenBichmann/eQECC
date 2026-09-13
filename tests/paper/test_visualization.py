@@ -6,6 +6,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import pytest
+from matplotlib.colors import to_rgba
 
 from paper.experiments.common import write_csv
 from paper.experiments.extract_a7 import EXPERIMENT1, EXPERIMENT2
@@ -108,6 +109,7 @@ def test_a3_relative_cost(tmp_path: Path) -> None:
                 "relative_runtime": 0.5,
                 "num_invariant_requested": 10,
                 "num_invariant_successful": 10,
+                "num_invariant_timeouts": int(problem == "lc_stb"),
             }
             for problem, invariant in (
                 ("pm_stb", "linear_dependency"),
@@ -119,6 +121,25 @@ def test_a3_relative_cost(tmp_path: Path) -> None:
         ],
         visualize_a3.render,
     )
+
+
+def test_a3_marks_invariant_timeout_with_deep_red_outline() -> None:
+    figure, ax = plt.subplots()
+    row = {
+        "problem": "lc_stb",
+        "n": 3,
+        "r": 2,
+        "relative_runtime": "",
+        "backend_selection": "completed",
+        "num_invariant_timeouts": 1,
+    }
+    visualize_a3.draw_panel(ax, [row], ("lc_stb",), visualize_a3.relative_norm())
+    try:
+        assert len(ax.patches) == 1
+        assert ax.patches[0].get_facecolor()[-1] == 0
+        assert ax.patches[-1].get_edgecolor() == pytest.approx(to_rgba(visualize_a3.COLOR_PAPER_DARK_RED))
+    finally:
+        plt.close(figure)
 
 
 def test_a4_graph_representations(tmp_path: Path) -> None:

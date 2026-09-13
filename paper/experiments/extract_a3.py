@@ -36,12 +36,13 @@ FIELDS = (
     "relative_runtime",
     "num_invariant_requested",
     "num_invariant_successful",
+    "num_invariant_timeouts",
 )
 SEEDS_PER_POLARITY = 5
 
 
 def read_invariant_cells(path: Path) -> list[dict]:
-    # latest row per key wins; a cell needs all 5 + 5 runs to have succeeded
+    # latest row per key wins; a cell needs all 5 + 5 runs to have a measured runtime
     latest = {}
     for row in read_csv(path):
         latest[tuple(row[field] for field in ("problem", "invariant", "n", "k", "positive", "seed"))] = row
@@ -52,13 +53,15 @@ def read_invariant_cells(path: Path) -> list[dict]:
     cells = []
     for (problem, invariant, n, k), group in sorted(grouped.items()):
         positives = sum(as_bool(row["positive"]) for row in group)
-        runtimes = [
-            runtime
+        timed_rows = [
+            row
             for row in group
-            if row["status"] == "success" and (runtime := as_float(row["runtime_seconds"])) is not None
+            if row["status"] in {"success", "timeout"} and as_float(row["runtime_seconds"]) is not None
         ]
-        if positives != SEEDS_PER_POLARITY or len(runtimes) != 2 * SEEDS_PER_POLARITY:
+        runtimes = [runtime for row in timed_rows if (runtime := as_float(row["runtime_seconds"])) is not None]
+        if positives != SEEDS_PER_POLARITY or len(timed_rows) != 2 * SEEDS_PER_POLARITY:
             continue
+        num_successful = sum(row["status"] == "success" for row in timed_rows)
         cells.append(
             {
                 "problem": problem,
@@ -66,10 +69,11 @@ def read_invariant_cells(path: Path) -> list[dict]:
                 "n": n,
                 "k": k,
                 "r": n - k,
-                "mean_seconds": mean(runtimes),
-                "stddev_seconds": stdev(runtimes),
+                "mean_seconds": mean(runtimes) if num_successful else None,
+                "stddev_seconds": stdev(runtimes) if num_successful else None,
                 "num_requested": len(group),
-                "num_successful": len(runtimes),
+                "num_successful": num_successful,
+                "num_timeouts": sum(row["status"] == "timeout" for row in timed_rows),
             }
         )
     return cells
@@ -105,9 +109,12 @@ def extract(
                 "backend_mean_seconds": backend["mean_seconds"],
                 "backend_selection": backend["selection"],
                 "backend_num_timeouts": backend["winner_num_timeouts"],
-                "relative_runtime": cell["mean_seconds"] / backend["mean_seconds"],
+                "relative_runtime": cell["mean_seconds"] / backend["mean_seconds"]
+                if cell["mean_seconds"] is not None
+                else None,
                 "num_invariant_requested": cell["num_requested"],
                 "num_invariant_successful": cell["num_successful"],
+                "num_invariant_timeouts": cell["num_timeouts"],
             }
         )
     write_csv(output_file, output, FIELDS)

@@ -283,6 +283,38 @@ def test_a3_excludes_incomplete_invariant_cells(tmp_path: Path) -> None:
     assert extract_a3(invariant_file, algorithms, tmp_path / "a3.csv", ("lc_stb_sat",)) == []
 
 
+def test_a3_keeps_and_marks_invariant_timeout_cells(tmp_path: Path) -> None:
+    algorithms = tmp_path / "algorithms"
+    _algorithm(algorithms, "lc_stb_sat", 1.0, 1.0)
+    invariant_file = tmp_path / "invariants.csv"
+    invariant_rows = _invariant_timing_rows("lc_stb", "local_invariant", 0.2)
+    invariant_rows[-1].update(status="timeout", runtime_seconds=5_400.0)
+    write_csv(invariant_file, invariant_rows, tuple(invariant_rows[0]))
+
+    rows = extract_a3(invariant_file, algorithms, tmp_path / "a3.csv", ("lc_stb_sat",))
+
+    assert rows[0]["num_invariant_successful"] == 9
+    assert rows[0]["num_invariant_timeouts"] == 1
+    assert rows[0]["invariant_mean_seconds"] == pytest.approx((9 * 0.2 + 5_400.0) / 10)
+
+
+def test_a3_leaves_timeout_only_invariant_cell_without_a_ratio(tmp_path: Path) -> None:
+    algorithms = tmp_path / "algorithms"
+    _algorithm(algorithms, "lc_stb_sat", 1.0, 1.0)
+    invariant_file = tmp_path / "invariants.csv"
+    invariant_rows = _invariant_timing_rows("lc_stb", "local_invariant", 5_400.0)
+    for row in invariant_rows:
+        row["status"] = "timeout"
+    write_csv(invariant_file, invariant_rows, tuple(invariant_rows[0]))
+
+    rows = extract_a3(invariant_file, algorithms, tmp_path / "a3.csv", ("lc_stb_sat",))
+
+    assert rows[0]["num_invariant_successful"] == 0
+    assert rows[0]["num_invariant_timeouts"] == 10
+    assert rows[0]["invariant_mean_seconds"] is None
+    assert rows[0]["relative_runtime"] is None
+
+
 # A4 graph representations ------------------------------------------------------------------------
 
 

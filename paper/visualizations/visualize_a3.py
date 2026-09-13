@@ -7,11 +7,11 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 from matplotlib.patches import Patch
 
-from paper.experiments.common import RESULTS_DIR, as_float, read_csv
+from paper.experiments.common import RESULTS_DIR, as_float, as_int, read_csv
 from paper.visualizations.common import (
     COLOR_PAPER_DARK_BLUE,
     COLOR_PAPER_DARK_RED,
-    COLOR_PAPER_GRAY_LIGHT,
+    COLOR_PAPER_GRAY_MEDIUM,
     COLOR_PAPER_GRAY_VERY_VERY_DARK,
     COLOR_PAPER_WHITE,
     RELATIVE_CMAP,
@@ -40,13 +40,16 @@ PANELS = (
 def draw_panel(ax, rows, problems, norm) -> None:
     for index, problem in enumerate(problems):
         for row in rows:
-            ratio = as_float(row["relative_runtime"])
-            if row["problem"] != problem or not ratio or ratio <= 0:
+            if row["problem"] != problem:
                 continue
             n, r = int(row["n"]), int(row["r"])
-            partition_cell(ax, n, r, index, len(problems), RELATIVE_CMAP(norm(ratio)))
+            ratio = as_float(row["relative_runtime"])
+            if ratio and ratio > 0:
+                partition_cell(ax, n, r, index, len(problems), RELATIVE_CMAP(norm(ratio)))
             if row["backend_selection"] == "timeout_fallback":
                 outline_partition(ax, n, r, index, len(problems), COLOR_PAPER_GRAY_VERY_VERY_DARK)
+            if as_int(row.get("num_invariant_timeouts")):
+                outline_partition(ax, n, r, index, len(problems), COLOR_PAPER_DARK_RED)
 
 
 def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
@@ -57,7 +60,7 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     figure, axes = plt.subplots(1, 3, figsize=(14.4, 5.7))
     figure.subplots_adjust(left=0.055, right=0.90, bottom=0.22, top=0.80, wspace=0.18)
     for ax, (invariant, title, problems) in zip(axes, PANELS):
-        parameter_axis(ax, title, empty_color=COLOR_PAPER_GRAY_LIGHT)
+        parameter_axis(ax, title, empty_color=COLOR_PAPER_GRAY_MEDIUM)
         draw_panel(ax, [row for row in rows if row["invariant"] == invariant], problems, norm)
 
     figure.suptitle("Invariant Cost Relative to the Best-Performing Backend", fontsize=12 * WIDE_TEXT_SCALE, y=0.96)
@@ -69,9 +72,15 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
             Patch(facecolor=COLOR_PAPER_DARK_BLUE, edgecolor="none", label="Invariant is cheaper"),
             Patch(facecolor=COLOR_PAPER_DARK_RED, edgecolor="none", label="Invariant costs more"),
             Patch(facecolor=COLOR_PAPER_WHITE, edgecolor=gray, linewidth=0.9, label="Backend timed out"),
+            Patch(
+                facecolor=COLOR_PAPER_WHITE,
+                edgecolor=COLOR_PAPER_DARK_RED,
+                linewidth=0.9,
+                label="Invariant timed out",
+            ),
         ],
         loc="lower center",
-        ncol=5,
+        ncol=6,
         frameon=False,
         fontsize=11,
         bbox_to_anchor=(0.5, 0.015),
