@@ -37,7 +37,7 @@ Figures and Tables are referred to everywhere in this package as **A1 … A8**, 
 | **A4** | How do methods eliminating the representation degree of freedom perform? | `collect_algorithm` | `algorithms/pm_stb_graph_iso.csv`, `algorithms/lc_stb_graph_iso.csv`, `algorithms/pm_css_matroid.csv`| `paper/results/a4/a4.png` |
 | **A5** | Which exact method performs best? | `collect_algorithm` | `algorithms/*.csv` | `paper/results/a5/a5.png` |
 | **A6** | Is SAT's poor CSS behavior caused by the encoding or by the CSS inputs? | `collect_a6` + `collect_algorithm` | `pm_stb_sat_on_css.csv`, `algorithms/pm_stb_sat.csv`, `algorithms/pm_css_sat.csv` | `paper/results/a6/a6.png`<br>`paper/results/a6/a6_css.png` |
-| **A7** | Why does SAT perform so poorly on CSS Permutations? | `collect_a7` | `a7_sat_css_structure.csv` | `paper/results/a7/a7.png` |
+| **A7** | Why does SAT perform so poorly on CSS Permutations? | `collect_a7` | `sat_css_weakness.csv` | `paper/results/a7/a7.png` |
 | **A8** | How do the hybrids perform? | `collect_a8` | `hybrids/{pm_stb,pm_css,lc_stb}_{instances,raw}.csv` | `paper/results/a8/a8.png` |
 
 All collected-file paths in this table are relative to `paper/data/collected/`. The top-level `data/` and `results/` directories belong to the thesis benchmark pipeline and are unrelated to this package.
@@ -188,6 +188,8 @@ Negative instances use the same constructions and large-parameter CSS fallback d
 
 The result value for a parameter setting is the mean runtime of the instances.
 
+The CSS instances draw the X-check rank `rx` uniformly from `0..n-k`; A7 shows that this rank split is what separates the fast from the slow cells.
+
 Negative general-stabilizer instances use A1's short Clifford perturbation.
 Negative CSS instances use `css_codes_independent_candidate` with pinned `rx` and exact SAT/matroid certification. Beyond the exact-certifier region they use `css_codes_cascaded`, so the negative-family composition changes across cells as described under A4.
 
@@ -196,11 +198,14 @@ Negative CSS instances use `css_codes_independent_candidate` with pinned `rx` an
 |  |  |
 |---|---|
 | **Question** | Why does SAT perform so poorly on CSS permutation equivalence, even with the check-matrix encoding? |
-| **Algorithms measured** | `pm_stb_sat` on unrestricted and block-structured general stabilizer codes; `pm_css_sat` on balanced CSS codes |
-| **Method** | 10 positive randomized instances per parameter setting; no direct runtime measurements |
+| **Algorithms measured** | `pm_css_sat` on CSS codes with pinned X-check rank; `pm_stb_sat` on general stabilizer codes as reference and on clean and row-mixed CSS tableaus |
+| **Method** | 10 positive randomized instances per parameter setting; comparison of median solver decisions |
 
-Two experiments are measured, first the number of solver decisions required to solve a code size and the number of decisions required to reject deliberately wrong qubit mappings. Both on instances with different amount of (in)dependent (un)coupled row-transformations.
-The second compares clean/separated and fully row-mixed presentations of the same CSS groups using the `pm_stb_sat` encoding.
+The result value for a parameter setting is the median number of z3 decisions over its instances. Decisions are used instead of runtimes because they are the hardware-independent measure of search effort; runtimes of SAT on CSS codes are covered by A6. Runs that hit the 300 s timeout are excluded from the median.
+
+Two experiments share the collected file. 
+The rank sweep (`k = 4`, `n = 14, 16, 18`) pins the X-check rank `rx` to `0, 1, 2, r/2, r-2, r-1, r` and solves with the check-matrix encoding; a random general stabilizer code of the same `n`, `k` solved with the tableau encoding is the reference. 
+The row-mixing experiment (`k = 2`, same `n`) solves balanced CSS pairs with the tableau encoding, once as the clean block-diagonal tableau and once after random row operations per side that mix X and Z generators.
 
 ### A8 — Hybrid Component Attribution
 
