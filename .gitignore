@@ -36,3 +36,5 @@ paper/data/collected/**
 !paper/data/collected/**/*.csv
 
 paper/data/collected/hybrids/*_instances.csv
+
+*.backup.csv
