@@ -10,16 +10,12 @@ from matplotlib.patches import Patch, Polygon
 
 from paper.experiments.common import RESULTS_DIR, read_csv
 from paper.visualizations.common import (
+    COLOR_PAPER_BLUE,
     COLOR_PAPER_CYAN_STRONG,
-    COLOR_PAPER_DARK_CYAN,
-    COLOR_PAPER_DARK_PINK,
-    COLOR_PAPER_DARK_RED,
+    COLOR_PAPER_DARK_GREEN,
     COLOR_PAPER_GRAY_VERY_DARK,
     COLOR_PAPER_GRAY_VERY_VERY_DARK,
-    COLOR_PAPER_GREEN_DEEP,
-    COLOR_PAPER_LIGHT_RED,
-    COLOR_PAPER_LILA,
-    COLOR_PAPER_ZX_BLUE,
+    COLOR_PAPER_GREEN,
     WIDE_TEXT_SCALE,
     parameter_axis,
     partition_cell,
@@ -30,6 +26,11 @@ from paper.visualizations.common import (
 INPUT = RESULTS_DIR / "a5" / "by_cell.csv"
 OUTPUT = RESULTS_DIR / "a5" / "a5.png"
 NEAR_TIE_RATIO = 1.05
+# one hue per method family, light -> dark in legend order (paper: best_perf.tex)
+COLOR_LILA_LIGHT = "#AF81DA"
+COLOR_LILA = "#53257F"
+COLOR_BLUE_LIGHT = "#9AB2F4"
+COLOR_BLUE_MEDIUM = "#648AF2"
 
 PANELS = (
     ("pm_stb", "Permutation Equivalence\nfor Stabilizer Codes"),
@@ -37,13 +38,13 @@ PANELS = (
     ("lc_stb", "Local Clifford Equivalence\nfor Stabilizer Codes"),
 )
 METHODS = (
-    ("sat", "SAT", COLOR_PAPER_DARK_CYAN),
-    ("lse", "Graph-State LSE", COLOR_PAPER_DARK_PINK),
-    ("graph_iso", "Graph Isomorphism", COLOR_PAPER_GREEN_DEEP),
-    ("matroid", "Matroid Isomorphism", COLOR_PAPER_LIGHT_RED),
-    ("bruteforce", "Brute force", COLOR_PAPER_DARK_RED),
-    ("kls", "KLS Orbit", COLOR_PAPER_ZX_BLUE),
-    ("classical", "Classical Approaches", COLOR_PAPER_LILA),
+    ("sat", "SAT", COLOR_LILA_LIGHT),
+    ("lse", "Graph-State LSE", COLOR_LILA),
+    ("graph_iso", "Graph Isomorphism", COLOR_PAPER_GREEN),
+    ("matroid", "Matroid Isomorphism", COLOR_PAPER_DARK_GREEN),
+    ("bruteforce", "Brute force", COLOR_BLUE_LIGHT),
+    ("kls", "KLS Orbit", COLOR_BLUE_MEDIUM),
+    ("classical", "Classical Approaches", COLOR_PAPER_BLUE),
     ("aut", "Automorphism Group", COLOR_PAPER_CYAN_STRONG),
 )
 GROUPS = (
@@ -134,7 +135,7 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
             )
         )
         legends[-1].get_title().set(color=GROUP_COLOR, fontweight="bold")
-    split_key = Patch(label="top/bottom: within 5%")
+    split_key = Patch(label="runner-up (bottom) within 5% of winner's (top) runtime")
     legends.append(
         figure.legend(
             handles=[split_key], handler_map={split_key: SplitCellHandler()}, loc="lower left", frameon=False, fontsize=11

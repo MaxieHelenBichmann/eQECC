@@ -31,7 +31,7 @@ from paper.visualizations.common import (
 INPUT = RESULTS_DIR / "a8" / "by_cell.csv"
 OUTPUT = RESULTS_DIR / "a8" / "a8.png"
 
-PROBLEM_LABELS = {"pm_stb": "PM-STB", "pm_css": "PM-CSS", "lc_stb": "LC-STB"}
+PROBLEM_LABELS = {"pm_stb": "Permutation eq.\nfor general stabilizer codes", "pm_css": "Permutation eq.\nfor CSS codes", "lc_stb": "Local-Clifford eq.\nfor general stabilizer codes"}
 LABELS = ((True, "equivalent"), (False, "inequivalent"))
 STAGE_LEGEND = (
     ("CI", "cheap invariants"),

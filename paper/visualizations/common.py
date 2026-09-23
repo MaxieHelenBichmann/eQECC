@@ -31,6 +31,7 @@ COLOR_PAPER_LIGHT_RED = "#F39385"
 COLOR_PAPER_RED = "#E9341A"
 COLOR_PAPER_DARK_RED = "#A72512"
 
+COLOR_PAPER_PALE_BLUE = "#C8D8F8"
 COLOR_PAPER_LIGHT_BLUE = "#D5DEF8"
 COLOR_PAPER_MEDIUM_BLUE = "#94ABEA"
 COLOR_PAPER_BLUE = "#2E61F1"
@@ -95,18 +96,18 @@ RUNTIME_CMAP = LinearSegmentedColormap.from_list(
 )
 SIGNATURE_CMAP = LinearSegmentedColormap.from_list("signature_space", COLOR_PAPER_CYAN_RAMP)
 
-# diverging log scale for runtime ratios: white at 1, blue below, red above
+# diverging log scale for runtime ratios: light yellow at 1, blue below, the runtime ramp above
 RELATIVE_DECADES = 3
 RELATIVE_BLUE_ARM = (
-    COLOR_PAPER_WHITE,
-    COLOR_PAPER_LIGHT_BLUE,
+    COLOR_PAPER_YELLOW_LIGHT,
+    COLOR_PAPER_PALE_BLUE,
     COLOR_PAPER_MEDIUM_BLUE,
     COLOR_PAPER_BLUE,
     COLOR_PAPER_DARK_BLUE,
 )
 RELATIVE_RED_ARM = (
-    COLOR_PAPER_WHITE,
-    COLOR_PAPER_SALMON,
+    COLOR_PAPER_YELLOW_LIGHT,
+    COLOR_PAPER_ZX_ORANGE_MUTED,
     COLOR_PAPER_LIGHT_RED,
     COLOR_PAPER_RED,
     COLOR_PAPER_DARK_RED,

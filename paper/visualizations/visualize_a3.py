@@ -11,8 +11,8 @@ from paper.experiments.common import RESULTS_DIR, as_float, as_int, read_csv
 from paper.visualizations.common import (
     COLOR_PAPER_DARK_BLUE,
     COLOR_PAPER_DARK_RED,
-    COLOR_PAPER_GRAY_MEDIUM,
     COLOR_PAPER_GRAY_VERY_VERY_DARK,
+    COLOR_PAPER_RED,
     COLOR_PAPER_WHITE,
     RELATIVE_CMAP,
     WIDE_TEXT_SCALE,
@@ -29,6 +29,8 @@ from paper.visualizations.common import (
 
 INPUT = RESULTS_DIR / "a3" / "by_cell.csv"
 OUTPUT = RESULTS_DIR / "a3" / "a3.png"
+COLOR_BACKEND_TIMEOUT = "#202020"
+COLOR_INVARIANT_TIMEOUT = COLOR_PAPER_RED
 
 PANELS = (
     ("linear_dependency", "Linear Column Dependencies", ("pm_stb", "pm_css")),
@@ -47,9 +49,9 @@ def draw_panel(ax, rows, problems, norm) -> None:
             if ratio and ratio > 0:
                 partition_cell(ax, n, r, index, len(problems), RELATIVE_CMAP(norm(ratio)))
             if row["backend_selection"] == "timeout_fallback":
-                outline_partition(ax, n, r, index, len(problems), COLOR_PAPER_GRAY_VERY_VERY_DARK)
+                outline_partition(ax, n, r, index, len(problems), COLOR_BACKEND_TIMEOUT)
             if as_int(row.get("num_invariant_timeouts")):
-                outline_partition(ax, n, r, index, len(problems), COLOR_PAPER_DARK_RED)
+                outline_partition(ax, n, r, index, len(problems), COLOR_INVARIANT_TIMEOUT)
 
 
 def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
@@ -60,7 +62,7 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     figure, axes = plt.subplots(1, 3, figsize=(14.4, 5.7))
     figure.subplots_adjust(left=0.055, right=0.90, bottom=0.22, top=0.80, wspace=0.18)
     for ax, (invariant, title, problems) in zip(axes, PANELS):
-        parameter_axis(ax, title, empty_color=COLOR_PAPER_GRAY_MEDIUM)
+        parameter_axis(ax, title, empty_color=COLOR_PAPER_WHITE)
         draw_panel(ax, [row for row in rows if row["invariant"] == invariant], problems, norm)
 
     figure.suptitle("Invariant Cost Relative to the Best-Performing Backend", fontsize=12 * WIDE_TEXT_SCALE, y=0.96)
@@ -71,10 +73,10 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
             half_cell_key("right", gray, "CSS codes", size=8),
             Patch(facecolor=COLOR_PAPER_DARK_BLUE, edgecolor="none", label="Invariant is cheaper"),
             Patch(facecolor=COLOR_PAPER_DARK_RED, edgecolor="none", label="Invariant costs more"),
-            Patch(facecolor=COLOR_PAPER_WHITE, edgecolor=gray, linewidth=0.9, label="Backend timed out"),
+            Patch(facecolor=COLOR_PAPER_WHITE, edgecolor=COLOR_BACKEND_TIMEOUT, linewidth=0.9, label="Backend timed out"),
             Patch(
                 facecolor=COLOR_PAPER_WHITE,
-                edgecolor=COLOR_PAPER_DARK_RED,
+                edgecolor=COLOR_INVARIANT_TIMEOUT,
                 linewidth=0.9,
                 label="Invariant timed out",
             ),
