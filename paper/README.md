@@ -31,7 +31,7 @@ Figures and Tables are referred to everywhere in this package as **A1 … A8**, 
 
 | ID | Related Question | Collector(s) | Collected file(s) | Figure(s) |
 |---|---|---|---|---|
-| **A1** | Are invariants even useful? | `collect_a1` | `invariant_rejections.csv` | `paper/results/a1/a1.png`<br>`paper/results/a1/a1_overall.png` |
+| **A1** | Are invariants even useful? | `collect_a1` | `invariant_rejections.csv` | `paper/results/a1/a1.png` |
 | **A2** | Are signatures even useful? | `collect_a2` | `signature_space.csv` | `paper/results/a2/a2.png` |
 | **A3** | When are invariants useful? | `collect_a3` + `collect_algorithm` | `invariant_timings.csv`, `algorithms/*.csv` | `paper/results/a3/a3.png` |
 | **A4** | How do methods eliminating the representation degree of freedom perform? | `collect_algorithm` | `algorithms/pm_stb_graph_iso.csv`, `algorithms/lc_stb_graph_iso.csv`, `algorithms/pm_css_matroid.csv`| `paper/results/a4/a4.png` |
@@ -55,7 +55,7 @@ As the paper focuses on pairwise equivalence checking, only three problems from 
     hours-to-days, server            seconds, CSV-only
          │                                   │                             │
          ▼                                   ▼                             ▼
-  paper/data/collected/ ───────────►  paper/results/a<N>/by_cell.csv ─────► paper/results/a<N>/a<N>.png
+  paper/data/collected/ ───────►  paper/results/a<N>/by_cell.csv ───► paper/results/a<N>/a<N>.png
    (raw or batch summaries)             (figure-ready, per cell)
 ```
 
@@ -108,11 +108,10 @@ Reads CSVs from `paper/results/a<N>/` and writes one `paper/results/a<N>/a<N>.pn
 |  |  |
 |---|---|
 | **Question** | How many (and which) input instances are rejected by the utilized invariants? |
-| **Invariants and signatures measured** | Linear dependency and punctured-hull/Sendrier signatures on general stabilizer and CSS codes; the degree-2 local invariant on general stabilizer codes |
+| **Invariants and signatures measured** | Linear column dependencies and punctured-hull signatures on general stabilizer and CSS codes; the degree-2 local invariant on general stabilizer codes |
 | **Method** | 10 certified-negative randomized instances per parameter setting and record rejection counts; no runtimes are measured directly |
 
-The result value is how many of the 10 were rejected, per invariant and combined per equivalence notion.
-The aggregated table shows the percentage of rejected instances per invariant and code family.
+The result value is how many of the 10 were rejected, per invariant, code family and parameter setting. The full graph is not used in the paper, only the averaged rates across all parameter settings.
 
 > The generation of randomized instances has to be carefully considered here, as otherwise selection bias has a significant effect on the results.
 > Generating two tableaus (of the same dimensions) completely independently and certifying their inequivalence leads to high rejection rates, as usually fully independent tableaus are structurally very different. This however might not represent practical instances considered in equivalence checking, as two actually compared codes might usually be somewhat related.
@@ -121,6 +120,8 @@ The aggregated table shows the percentage of rejected instances per invariant an
 > Therefore:
 > - general stabilizer codes: apply a short random Clifford circuit (`GATE_STEPS`) to one source code, then keep the candidate only if the corresponding exact SAT backend proves inequivalence. This yields structurally related negatives selected by an exact backend rather than by a measured invariant.
 > - CSS codes: apply a short physical-CNOT circuit (`GATE_STEPS`) to one source code, then retain the candidate only when SAT or matroid isomorphism proves inequivalence. The perturbation preserves the CSS form and both check ranks without consulting a measured invariant. Parameter sizes outside this exact-certifier region keep using `css_codes_cascaded`, which emits a negative carrying its own permutation-invariant certificate; that certificate can correlate with a measured invariant.
+>
+> "Missing" instances in the plots are not measured due to an error or timeout of the instance generation.
 
 ### A2 — Signature Space
 
@@ -135,17 +136,14 @@ $$
   \bar{q} = 1 - \frac{q - \frac{1}{n}}{1 - \frac{1}{n}}
        = \frac{1-q}{1-\frac{1}{n}} \in [0, 1] \text{ with } q = \sum\limits_{i} \frac{|J_i|^2}{n^2} \in [\frac{1}{n}, 1]
 $$
-Here, `0` means one undivided class (no refinement), and `1` means
-every class is a singleton (complete refinement). This is a pairwise refinement
-score, not the literal fraction of the $n!$ permutation search space removed.
-Parameter settings where each seed is censored (due to timeout) are left uncolored.
+Here, `0` means one undivided class (no refinement), and `1` means every class is a singleton (complete refinement). This is a pairwise refinement score, not the literal fraction of the $n!$ permutation search space removed. Parameter settings where each seed is censored (due to timeout) are left uncolored.
 
 ### A3 — Relative Preprocessing Cost
 
 |  |  |
 |---|---|
 | **Question** | Does computing an invariant take longer than running a complete decision-procedure backend? |
-| **Invariants and signatures measured** | Linear dependency and punctured-hull/Sendrier signatures on general stabilizer and CSS codes; the degree-2 local invariant on general stabilizer codes |
+| **Invariants and signatures measured** | Linear dependency and punctured-hull signatures on general stabilizer and CSS codes; the degree-2 local invariant on general stabilizer codes |
 | **Method** | 5 positive and 5 negative randomized instances per parameter setting; invariant runtime compared with the best-performing backend from A5 |
 
 The result value is the mean of the comparisons of the runtime of the invariants to the runtimes of the best-performing backend for this parameter setting (see A5), thus showcasing the worst-case for invariant usability
@@ -163,9 +161,6 @@ $$
 
 The result value for a parameter setting is the mean runtime of the instances, explicitly marking runs where at least one instance resulted in a memory error.
 
-Negative stabilizer instances use A1's short Clifford perturbation followed by exact certification. Negative CSS instances instead use `css_codes_independent_candidate`: two independently sampled CSS codes with a pinned X-check rank `rx`, followed by SAT or matroid certification. When `n > 28` and `r > 9`, the suite falls back to `css_codes_cascaded`; this changes the negative-family composition across cells and, as its generator warns, is not a single stable construction over the entire grid.
-
-
 ### A5 — Best-Performing Methods
 
 |  |  |
@@ -174,9 +169,31 @@ Negative stabilizer instances use A1's short Clifford perturbation followed by e
 | **Algorithms measured** | All algorithms discussed in the paper for `pm_stb`, `pm_css`, and `lc_stb` on their corresponding code families |
 | **Method** | 10 positive and 10 negative randomized instances per parameter setting; eligible algorithm with the lowest mean runtime selected per setting |
 
-For each parameter setting, the lowest-mean method is selected only when both positive and negative batches are present, all requested calls succeed, and there are no timeouts, memory failures, wrong results, execution errors, or generation errors. If no method completes but one or more methods fail only by timeout, the lowest censored mean is used as a timeout-fallback winner. It is rendered with the selected method's normal color and remains identified by the `selection` column in `by_cell.csv`. A censored fallback ordering can be uncertain, but cases where multiple timeout-only methods actually compete are too few in the reported data to warrant a separate marker in the figure.
+For each parameter setting, the lowest-mean method is selected only when both positive and negative batches are present, all requested calls succeed, and there are no timeouts, memory failures, wrong results, execution errors, or generation errors. If no method completes but one or more methods fail only by timeout, the lowest censored mean is used as a timeout-fallback winner. It is rendered with the selected method's normal color and remains identified by the `selection` column in `by_cell.csv`. A censored fallback ordering can be uncertain.
 
-Negative instances use the same constructions and large-parameter CSS fallback described under A4: short Clifford perturbations for stabilizer codes, `css_codes_independent_candidate` with pinned `rx` for CSS codes, and `css_codes_cascaded` beyond the exact-certifier region.
+> The measured algorithms are listed in the top-level [README](../README.md), and can be mapped to the following approaches named in the paper:
+>
+> <table>
+>   <thead>
+>     <tr><th>Problem</th><th>Repository Algorithm</th><th>Paper Strategy</th><th>Paper Approach</th></tr>
+>   </thead>
+>   <tbody>
+>     <tr><td rowspan="5">PM-STB</td><td>Brute-force search</td><td>Group-Action Search</td><td>Exhaustive search of physical transformations with rank-based row-space check</td></tr>
+>     <tr><td>Classical approaches</td><td>Group-Action Search</td><td>Upfront reduction (Sendrier's signatures) and dynamic pruning of physical transformations with canonicalized matrix representation (Feulner's Canonicalization Algorithm)</td></tr>
+>     <tr><td>Automorphism groups</td><td>Group-Action Search</td><td>Upfront reduction with rank-based row-space check</td></tr>
+>     <tr><td>Graph isomorphism</td><td>Isomorphisms</td><td>Full-group encoding for permutation freedom</td></tr>
+>     <tr><td>SAT</td><td>Constraint Solving</td><td>SAT encoding</td></tr>
+>     <tr><td rowspan="4">PM-CSS</td><td>Brute-force search</td><td>Group-Action Search</td><td>Exhaustive search of physical transformations with rank-based row-space check</td></tr>
+>     <tr><td>Classical approaches</td><td>Group-Action Search</td><td>Upfront reduction (Sendrier's signatures) and dynamic pruning of physical transformations with canonicalized matrix representation (Feulner's Canonicalization Algorithm)</td></tr>
+>     <tr><td>Matroid isomorphism</td><td>Isomorphisms</td><td>Matroid-circuit encoding for permutation freedom</td></tr>
+>     <tr><td>SAT</td><td>Constraint Solving</td><td>SAT encoding</td></tr>
+>     <tr><td rowspan="5">LC-STB</td><td>Brute-force search</td><td>Group-Action Search</td><td>Exhaustive search of physical transformations with rank-based row-space check</td></tr>
+>     <tr><td>Graph isomorphism</td><td>Isomorphisms</td><td>Full-group encoding for local Clifford freedom</td></tr>
+>     <tr><td>Graph-state LSE</td><td>Constraint Solving</td><td>polynomial LSE-based algorithm on graph-state representation</td></tr>
+>     <tr><td>KLS</td><td>Group-Action Search</td><td>Dynamic pruning while orbit traversal with canonicalized graph-state representation (KLS normal form)</td></tr>
+>     <tr><td>SAT</td><td>Constraint Solving</td><td>SAT encoding</td></tr>
+>   </tbody>
+> </table>
 
 ### A6 — SAT on CSS-Code Permutation Equivalence
 
@@ -188,11 +205,6 @@ Negative instances use the same constructions and large-parameter CSS fallback d
 
 The result value for a parameter setting is the mean runtime of the instances.
 
-The CSS instances draw the X-check rank `rx` uniformly from `0..n-k`; A7 shows that this rank split is what separates the fast from the slow cells.
-
-Negative general-stabilizer instances use A1's short Clifford perturbation.
-Negative CSS instances use `css_codes_independent_candidate` with pinned `rx` and exact SAT/matroid certification. Beyond the exact-certifier region they use `css_codes_cascaded`, so the negative-family composition changes across cells as described under A4.
-
 ### A7 — SAT Encodings on CSS-Code Permutation Equivalence
 
 |  |  |
@@ -201,7 +213,7 @@ Negative CSS instances use `css_codes_independent_candidate` with pinned `rx` an
 | **Algorithms measured** | `pm_css_sat` on CSS codes with pinned X-check rank; `pm_stb_sat` on general stabilizer codes as reference and on clean and row-mixed CSS tableaus |
 | **Method** | 10 positive randomized instances per parameter setting; comparison of median solver decisions |
 
-The result value for a parameter setting is the median number of z3 decisions over its instances. Decisions are used instead of runtimes because they are the hardware-independent measure of search effort; runtimes of SAT on CSS codes are covered by A6. Runs that hit the 300 s timeout are excluded from the median.
+The result value for a parameter setting is the median number of z3 decisions over its instances. Decisions are used instead of runtimes because they are the hardware-independent measure of search effort. Runs that hit the 300 s timeout are excluded from the median.
 
 Two experiments share the collected file. 
 The rank sweep (`k = 4`, `n = 14, 16, 18`) pins the X-check rank `rx` to `0, 1, 2, r/2, r-2, r-1, r` and solves with the check-matrix encoding; a random general stabilizer code of the same `n`, `k` solved with the tableau encoding is the reference. 
