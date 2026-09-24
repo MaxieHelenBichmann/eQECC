@@ -38,9 +38,9 @@ Figures and Tables are referred to everywhere in this package as **A1 … A8**, 
 | **A5** | Which exact method performs best? | `collect_algorithm` | `algorithms/*.csv` | `paper/results/a5/a5.png` |
 | **A6** | Is SAT's poor CSS behavior caused by the encoding or by the CSS inputs? | `collect_a6` + `collect_algorithm` | `pm_stb_sat_on_css.csv`, `algorithms/pm_stb_sat.csv`, `algorithms/pm_css_sat.csv` | `paper/results/a6/a6.png`<br>`paper/results/a6/a6_css.png` |
 | **A7** | Why does SAT perform so poorly on CSS Permutations? | `collect_a7` | `sat_css_weakness.csv` | `paper/results/a7/a7.png` |
-| **A8** | How do the hybrids perform? | `collect_a8` | `hybrids/{pm_stb,pm_css,lc_stb}_{instances,raw}.csv` | `paper/results/a8/a8.png` |
+| **A8** | How do the hybrids perform? | `collect_a8` | `hybrids/{pm_stb,pm_css,lc_stb}_raw.csv` | `paper/results/a8/a8.png` |
 
-All collected-file paths in this table are relative to `paper/data/collected/`. The top-level `data/` and `results/` directories belong to the thesis benchmark pipeline and are unrelated to this package.
+All collected-file paths in this table are relative to `paper/data/collected/`. The top-level `results/` directory belongs to the thesis benchmark pipeline and is unrelated to this package.
 
 As the paper focuses on pairwise equivalence checking, only three problems from the underlying thesis are in scope: `pm_stb` (permutation equivalence of stabilizer codes), `pm_css` (permutation equivalence of CSS codes), and `lc_stb` (local-Clifford equivalence of stabilizer codes).
 
@@ -48,27 +48,21 @@ As the paper focuses on pairwise equivalence checking, only three problems from 
 
 ## Layered Data Collection
 
-```text
-  PHASE 1  collect                 PHASE 2  extract              PHASE 3  visualize
-  benchmarks/collect_*.py          experiments/extract_a<N>.py   visualizations/visualize_a<N>.py
-  - primarily collection,          - deterministic, local,       - primarily plotting
-    hours-to-days, server            seconds, CSV-only
-         │                                   │                             │
-         ▼                                   ▼                             ▼
-  paper/data/collected/ ───────►  paper/results/a<N>/by_cell.csv ───► paper/results/a<N>/a<N>.png
-   (raw or batch summaries)             (figure-ready, per cell)
-```
-
 This pipeline has three phases for each experiment:
 
-- Phase 1 primarily collects measurements and is the only phase that generates codes, runs algorithms, or consumes meaningful compute time. Depending on the collector, it stores either per-instance rows or summaries of a seeded batch.
-- Phase 2 performs deterministic extraction, including the main selection and aggregation steps (winner choice, backend choice, eligibility rules, and normalization). It never generates inputs or runs a benchmark algorithm.
-- Phase 3 primarily draws the figures from `paper/results/`. Visualizers may apply presentation-specific grouping, range restrictions, or annotations, but never read from `paper/data/collected/`.
+|  |  |  |
+|---|---|---|
+| PHASE 1 | PHASE 2 | PHASE 3 |
+| `paper/benchmarks/collect_*.py` | `paper/experiments/extract_a<N>.py` | `paper/visualizations/visualize_a<N>.py` |
+| primarily collection, hours-to-days, server | deterministic, local, seconds, CSV-only | primarily plotting |
+| `paper/data/collected/* ` (raw or batch summaries) | `paper/results/a<N>/*.csv` (figure-ready, per cell) | `paper/results/a<N>/*.png` |
 
 Phase 1 normally runs on a benchmark server; phases 2 and 3 run locally. The transfer between machines is exactly the contents of `paper/data/collected/`.
 The concrete measurements collected for the paper are also committed in `paper/data/collected/` for replication, so phases 2 and 3 can be run directly from a checkout. To collect your own measurements, delete the contents of `paper/data/collected/` first: the collectors resume from existing files and would otherwise skip everything already present.
 
 ### Phase 1 — Data Collection
+
+> Phase 1 primarily collects measurements and is the only phase that generates codes, runs algorithms, or consumes meaningful compute time. Depending on the collector, it stores either per-instance rows or summaries of a seeded batch.
 
 Long-running. Run under `tmux` or an equivalent. Almost every collector appends incrementally and resumes by skipping keys already present. Collectors based on shared batch statistics instead append one summary row per completed batch; re-running such a batch may repeat its computation, while extraction keeps its latest row. Delete the relevant output file or files only to deliberately restart a collection from scratch. This includes the committed measurements from the paper: remove them from `paper/data/collected/` before collecting your own, or the collectors will treat them as already done.
 Collected data from `collect_algorithm.py` is not figure-specific, but used by multiple aggregators in the next steps.
@@ -81,6 +75,8 @@ Writes CSV data into `paper/data/collected/`.
 
 ### Phase 2 — Information Extraction
 
+> Phase 2 performs deterministic extraction, including the main selection and aggregation steps (winner choice, backend choice, eligibility rules, and normalization). It never generates inputs or runs a benchmark algorithm.
+
 Fast, deterministic, safe to re-run at any time.
 
 ```bash
@@ -91,6 +87,8 @@ Reads CSVs from `paper/data/collected/` and writes CSV data into `paper/results/
 
 ### Phase 3 — Information Visualization
 
+> Phase 3 primarily draws the figures from `paper/results/`. Visualizers may apply presentation-specific grouping, range restrictions, or annotations, but never read from `paper/data/collected/`.
+
 Fast, deterministic, safe to re-run at any time.
 
 ```bash
@@ -98,6 +96,30 @@ uv run python -m paper.visualizations.visualize_a<N>
 ```
 
 Reads CSVs from `paper/results/a<N>/` and writes one `paper/results/a<N>/a<N>.png` or multiple PNGs, depending on the experiment.
+
+---
+
+## Instance Generation
+
+All randomized instances derive from `MASTER_SEED = 42` in `paper/benchmarks/common.py` through the seeded generators in `benchmarks/experiments/`, so every collector is deterministic up to timeouts. Generation and certification always happen before the timed call and never count towards a measured runtime.
+
+**Positive instances** (equivalent pairs) are a random source code and a partner obtained by a random qubit permutation (`pm_stb`, `pm_css`) or a random local Clifford operation (`lc_stb`), followed by a random change of the generator basis. For CSS codes, the X and Z check matrices change basis independently, matching the actual freedom of a CSS presentation.
+
+**Negative instances** (inequivalent pairs) have to be carefully considered, as otherwise selection bias has a significant effect on the results.
+Generating two tableaus (of the same dimensions) completely independently and certifying their inequivalence leads to high rejection rates, as usually fully independent tableaus are structurally very different. This however might not represent practical instances considered in equivalence checking, as two actually compared codes might usually be somewhat related.
+Additionally, the certification method of their inequivalence might introduce a selection bias. When certifying their inequivalence by a mismatched invariant due to runtime constraints, this must not be the invariant whose rejection rate is being measured, or the estimate is circular and the pair will be rejected by construction.
+
+Therefore:
+- general stabilizer codes: apply a short random Clifford circuit (`GATE_STEPS`) to one source code, then keep the candidate only if the corresponding exact SAT backend proves inequivalence. This yields structurally related negatives selected by an exact backend rather than by a measured invariant.
+- CSS codes: apply a short physical-CNOT circuit (`GATE_STEPS`) to one source code, then retain the candidate only when SAT (`r ≤ 9`) or matroid isomorphism (`n ≤ 28`) proves inequivalence. The perturbation preserves the CSS form and both check ranks without consulting a measured invariant. Parameter sizes outside this exact-certifier region keep using `css_codes_cascaded`, which emits a negative carrying its own permutation-invariant certificate; that certificate can correlate with a measured invariant.
+
+Certification is limited to 600 s per candidate and up to 1 000 candidates per seed; instances whose generation fails or times out are recorded as `generation_error` and excluded from every result value.
+
+Exceptions per experiment:
+- A2 measures single random codes, so no pairs are generated.
+- A3 to A6 take their positives from the thesis random suite. Their `pm_css` negatives are two independently sampled CSS codes with matching check ranks instead of a CNOT-perturbed pair, certified by the same exact backends (`css_cnots=False` in `certified_negative_pair`).
+- A7 uses positives only, constructed directly in the collector with a pinned X-check rank and a 300 s solver timeout.
+- A8 uses the named codes in `data/` as sources and caches its instances in `hybrids/<problem>_instances.csv` (not committed; regenerated deterministically). Its instance generation is limited to 900 s. CSS codes beyond the exact-certifier region (more than 28 qubits) are certified by a permutation-invariant certificate mismatch instead.
 
 ---
 
@@ -113,13 +135,7 @@ Reads CSVs from `paper/results/a<N>/` and writes one `paper/results/a<N>/a<N>.pn
 
 The result value is how many of the 10 were rejected, per invariant, code family and parameter setting. The full graph is not used in the paper, only the averaged rates across all parameter settings.
 
-> The generation of randomized instances has to be carefully considered here, as otherwise selection bias has a significant effect on the results.
-> Generating two tableaus (of the same dimensions) completely independently and certifying their inequivalence leads to high rejection rates, as usually fully independent tableaus are structurally very different. This however might not represent practical instances considered in equivalence checking, as two actually compared codes might usually be somewhat related.
-> Additionally, the certification method of their inequivalence might introduce a selection bias. When certifying their inequivalence by a mismatched invariant due to runtime constraints, this must not be the invariant whose rejection rate is being measured, or the estimate is circular and the pair will be rejected by construction.
->
-> Therefore:
-> - general stabilizer codes: apply a short random Clifford circuit (`GATE_STEPS`) to one source code, then keep the candidate only if the corresponding exact SAT backend proves inequivalence. This yields structurally related negatives selected by an exact backend rather than by a measured invariant.
-> - CSS codes: apply a short physical-CNOT circuit (`GATE_STEPS`) to one source code, then retain the candidate only when SAT or matroid isomorphism proves inequivalence. The perturbation preserves the CSS form and both check ranks without consulting a measured invariant. Parameter sizes outside this exact-certifier region keep using `css_codes_cascaded`, which emits a negative carrying its own permutation-invariant certificate; that certificate can correlate with a measured invariant.
+> The negative instances are the CNOT- and Clifford-perturbed pairs described under [Instance Generation](#instance-generation); this experiment is the one most sensitive to their selection bias.
 >
 > "Missing" instances in the plots are not measured due to an error or timeout of the instance generation.
 
@@ -215,9 +231,9 @@ The result value for a parameter setting is the mean runtime of the instances.
 
 The result value for a parameter setting is the median number of z3 decisions over its instances. Decisions are used instead of runtimes because they are the hardware-independent measure of search effort. Runs that hit the 300 s timeout are excluded from the median.
 
-Two experiments share the collected file. 
-The rank sweep (`k = 4`, `n = 14, 16, 18`) pins the X-check rank `rx` to `0, 1, 2, r/2, r-2, r-1, r` and solves with the check-matrix encoding; a random general stabilizer code of the same `n`, `k` solved with the tableau encoding is the reference. 
-The row-mixing experiment (`k = 2`, same `n`) solves balanced CSS pairs with the tableau encoding, once as the clean block-diagonal tableau and once after random row operations per side that mix X and Z generators.
+Two experiments share the collected file `sat_css_weakness.csv` and are extracted into separate tables in `paper/results/a7/`.
+The rank sweep (`k = 4`, `n = 14, 16, 18`) pins the X-check rank `rx` to `0, 1, 2, r/2, r-2, r-1, r` and solves with the check-matrix encoding; a random general stabilizer code of the same `n`, `k` solved with the tableau encoding is the reference. Its medians are written to `rank_sweep.csv` (left panel).
+The row-mixing experiment (`k = 2`, same `n`) solves balanced CSS pairs with the tableau encoding, once as the clean block-diagonal tableau and once after random row operations per side that mix X and Z generators. Its medians are written to `row_mixing.csv` (right panel).
 
 ### A8 — Hybrid Component Attribution
 
@@ -227,7 +243,7 @@ The row-mixing experiment (`k = 2`, same `n`) solves balanced CSS pairs with the
 | **Algorithms measured** | Paper hybrids in `paper/hybrids/` (`pm_stb`, `pm_css`, `lc_stb`), rather than the thesis hybrids whose MQT-QECC integration follows a maintainability-oriented design strategy |
 | **Method** | 10 positive and 10 certified-negative structured instances per named code and problem; mean runtime and the distribution of deciding stages |
 
-Positive instances pair the named code with an equivalent presentation, constructed like all previous other equivalent partners. Negative instances follow A1's short Clifford perturbation followed by exact certification.
+Positive instances pair the named code with an equivalent presentation, constructed like all previous other equivalent partners. Negative instances follow the short CNOT or Clifford perturbation of [Instance Generation](#instance-generation), with the certificate-based fallback for the largest CSS codes.
 
 The collector caches the generated instances, but an instance's result value is primarily its runtime and the stage that decided it (`decided_by`), or (for a timed-out or memory-killed call) the stage it was stuck in (`stuck_at`).
 
