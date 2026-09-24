@@ -52,6 +52,7 @@ NAMED_CODE_SPECS: dict[str, tuple[str | None, bool]] = {
     "bell": (None, True),
     "3q_rep": ("three_bit_repetition", True),
     "5q_prf": ("five_qubit_perfect", False),
+    "4q_422": ("four_qubit", True),
     "steane": ("steane", True),
     "gottesman": ("eight_qubit_gottesman", False),
     "shor": ("shor", True),
