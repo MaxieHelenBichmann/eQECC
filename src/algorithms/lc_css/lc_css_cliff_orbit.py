@@ -107,15 +107,6 @@ class RedStabGraph:
         new_graph._adj_edge_count = self._adj_edge_count
         return new_graph
 
-    def adj_matrix(self) -> np.ndarray:
-        nr = self.n + self.k
-        adj = np.zeros((nr, nr), dtype=np.uint8)
-        for u, v in self.edges:
-            adj[u][v] = 1
-            adj[v][u] = 1
-
-        return adj
-
     def canon_key(self) -> GraphKey:
         return tuple(sorted(self.edges)), tuple(self.vertices)
 

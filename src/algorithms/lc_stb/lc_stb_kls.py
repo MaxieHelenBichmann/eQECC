@@ -92,15 +92,6 @@ class GSLC:
                 adj[u, v - self.k] = True
         return adj
 
-    def get_full_adjacency(self) -> np.ndarray:
-        self._ensure_adjacency()
-        adj = np.zeros((self.n + self.k, self.n + self.k), dtype=bool)
-        for edge in self.edges:
-            u, v = edge
-            adj[u, v] = True
-            adj[v, u] = True
-        return adj
-
     def get_upper_adjacency_key(self) -> bytes:
         self._ensure_adjacency()
         nr = self.n + self.k
@@ -257,7 +248,7 @@ def _code_to_encoder_circuit(code) -> zx.Circuit:
 
 def _stab_state_to_graph_state(tableau: np.ndarray, old_n: int, old_k: int) -> GSLC:
     """Convert a stabilizer state into a graph state under local Clifford operations.
-    Returns the adjacency matrix of the graph state."""
+    Returns the graph state together with the local Cliffords applied to each qubit."""
     n = tableau.shape[1] // 2
     local_clifords: list[list[str]] = [[] for _ in range(n)]
 

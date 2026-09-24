@@ -48,42 +48,12 @@ class GF4:
     def __add__(self, other: GF4) -> GF4:
         return GF4(self.value ^ other.value)
 
-    def __sub__(self, other: GF4) -> GF4:
-        return self + other
-
-    def __neg__(self) -> GF4:
-        return self
-
     def __mul__(self, other: GF4) -> GF4:
         return GF4(_GF4_MUL_TABLE[self.value][other.value])
-
-    def __pow__(self, n: int) -> GF4:
-        if n < 0:
-            return self.inverse() ** (-n)
-        result = GF4(1)
-        base = self
-        for _ in range(n):
-            result *= base
-        return result
-
-    def inverse(self) -> GF4:
-        if self.value == 0:
-            raise ZeroDivisionError("0 has no multiplicative inverse in GF(4).")
-        return self**2
-
-    def __truediv__(self, other: GF4) -> GF4:
-        return self * other.inverse()
 
     def conjugate(self) -> GF4:
         # conjugation GF(4): x -> x^2
         return GF4(_GF4_CONJ_TABLE[self.value])
-
-    def trace(self) -> int:
-        # trace GF(4): Tr(x) = x + x^2
-        return (self + self.conjugate()).value
-
-    def is_zero(self) -> bool:
-        return self.value == 0
 
     def __repr__(self) -> str:
         names = {

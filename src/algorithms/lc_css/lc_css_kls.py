@@ -93,15 +93,6 @@ class GSLC:
                 adj[u, v - self.k] = True
         return adj
 
-    def get_full_adjacency(self) -> np.ndarray:
-        self._ensure_adjacency()
-        adj = np.zeros((self.n + self.k, self.n + self.k), dtype=bool)
-        for edge in self.edges:
-            u, v = edge
-            adj[u, v] = True
-            adj[v, u] = True
-        return adj
-
     def get_upper_adjacency_key(self) -> bytes:
         self._ensure_adjacency()
         nr = self.n + self.k

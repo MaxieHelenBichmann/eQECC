@@ -104,7 +104,6 @@ def test_gf4_arithmetic() -> None:
         ),
     )
     assert W.conjugate() == W_BAR
-    assert W.inverse() == W_BAR
     with pytest.raises(ValueError):
         GF4(4)
 
