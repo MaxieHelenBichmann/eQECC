@@ -126,6 +126,8 @@ Exceptions per experiment:
 
 ## Measurement Definitions
 
+Conventions for every runtime statistic (A3 to A6, A8): a timed-out call enters the mean at its capped runtime (the 5400 s budget), memory-limited and failed calls are excluded from it, and positive and negative batches are pooled instance-weighted. Some parameter settings of the algorithm suite were collected with fewer than 10 seeds per polarity (down to 2), so the instance counts below are upper bounds and "requested" always refers to the batch actually collected.
+
 ### A1 — Rejection Rates
 
 |  |  |
@@ -134,7 +136,7 @@ Exceptions per experiment:
 | **Invariants and signatures measured** | Linear column dependencies and punctured-hull signatures on general stabilizer and CSS codes; the degree-2 local invariant on general stabilizer codes |
 | **Method** | 10 certified-negative randomized instances per parameter setting and record rejection counts; no runtimes are measured directly |
 
-The result value is how many of the 10 were rejected, per invariant, code family and parameter setting. The full graph is not used in the paper, only the averaged rates across all parameter settings.
+The result value is how many of the valid instances were rejected, per invariant, code family and parameter setting; settings with zero rejections are outlined. The full graph is not used in the paper, only the overall rates, which pool all valid instances of a problem rather than averaging per setting.
 
 > The negative instances are the CNOT- and Clifford-perturbed pairs described under [Instance Generation](#instance-generation); this experiment is the one most sensitive to their selection bias.
 
@@ -146,12 +148,12 @@ The result value is how many of the 10 were rejected, per invariant, code family
 | **Signatures measured** | Sendrier signatures, as implemented for `pm_css` and `pm_stb`, on CSS and general stabilizer codes |
 | **Method** | 10 randomized codes per parameter setting; no code pairs, equivalence labels, or direct runtime measurements |
 
-The result value of a parameter setting is the mean of the 10 seeds, of how the Sendrier signatures partition the physical qubits of the code $J_1, J_2, ...$, as a normalized fraction
+The result value of a parameter setting is the mean over its successful seeds, of how the Sendrier signatures partition the physical qubits of the code $J_1, J_2, ...$, as a normalized fraction
 $$
   \bar{q} = 1 - \frac{q - \frac{1}{n}}{1 - \frac{1}{n}}
        = \frac{1-q}{1-\frac{1}{n}} \in [0, 1] \text{ with } q = \sum\limits_{i} \frac{|J_i|^2}{n^2} \in [\frac{1}{n}, 1]
 $$
-Here, `0` means one undivided class (no refinement), and `1` means every class is a singleton (complete refinement). This is a pairwise refinement score, not the literal fraction of the $n!$ permutation search space removed. Parameter settings where each seed is censored (due to timeout) are left uncolored.
+Here, `0` means one undivided class (no refinement), and `1` means every class is a singleton (complete refinement). This is a pairwise refinement score, not the literal fraction of the $n!$ permutation search space removed. Parameter settings where every seed is censored (due to timeout) are outlined in dark gray.
 
 ### A3 — Relative Preprocessing Cost
 
@@ -161,10 +163,11 @@ Here, `0` means one undivided class (no refinement), and `1` means every class i
 | **Invariants and signatures measured** | Linear dependency and punctured-hull signatures on general stabilizer and CSS codes; the degree-2 local invariant on general stabilizer codes |
 | **Method** | 5 positive and 5 negative randomized instances per parameter setting; invariant runtime compared with the best-performing backend from A5 |
 
-The result value is the mean of the comparisons of the runtime of the invariants to the runtimes of the best-performing backend for this parameter setting (see A5), thus showcasing the worst-case for invariant usability
+The result value is the ratio of the mean invariant runtime over its valid instances to the mean runtime of the best-performing backend of the same parameter setting from A5 (measured on the backend's own instances), thus showcasing the worst case for invariant usability
 $$
  \frac{T_{\text{invariant}}}{T_{\text{backend}}}
 $$
+Timeouts are marked as an outlined parameter settings.
 
 ### A4 — Representation Cost
 
@@ -172,9 +175,9 @@ $$
 |---|---|
 | **Question** | Where do methods trade fast search for excessive representation cost? |
 | **Algorithms measured** | Graph-isomorphism-based algorithms for `pm_stb` and `lc_stb` on general stabilizer codes; the matroid-isomorphism-based algorithm for `pm_css` on CSS codes |
-| **Method** | 10 positive and 10 negative randomized instances per parameter setting; mean runtime and occurrence of memory errors |
+| **Method** | Up to 10 positive and 10 negative randomized instances per parameter setting; mean runtime and occurrence of memory or execution errors |
 
-The result value for a parameter setting is the mean runtime of the instances, explicitly marking runs where at least one instance resulted in a memory error.
+The result value for a parameter setting is the mean runtime of the instances, marking settings where at least one instance failed by a memory or execution error (one shared mark).
 
 ### A5 — Best-Performing Methods
 
@@ -182,9 +185,9 @@ The result value for a parameter setting is the mean runtime of the instances, e
 |---|---|
 | **Question** | Which exact algorithm performs best for each parameter setting? |
 | **Algorithms measured** | All algorithms discussed in the paper for `pm_stb`, `pm_css`, and `lc_stb` on their corresponding code families |
-| **Method** | 10 positive and 10 negative randomized instances per parameter setting; eligible algorithm with the lowest mean runtime selected per setting |
+| **Method** | Up to 10 positive and 10 negative randomized instances per parameter setting; eligible algorithm with the lowest mean runtime selected per setting |
 
-For each parameter setting, the lowest-mean method is selected only when both positive and negative batches are present, all requested calls succeed, and there are no timeouts, memory failures, wrong results, execution errors, or generation errors. If no method completes but one or more methods fail only by timeout, the lowest censored mean is used as a timeout-fallback winner. It is rendered with the selected method's normal color and remains identified by the `selection` column in `by_cell.csv`. A censored fallback ordering can be uncertain.
+For each parameter setting, the lowest-mean method is selected only when both positive and negative batches are present, all requested calls succeed, and there are no timeouts, memory failures, wrong results, execution errors, or generation errors. If no method completes but one or more methods fail only by timeout, the lowest censored mean is used as a timeout-fallback winner. It is rendered with the selected method's normal color and remains identified by the `selection` column in `by_cell.csv`. A censored fallback ordering can be uncertain. A runner-up completing within 5 % of the winner's mean runtime is overlaid on the lower half of the cell; settings without any eligible method stay empty.
 
 > The measured algorithms are listed in the top-level [README](../README.md), and can be mapped to the following approaches named in the paper:
 >
@@ -216,9 +219,9 @@ For each parameter setting, the lowest-mean method is selected only when both po
 |---|---|
 | **Question** | How does SAT perform with the tableau and check-matrix encodings on CSS codes, compared with its performance on general stabilizer codes? |
 | **Algorithms measured** | `pm_css_sat` and `pm_stb_sat` on CSS codes; `pm_stb_sat` on general stabilizer codes |
-| **Method** | 10 positive and 10 negative randomized instances per parameter setting; comparison of mean runtimes |
+| **Method** | Up to 10 positive and 10 negative randomized instances per parameter setting; comparison of mean runtimes |
 
-The result value for a parameter setting is the mean runtime of the instances.
+The result value for a parameter setting is the mean runtime of the instances. `a6.png` compares the tableau encoding on general stabilizer codes with the check-matrix encoding on CSS codes; `a6_css.png` compares both encodings on CSS codes and reports in its subtitle the mean per-setting log-runtime difference between them as a percentage of the figure's log-scale range (positive: check-matrix encoding faster).
 
 ### A7 — SAT Encodings on CSS-Code Permutation Equivalence
 
@@ -244,7 +247,7 @@ The row-mixing experiment (`k = 2`, same `n`) solves balanced CSS pairs with the
 
 The collector caches the generated instances, but an instance's result value is primarily its runtime and the stage that decided it (`decided_by`), or (for a timed-out or memory-killed call) the stage it was stuck in (`stuck_at`).
 
-Stage tags are `CI` (cheap invariants), `EI` (expensive invariants), `S` (signatures), and the decision procedures `BF` (brute force), `MI` (matroid isomorphism), `GI` (graph isomorphism), `SAT`, and `LSE` (polynomial graph-state approach).
+Stage tags are `CI` (cheap invariants), `EI` (expensive invariants), `S` (signatures), and the decision procedures `BF` (brute force), `MI` (matroid isomorphism), `GI` (graph isomorphism), `SAT`, and `LSE` (polynomial graph-state approach); `start` marks a call killed before its first stage. The figure ranks deciding stages and, for killed calls, the stage they were stuck in together.
 
 > All instances originate from structured codes, e.g. Steane Code or Color Codes. The negative instances are the CNOT- and Clifford-perturbed pairs described under [Instance Generation](#instance-generation); this experiment is also sensitive to their selection bias.
 
