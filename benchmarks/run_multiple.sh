@@ -1,63 +1,22 @@
 #!/usr/bin/env bash
+# Run every prototype algorithm of one problem family on the random thesis
+# suite, two at a time. Run from the repository root inside the uv environment.
 
 set -u
 
 problem_type="pm_stb"
-random=true
 
-max_avail_mem=26
+max_avail_mem_gib=26
 max_jobs=2
-memory_limit_gib=$((max_avail_mem / max_jobs))
+memory_limit_gib=$((max_avail_mem_gib / max_jobs))
+timeout_seconds=5400
 status=0
 pids=()
 
-nmin_for() {
+# inclusive bounds
+n_range_for() {
     case "$1" in
-        pm_css_sat) echo "" ;;
-        pm_css_matroid) echo "" ;;
-        pm_css_graph_iso) echo "" ;;
-        pm_css_classical) echo "" ;;
-        pm_css_bruteforce) echo "" ;;
-        pm_stb_sat) echo "" ;;
-        pm_stb_graph_iso) echo "" ;;
-        pm_stb_classical) echo "" ;;
-        pm_stb_bruteforce) echo "" ;;
-        pm_stb_aut) echo "" ;;
-        lc_stb_sat) echo "" ;;
-        lc_stb_kls) echo "" ;;
-        lc_stb_graph_state) echo "" ;;
-        lc_stb_graph_iso) echo "" ;;
-        lc_stb_bruteforce) echo "" ;;
-        lc_css_sat) echo "" ;;
-        lc_css_kls) echo "" ;;
-        lc_css_cliff_orbit) echo "" ;;
-        lc_css_lc_orbit) echo "" ;;
-        lc_css_bruteforce) echo "" ;;
-    esac
-}
-
-nmax_for() {
-    case "$1" in
-        pm_css_sat) echo "" ;;
-        pm_css_matroid) echo "" ;;
-        pm_css_graph_iso) echo "" ;;
-        pm_css_classical) echo "" ;;
-        pm_css_bruteforce) echo "" ;;
-        pm_stb_sat) echo "" ;;
-        pm_stb_graph_iso) echo "" ;;
-        pm_stb_classical) echo "" ;;
-        pm_stb_bruteforce) echo "" ;;
-        pm_stb_aut) echo "" ;;
-        lc_stb_sat) echo "" ;;
-        lc_stb_kls) echo "" ;;
-        lc_stb_graph_state) echo "" ;;
-        lc_stb_graph_iso) echo "" ;;
-        lc_stb_bruteforce) echo "" ;;
-        lc_css_sat) echo "" ;;
-        lc_css_kls) echo "" ;;
-        lc_css_cliff_orbit) echo "" ;;
-        lc_css_lc_orbit) echo "" ;;
-        lc_css_bruteforce) echo "" ;;
+        *) echo "" ;;
     esac
 }
 
@@ -65,57 +24,42 @@ mkdir -p results
 
 case "$problem_type" in
     pm_css)
-        algorithm_prefix="pm_css"
         algorithms=(sat matroid graph_iso classical bruteforce)
         ;;
     pm_stb)
-        algorithm_prefix="pm_stb"
         algorithms=(sat graph_iso classical bruteforce aut)
         ;;
     lc_stb)
-        algorithm_prefix="lc_stb"
-        algorithms=(sat kls graph_state graph_iso bruteforce)
+        algorithms=(sat kls lse graph_iso bruteforce)
         ;;
     lc_css)
-        algorithm_prefix="lc_css"
         algorithms=(sat kls cliff_orbit lc_orbit bruteforce)
+        ;;
+    *)
+        echo "unknown problem type: ${problem_type}" >&2
+        exit 2
         ;;
 esac
 
-if [[ "$random" == true ]]; then
-    random_args=(--random)
-    suffix="rdm"
-else
-    random_args=()
-    suffix="known"
-fi
-
 run_algo() {
     local algo="$1"
-    local algorithm_name="${algorithm_prefix}_${algo}"
-    local output_base="results/${problem_type}_${algo}_${suffix}"
+    local algorithm_name="${problem_type}_${algo}"
+    local output_base="results/${problem_type}_${algo}_rdm"
     local n_args=()
-    local nmin
-    local nmax
+    local n_range
 
-    nmin="$(nmin_for "$algorithm_name")"
-    nmax="$(nmax_for "$algorithm_name")"
-
-    if [[ -n "$nmin" ]]; then
-        n_args+=(--nmin "$nmin")
-    fi
-    if [[ -n "$nmax" ]]; then
-        n_args+=(--nmax "$nmax")
+    n_range="$(n_range_for "$algorithm_name")"
+    if [[ -n "$n_range" ]]; then
+        # shellcheck disable=SC2206
+        n_args=(--nmin ${n_range% *} --nmax ${n_range#* })
     fi
 
     echo "Starting ${algorithm_name}"
-    exec python3 -m benchmarks.run \
-        --stats \
+    exec python3 -u -m benchmarks.thesis.thesis_prototypes \
         --algorithm "${algorithm_name}" \
-        --timeout 5400 \
+        --timeout "$timeout_seconds" \
         --memory-limit "${memory_limit_gib}GiB" \
         --verbose \
-        "${random_args[@]}" \
         "${n_args[@]}" \
         --output "${output_base}.csv" \
         >"${output_base}.log" \
@@ -141,7 +85,6 @@ wait_for_one() {
     pids=("${remaining_pids[@]}")
 }
 
-# Keep a fixed-size pool, refilling the first slot freed by any completed job.
 for algo in "${algorithms[@]}"; do
     while (( ${#pids[@]} >= max_jobs )); do
         wait_for_one

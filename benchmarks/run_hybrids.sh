@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
+# Run the four thesis hybrids on the named structured codes, two at a time.
+# Run from the repository root inside the uv environment.
 
 set -u
 
-# Structured/named-code range (both bounds are inclusive).
+# inclusive bounds
 nmin=2
 nmax=144
 
-# At most two benchmark processes run concurrently. Each process gets half of
-# the total memory budget below.
 max_avail_mem_gib=26
 max_jobs=2
 memory_limit_gib=$((max_avail_mem_gib / max_jobs))
@@ -31,8 +31,7 @@ run_algo() {
     local output_base="${output_dir}/${algorithm_name}_structured"
 
     echo "Starting ${algorithm_name}"
-    exec python3 -u -m benchmarks.run \
-        --hybrid-stats \
+    exec python3 -u -m benchmarks.thesis.thesis_hybrids \
         --algorithm "$algorithm_name" \
         --nmin "$nmin" \
         --nmax "$nmax" \
