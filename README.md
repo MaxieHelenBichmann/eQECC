@@ -133,7 +133,7 @@ Here, we measure the runtime of the Python algorithms on an expected workload: i
 
 This repository is not currently intended for detailed benchmarking or profiling analyses.[^1] The goal is to understand the algorithms' different complexity classes and make a more informed decision about the hybrid implementations.
 
-Inputs are guaranteed to be valid and of same dimensions, so the prototype and hybrid algorithms in do not need to verify basic validity conditions.
+Inputs are guaranteed to be valid and of same dimensions, so the prototype and hybrid algorithms do not need to verify basic validity conditions.
 
 [^1]: A future C++ implementation could support more rigorous benchmarks, but that is currently outside the scope of the work.
 
@@ -168,9 +168,11 @@ tests/               # partially randomized tests and edge-case tests
   p_css/
   p_stab/
   bm/
+  paper/
 
 benchmarks/
   thesis/                     # data collection scripts used for thesis
+    __init__.py
     thesis_prototypes.py
     thesis_hybrids.py
     thesis_invariants.py
@@ -180,15 +182,22 @@ benchmarks/
     statistics.py             # seeded repetitions, aggregation, and CSV append
     generators_random.py
     generators_structured.py
-  run_hybrids.sh
-  run_invariants.sh
-  run_multiple.sh
+  run_*.sh              # server-side batch runs of the thesis scripts
 
-data/                # structured case inputs
+data/                # named structured codes, one Pauli string per line
 
-results/             # plotting tools; generated result artifacts are ignored by git
+results/             # thesis benchmark outputs (CSV, plots); ignored by git
 
-paper/               # replication package for the subsequent paper 
+docs/                # thesis PDF
+
+paper/               # replication package for the subsequent paper
+  README.md          # paper-specific information
+  benchmarks/        # collectors
+  experiments/       # extractors
+  visualizations/    # visualizers
+  hybrids/           # paper hybrids with stage diagnostics
+  data/collected/    # committed measurements
+  results/           # extracted tables and figures; ignored by git
 ```
 
 ## Running the Thesis Benchmarks
@@ -199,7 +208,7 @@ The project is managed with [uv](https://docs.astral.sh/uv/). Create the environ
 uv sync
 ```
 
-This creates virtual environment, which every command below runs inside, either with `uv run <command>` or after `source .venv/bin/activate`.
+This creates a virtual environment, which every command below runs inside, either with `uv run <command>` or after `source .venv/bin/activate`.
 
 The benchmark infrastructure offers resource-restriction and measurement infrastructure (`benchmarks.experiments.run.run(...)` `benchmarks.experiments.statistics.run_statistics(...)`). 
 
