@@ -1,4 +1,8 @@
-"""LC Orbit traversal for checking whether a stabilizer code with k < 2 is LC-equivalent to a CSS code."""
+"""LC Orbit traversal for checking whether a stabilizer code with k < 2 is LC-equivalent to a CSS code.
+
+References for this algorithm:
+- Jeremy C. Adcock, Sam Morley-Short, Axel Dahlberg, Joshua W. Silverstone: Mapping graph state orbits under local complementation
+"""
 
 from __future__ import annotations
 

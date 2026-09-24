@@ -1,4 +1,8 @@
-"""Matroid-isomorphism based permutation equivalence checking."""
+"""Matroid-isomorphism based permutation equivalence checking.
+
+References for this algorithm:
+- James G. Oxley: Matroid Theory
+"""
 
 from __future__ import annotations
 from collections import defaultdict
