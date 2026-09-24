@@ -413,7 +413,7 @@ def are_peq_stab_classical(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     """Check permutation equivalence mapping a tableau to GF(4) and using algorithms for classical code equivalence. A two-layer approach is used, where the first layer uses Sendrier's Support Splitting Algorithm to partition the columns of the generator matrices into equivalence classes based on the weight enumerator of the hull of the punctured code.
     The second layer then checks for permutation equivalence by traversing the search tree of possible permutations, and pruning branches based on the canonical form of Feulner's Algorithm.
 
-    ! ATTENTION ! I might map the stabilizer tableau to a classical code over GF(4), but i cannot use all the operations in GF(4) since the original stabilizer code is only GF(2)-additive and i have to keep that property. Thus computing the RREF is NOT the normal RREF of GF(4)-linear codes, similar for the semicanonical form, and as the inner product I use the trace inner product.
+    Note: the stabilizer tableau is mapped to a code over GF(4), but the code is only GF(2)-additive, so not all GF(4) operations are available. The RREF and the semicanonical form are therefore the additive-code variants rather than those of GF(4)-linear codes, and the trace inner product is used.
 
     For each code, the following is done:
     1.) Map the stabilizer tableau to a classical code over GF(4).

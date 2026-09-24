@@ -454,15 +454,8 @@ def _hk_normal_form(graph: GSLC) -> None:
         for j in g.neighbors(i):
             g.vertices[j][0].extend(["S", "S"])
 
-        # as we handle every subset {p,q} of N(i) twice - as apply_cs_edge(p, q) and apply_cs_edge(q, p) - it effectively applies a CZ between them -> local complementation, with applying S to every neighbor of i (I THINK)
-        #
-        # for p in g.neighbors(i):
-        #     for q in g.neighbors(i):
-        #         if p == q:
-        #            g.vertices[p][0] += ["S"]
-        #         else:
-        #             g.apply_cs_edge(p, q)
-
+        # CS on every ordered pair of N(i) is a CZ per unordered pair plus one S per neighbor,
+        # i.e. a local complementation at i with S applied to every neighbor of i
         for p in g.neighbors(i):
             g.vertices[p][0].append("S")
 
@@ -472,15 +465,8 @@ def _hk_normal_form(graph: GSLC) -> None:
         # (Eq. 11) S_i H_i |G> = H_i prod_{p,q in N(i)} CS_{p,q} |G>
         g.vertices[i] = (g.vertices[i][0][:-2] + ["H"], g.vertices[i][1])
 
-        # as we handle every subset {p,q} of N(i) twice - as apply_cs_edge(p, q) and apply_cs_edge(q, p) - it effectively applies a CZ between them -> local complementation, with applying S to every neighbor of i (I THINK)
-        #
-        # for p in g.neighbors(i):
-        #    for q in g.neighbors(i):
-        #        if p == q:
-        #            g.vertices[p][0] += ["S"]
-        #        else:
-        #            g.apply_cs_edge(p, q)
-
+        # CS on every ordered pair of N(i) is a CZ per unordered pair plus one S per neighbor,
+        # i.e. a local complementation at i with S applied to every neighbor of i
         for p in g.neighbors(i):
             g.vertices[p][0].append("S")
 
