@@ -36,7 +36,7 @@ CODE_LABELS = (
 )
 CODE_ORDER = {name: index for index, (name, _) in enumerate(CODE_LABELS)}
 CODE_LABEL = dict(CODE_LABELS)
-STAGES = ("CI", "EI", "S", "BF", "MI", "GI", "SAT", "LSE", "trivial")
+STAGES = ("CI", "EI", "S", "BF", "MI", "GI", "SAT", "LSE")
 
 FIELDS = (
     "problem",

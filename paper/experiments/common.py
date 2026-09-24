@@ -15,25 +15,6 @@ COLLECTED_DATA_DIR = ROOT / "paper" / "data" / "collected"
 ALGORITHM_DATA_DIR = COLLECTED_DATA_DIR / "algorithms"
 RESULTS_DIR = ROOT / "paper" / "results"
 
-STATISTICS_FIELDS = (
-    "algorithm",
-    "n",
-    "k",
-    "positive",
-    "seed",
-    "nr_seeds",
-    "mean_seconds",
-    "stddev_seconds",
-    "maximum_seconds",
-    "num_cases",
-    "num_successful",
-    "num_unexpected",
-    "num_timeouts",
-    "num_memory_limited",
-    "num_errors",
-    "num_generation_errors",
-)
-
 
 def read_csv(path: Path) -> list[dict[str, str]]:
     if not path.is_file():

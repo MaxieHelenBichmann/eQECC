@@ -88,7 +88,6 @@ VERBOSE = True
 
 # stage tags the hybrids print on entry, in pipeline order
 STAGES = ("CI", "EI", "S", "BF", "MI", "GI", "SAT", "LSE")
-TRIVIAL = "trivial"
 UNREACHED = "start"
 DECIDED_MARKER = "#decided_by "
 
@@ -205,7 +204,7 @@ class TracedHybrid:
         with open(self.log_path, "w", buffering=1, encoding="utf-8") as log:
             with contextlib.redirect_stdout(log):
                 decision, stage = self.function(left, right)
-                print(f"{DECIDED_MARKER}{stage or TRIVIAL}")
+                print(f"{DECIDED_MARKER}{stage}")
         return bool(decision)
 
 
