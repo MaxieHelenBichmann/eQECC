@@ -1,4 +1,4 @@
-"""Best hybrid solution for checking whether two stabilizer codes are permutation-equivalent."""
+"""Best hybrid solution for checking whether two stabilizer codes are permutation-equivalent, including diagnostic information."""
 
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ def are_peq_stab(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
     r = reduced_symplectic_1.shape[0]
 
     if r < 1:
-        return True, ""
+        return True, "CI"
 
     if r >= 8 and n >= 25:
         if not preserved_linear_dependencies(reduced_symplectic_1, reduced_symplectic_2):
@@ -398,7 +398,7 @@ def _graph_iso(
 
         adj_dict = defaultdict(list)
 
-        # ISSUE: pynauty does no support colored edges, so we need to encode the edge colors into the vertex colors by splitting edges and introducing auxiliary vertices
+        # pynauty does no support colored edges, so we need to encode the edge colors into the vertex colors by splitting edges and introducing auxiliary vertices
 
         z_edges = set()
         x_edges = set()

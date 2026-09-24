@@ -1,6 +1,6 @@
 """Collect runtimes and deciding stages of the paper hybrids on named codes (A8).
 
-    python3 -m paper.benchmarks.collect_a8 [--problem pm_stb|pm_css|lc_stb ...]
+    uv run python -m paper.benchmarks.collect_a8 [--problem pm_stb|pm_css|lc_stb ...]
 
 Per problem, code, label, and seed one instance is generated and cached in
 hybrids/<problem>_instances.csv, then the hybrid runs on it under supervision

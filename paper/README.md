@@ -68,7 +68,7 @@ Phase 1 primarily collects measurements and is the only phase that generates cod
 Collected data from `collect_algorithm.py` is not figure-specific, but used by multiple aggregators in the next steps.
 
 ```bash
-uv run python -m paper.benchmarks.collect_*
+uv run python -m paper.benchmarks.collect_<name>
 ```
 
 Writes CSV data into `paper/data/collected/`.

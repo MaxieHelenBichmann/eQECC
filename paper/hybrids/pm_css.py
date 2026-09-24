@@ -1,4 +1,4 @@
-"""Best hybrid solution for checking whether two CSS codes are permutation-equivalent."""
+"""Best hybrid solution for checking whether two CSS codes are permutation-equivalent, including diagnostic information."""
 
 from __future__ import annotations
 

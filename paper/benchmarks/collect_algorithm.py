@@ -1,6 +1,6 @@
 """Collect the random-suite statistics of the exact algorithms (A3 to A6).
 
-    python3 -m paper.benchmarks.collect_algorithm [--algorithm SELECTOR ...]
+    uv run python -m paper.benchmarks.collect_algorithm [--algorithm SELECTOR ...]
 
 Each selected algorithm appends to algorithms/<algorithm>.csv, one summary row
 per seeded batch of positive or negative pairs; the extractors keep the latest

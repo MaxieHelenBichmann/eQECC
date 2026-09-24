@@ -129,7 +129,7 @@ $$
 
 ## Scope
 
-Here, we measure the runtime of the Python algorithms on an expected workload: input codes $[[n,k,d]]$ with $n$ ranging from 2 to approximately 50, plus some larger structured cases.
+Here, we measure the runtime of the Python algorithms on an expected workload: input codes $[[n,k,d]]$ with $n$ ranging from 2 to 47, plus some larger structured cases.
 
 This repository is not currently intended for detailed benchmarking or profiling analyses.[^1] The goal is to understand the algorithms' different complexity classes and make a more informed decision about the hybrid implementations.
 
@@ -210,7 +210,7 @@ uv sync
 
 This creates a virtual environment, which every command below runs inside, either with `uv run <command>` or after `source .venv/bin/activate`.
 
-The benchmark infrastructure offers resource-restriction and measurement infrastructure (`benchmarks.experiments.run.run(...)` `benchmarks.experiments.statistics.run_statistics(...)`). 
+The benchmark directory offers resource-restriction and measurement infrastructure (`benchmarks.experiments.run.run(...)`, `benchmarks.experiments.statistics.run_statistics(...)`). 
 
 The thesis benchmarks (`benchmarks.thesis.thesis_prototypes`, `benchmarks.thesis.thesis_hybrids`, `benchmarks.thesis.thesis_invariants` ) are rather extensive and customizable, meant to provide a whole picture of the practical performance of prototype implementations, hybrids and invariants.
 

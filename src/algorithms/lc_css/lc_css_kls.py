@@ -400,7 +400,7 @@ def _code_to_graph(code) -> GSLC:
     """Convert the stabilizer code into a LC-equivalent graph state with local Clifford decorations on the vertices.
 
     1.) Convert the code into an encoder circuit using Gaussian elimination on the tableau.
-    2.) Apply the Choi-Jamiołkowski isomorphism on the circuit, by applying the Bell-state |Φ⁺⟩ on the inputs and reference output qubits, which is the same as "bending the wires" in th ZX-calculus.
+    2.) Apply the Choi-Jamiołkowski isomorphism on the circuit, by applying the Bell-state |Φ⁺⟩ on the inputs and reference output qubits, which is the same as "bending the wires" in the ZX-calculus.
     3.) Apply the resulting circuit to the initial state |0⟩^(n+k) (stabilized by the tableau [0 | I]) to get the state tableau.
     4.) Convert the state tableau into a graph state under local Clifford operations (making X invertible, bringing the tableau into the form [I | A] and extracting the adjacency matrix A), constructing a GSLC object.
     """
