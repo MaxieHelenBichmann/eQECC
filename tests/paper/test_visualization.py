@@ -9,7 +9,7 @@ import pytest
 from matplotlib.colors import to_rgba
 
 from paper.experiments.common import write_csv
-from paper.experiments.extract_a7 import EXPERIMENT1, EXPERIMENT2
+from paper.experiments.extract_a7 import RX_LABELS
 from paper.experiments.extract_a8 import FIELDS as A8_FIELDS
 from paper.visualizations import (
     visualize_a1,
@@ -44,7 +44,7 @@ def test_a1_draws_measured_zero_with_an_outline() -> None:
         plt.close(figure)
 
 
-def test_a1_rejections_write_main_and_overall_pngs(tmp_path: Path) -> None:
+def test_a1_rejections(tmp_path: Path) -> None:
     _render(
         tmp_path,
         [
@@ -66,7 +66,6 @@ def test_a1_rejections_write_main_and_overall_pngs(tmp_path: Path) -> None:
             )
         ],
         visualize_a1.render,
-        "figure_overall.png",
     )
 
 
@@ -123,7 +122,7 @@ def test_a3_relative_cost(tmp_path: Path) -> None:
     )
 
 
-def test_a3_marks_invariant_timeout_with_deep_red_outline() -> None:
+def test_a3_marks_invariant_timeout_with_red_outline() -> None:
     figure, ax = plt.subplots()
     row = {
         "problem": "lc_stb",
@@ -137,7 +136,7 @@ def test_a3_marks_invariant_timeout_with_deep_red_outline() -> None:
     try:
         assert len(ax.patches) == 1
         assert ax.patches[0].get_facecolor()[-1] == 0
-        assert ax.patches[-1].get_edgecolor() == pytest.approx(to_rgba(visualize_a3.COLOR_PAPER_DARK_RED))
+        assert ax.patches[-1].get_edgecolor() == pytest.approx(to_rgba(visualize_a3.COLOR_INVARIANT_TIMEOUT))
     finally:
         plt.close(figure)
 
@@ -210,22 +209,53 @@ def test_a6_css_structure(tmp_path: Path) -> None:
 
 
 def test_a7_decision_counts(tmp_path: Path) -> None:
-    _render(
-        tmp_path,
-        [
-            {
-                "experiment": experiment,
-                "condition": condition,
-                "n": 8,
-                "r": 4,
-                "median_base_decisions": 10,
-                "median_invalid_mapping_decisions": 5,
-            }
-            for experiment, conditions in ((EXPERIMENT1, ("A", "B1", "B2", "C")), (EXPERIMENT2, ("clean", "mixed")))
-            for condition in conditions
-        ],
-        visualize_a7.render,
+    n, k = 14, 4
+    r = n - k
+    sweep = [
+        {
+            "n": n,
+            "k": k,
+            "r": r,
+            "condition": "css",
+            "rx": rx,
+            "rz": r - rx,
+            "rx_label": label,
+            "runs": 10,
+            "completed": 10,
+            "timeouts": 0,
+            "median_decisions": 100 * (index + 1),
+            "row_operation_variables": rx * rx + (r - rx) ** 2,
+        }
+        for index, (rx, label) in enumerate(zip((0, 1, 2, r // 2, r - 2, r - 1, r), RX_LABELS, strict=True))
+    ]
+    sweep.append(
+        {
+            "n": n,
+            "k": k,
+            "r": r,
+            "condition": "general",
+            "rx": "",
+            "rz": "",
+            "rx_label": "general",
+            "runs": 10,
+            "completed": 10,
+            "timeouts": 0,
+            "median_decisions": 50,
+            "row_operation_variables": r * r,
+        }
     )
+    row_mixing = [
+        {"n": n, "k": 2, "r": n - 2, "condition": condition, "runs": 10, "completed": 10, "timeouts": 0}
+        | {"median_decisions": decisions}
+        for condition, decisions in (("clean", 10), ("mixed", 40))
+    ]
+    sweep_file = tmp_path / "rank_sweep.csv"
+    row_mixing_file = tmp_path / "row_mixing.csv"
+    output = tmp_path / "figure.png"
+    write_csv(sweep_file, sweep, tuple(sweep[0]))
+    write_csv(row_mixing_file, row_mixing, tuple(row_mixing[0]))
+    assert visualize_a7.render(sweep_file, row_mixing_file, output) == output
+    assert output.stat().st_size > 0
 
 
 def test_a8_hybrid_stages(tmp_path: Path) -> None:

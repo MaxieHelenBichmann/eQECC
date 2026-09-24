@@ -45,7 +45,7 @@ def _rx(row) -> int | str:
 
 
 def rx_label(r: int, rx: int | str) -> str:
-    if rx == "":
+    if isinstance(rx, str):
         return "general"
     return dict(zip((0, 1, 2, r // 2, r - 2, r - 1, r), RX_LABELS, strict=True))[rx]
 
@@ -72,7 +72,7 @@ def _rank_sweep(rows) -> list[dict]:
                 "r": r,
                 "condition": condition,
                 "rx": rx,
-                "rz": r - rx if rx != "" else "",
+                "rz": r - rx if isinstance(rx, int) else "",
                 "rx_label": rx_label(r, rx),
                 "runs": len(cell),
                 "completed": len(completed),
