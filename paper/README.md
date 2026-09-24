@@ -1,4 +1,4 @@
-# Replication Package for "Methods for Automated Equivalence Checking of Quantum Error Correction Codes" 
+# Replication Package for "Methods for Automated Equivalence Checking of Quantum Error-Correction Codes"
 
 Everything needed to reproduce the figures of the associated paper lives in the directory `paper/`. 
 It contains server-side measurement scripts, the deterministic aggregation step, and plotting entry points.

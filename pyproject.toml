@@ -1,5 +1,5 @@
 [project]
-name = "bm_qecc"
+name = "eqecc"
 version = "0.1.0"
 description = "Equivalence checking for quantum error correction codes: algorithms, benchmarks and paper replication package"
 requires-python = ">=3.13"

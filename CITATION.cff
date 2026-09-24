@@ -4,8 +4,8 @@ title: "Automated Equivalence Checking of Stabilizer Codes"
 type: software
 authors:
   - family-names: "Bichmann"
-    given-names: "Maxie Helen"
-repository-code: "https://github.com/MaxieHelenBichmann/bm_qecc"
+    given-names: "Maxie"
+repository-code: "https://github.com/MaxieHelenBichmann/eQECC"
 license: MIT
 abstract: >-
   Implementations and benchmarks for checking permutation and local-Clifford

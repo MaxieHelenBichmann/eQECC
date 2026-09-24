@@ -2,7 +2,7 @@
 
 This repository benchmarks different approaches to equivalence checking for quantum error-correcting codes (QECCs) under different equivalence notions. It is part of the implementation for my Bachelor's thesis, ["Automated Equivalence Checking of Stabilizer Codes"](./docs/thesis.pdf), which contributes to [MQT QECC](https://github.com/munich-quantum-toolkit/qecc). The required infrastructure and code representation classes are taken from that project.
 
-Additionally, it functions as a replication package for data and methodology in the paper "Methods for Automated Equivalence Checking of Stabilizer Codes", which is written on the basis of my thesis. Specific information about that can be found in [README](./paper/README.md).
+Additionally, it functions as a replication package for data and methodology in the paper "Methods for Automated Equivalence Checking of Quantum Error-Correction Codes", which is written on the basis of my thesis. Specific information about that can be found in [README](./paper/README.md).
 
 This README does not discuss the examined equivalence notions or their theoretical foundations in depth; those are covered in the [thesis](./docs/thesis.pdf) or paper. References for the implemented algorithms are cited in the corresponding source files.
 
@@ -236,7 +236,7 @@ uv run mypy paper/
 
 Requires Linux or macOS with a C compiler and Python 3.13 or newer; Python 3.13 is the tested version in CI and for the paper replication package. The compiler is needed because `pynauty` is built from source on these versions; Windows is not supported by `pynauty` and by the benchmark supervision.
 
-Apart from the Python dependencies declared in `pyproject.toml` and locked in `uv.lock`, the automorphism-group algorithm uses [GAP and Guava](https://docs.gap-system.org/pkg/guava/doc/manual.pdf), so a GAP executable and Guava's dependencies are required. Place the Guava dependencies in `bm_qecc/.gap` and set the path to the GAP executable before running this algorithm:
+Apart from the Python dependencies declared in `pyproject.toml` and locked in `uv.lock`, the automorphism-group algorithm uses [GAP and Guava](https://docs.gap-system.org/pkg/guava/doc/manual.pdf), so a GAP executable and Guava's dependencies are required. Place the Guava dependencies in `.gap/` at the repository root and set the path to the GAP executable before running this algorithm:
 
 ```bash
 export GAP_EXECUTABLE=/path/to/gap

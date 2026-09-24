@@ -80,47 +80,6 @@ wheels = [
 ]
 
 [[package]]
-name = "bm-qecc"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "ldpc" },
-    { name = "matplotlib" },
-    { name = "numpy" },
-    { name = "pynauty" },
-    { name = "pyzx" },
-    { name = "stim" },
-    { name = "z3-solver" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "mypy" },
-    { name = "py-spy" },
-    { name = "pytest" },
-    { name = "ruff" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "ldpc", specifier = "==2.4.1" },
-    { name = "matplotlib", specifier = "==3.11.1" },
-    { name = "numpy", specifier = "==2.4.6" },
-    { name = "pynauty", specifier = "==2.8.8.1" },
-    { name = "pyzx", specifier = "==0.10.6" },
-    { name = "stim", specifier = "==1.16.0" },
-    { name = "z3-solver", specifier = "==4.16.0.0" },
-]
-
-[package.metadata.requires-dev]
-dev = [
-    { name = "mypy", specifier = "==2.1.0" },
-    { name = "py-spy", specifier = "==0.4.2" },
-    { name = "pytest", specifier = "==9.1.1" },
-    { name = "ruff", specifier = "==0.16.6" },
-]
-
-[[package]]
 name = "colorama"
 version = "0.4.6"
 source = { registry = "https://pypi.org/simple" }
@@ -200,6 +159,47 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/a9/95/a3dbbb5028f35eafb79008e7522a75244477d2838f38cbb722248dabc2a8/cycler-0.12.1.tar.gz", hash = "sha256:88bb128f02ba341da8ef447245a9e138fae777f6a23943da4540077d3601eb1c", size = 7615, upload-time = "2023-10-07T05:32:18.335Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/e7/05/c19819d5e3d95294a6f5947fb9b9629efb316b96de511b418c53d245aae6/cycler-0.12.1-py3-none-any.whl", hash = "sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30", size = 8321, upload-time = "2023-10-07T05:32:16.783Z" },
+]
+
+[[package]]
+name = "eqecc"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "ldpc" },
+    { name = "matplotlib" },
+    { name = "numpy" },
+    { name = "pynauty" },
+    { name = "pyzx" },
+    { name = "stim" },
+    { name = "z3-solver" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "mypy" },
+    { name = "py-spy" },
+    { name = "pytest" },
+    { name = "ruff" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "ldpc", specifier = "==2.4.1" },
+    { name = "matplotlib", specifier = "==3.11.1" },
+    { name = "numpy", specifier = "==2.4.6" },
+    { name = "pynauty", specifier = "==2.8.8.1" },
+    { name = "pyzx", specifier = "==0.10.6" },
+    { name = "stim", specifier = "==1.16.0" },
+    { name = "z3-solver", specifier = "==4.16.0.0" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "mypy", specifier = "==2.1.0" },
+    { name = "py-spy", specifier = "==0.4.2" },
+    { name = "pytest", specifier = "==9.1.1" },
+    { name = "ruff", specifier = "==0.16.6" },
 ]
 
 [[package]]
