@@ -55,7 +55,7 @@ This pipeline has three phases for each experiment:
 | PHASE 1 | PHASE 2 | PHASE 3 |
 | `paper/benchmarks/collect_*.py` | `paper/experiments/extract_a<N>.py` | `paper/visualizations/visualize_a<N>.py` |
 | primarily collection, hours-to-days, server | deterministic, local, seconds, CSV-only | primarily plotting |
-| `paper/data/collected/* ` (raw or batch summaries) | `paper/results/a<N>/*.csv` (figure-ready, per cell) | `paper/results/a<N>/*.png` |
+| `paper/data/collected/*` (raw or batch summaries) | `paper/results/a<N>/*.csv` (figure-ready, per cell) | `paper/results/a<N>/*.png` |
 
 Phase 1 normally runs on a benchmark server; phases 2 and 3 run locally. The transfer between machines is exactly the contents of `paper/data/collected/`.
 The concrete measurements collected for the paper are also committed in `paper/data/collected/` for replication, so phases 2 and 3 can be run directly from a checkout. 
@@ -103,7 +103,8 @@ Reads CSVs from `paper/results/a<N>/` and writes one `paper/results/a<N>/a<N>.pn
 
 All randomized instances derive from `MASTER_SEED = 42` in `paper/benchmarks/common.py` through the seeded generators in `benchmarks/experiments/`, so every collector is deterministic up to timeouts. Generation and certification always happen before the timed call and never count towards a measured runtime.
 
-**Positive instances** (equivalent pairs) are a source code (randomly generated code by applying random arbitrary Cliffords to a tableau of random generated single-qubit Z-checks) and a partner obtained by a random qubit permutation (`pm_stb`, `pm_css`) or a random local Clifford operation (`lc_stb`), followed by a random change of the generator basis. For CSS codes, the X and Z check matrices change basis independently, matching the actual freedom of a CSS presentation.
+**Positive instances** (equivalent pairs) are a source code and a partner obtained by a random qubit permutation (`pm_stb`, `pm_css`) or a random local Clifford operation (`lc_stb`), followed by a random change of the generator basis. For CSS codes, the X and Z check matrices change basis independently, matching the actual freedom of a CSS presentation.
+Random general stabilizer source codes are built by applying random Clifford layers to a tableau of single-qubit Z-checks on random qubits; random CSS source codes are drawn directly as full-rank X and Z check matrices with a chosen X-check rank.
 
 **Negative instances** (inequivalent pairs) have to be carefully considered, as otherwise selection bias has a significant effect on the results.
 Generating two tableaus (of the same dimensions) completely independently and certifying their inequivalence leads to high rejection rates, as usually fully independent tableaus are structurally very different. This however might not represent practical instances considered in equivalence checking, as two actually compared codes might usually be somewhat related.

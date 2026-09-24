@@ -6,6 +6,9 @@ authors:
   - family-names: "Bichmann"
     given-names: "Maxie"
 repository-code: "https://github.com/MaxieHelenBichmann/eQECC"
+url: "https://github.com/MaxieHelenBichmann/eQECC"
+version: 0.1.0
+date-released: "2026-09-24"
 license: MIT
 abstract: >-
   Implementations and benchmarks for checking permutation and local-Clifford
@@ -17,3 +20,11 @@ keywords:
   - code equivalence
   - local Clifford equivalence
   - permutation equivalence
+preferred-citation:
+  type: unpublished
+  title: "Methods for Automated Equivalence Checking of Quantum Error-Correction Codes"
+  authors:
+    - family-names: "Bichmann"
+      given-names: "Maxie"
+  year: 2026
+  notes: "Based on the Bachelor's thesis \"Automated Equivalence Checking of Stabilizer Codes\"."
