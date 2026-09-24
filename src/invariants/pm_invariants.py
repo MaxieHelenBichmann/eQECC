@@ -117,7 +117,7 @@ def preserved_weight_enumerator(c1: StabilizerCode, c2: StabilizerCode) -> bool:
 
 
 def preserved_pauli_weight_enumerator(c1: StabilizerCode, c2: StabilizerCode) -> bool:
-    """Check whether the weight enumerator is preserved, which is a necessary condition for P-equivalence."""
+    """Check whether the Pauli-sensitive weight enumerator (counting X, Y and Z separately) is preserved, which is a necessary condition for P-equivalence."""
 
     def _row_basis(M: np.ndarray) -> np.ndarray:
         M = np.asarray(M, dtype=np.uint8) & 1

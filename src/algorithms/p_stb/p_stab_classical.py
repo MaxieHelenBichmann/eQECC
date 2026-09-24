@@ -334,7 +334,7 @@ def _partition_columns_by_invariants(invariants: list[tuple[int, ...]]) -> dict[
 
 
 def _compute_canonical_form(matrix: np.ndarray, cells: list[list[int]]) -> np.ndarray:
-    """Compute the canonical form of the GF(4) representation of the  code, using Feulner's algorithm, and return the canonical form and the corresponding permutation of the columns. Partition is used for pruning the search tree."""
+    """Compute the canonical form of the GF(4) representation of the  code, using Feulner's algorithm, and return the canonical form. The partition into cells is used for pruning the search tree."""
 
     def _prefix_semicanonical(G: np.ndarray, i: int) -> np.ndarray:
         """Bring the first i columns of G into semi-canonical form only using GF(2) row operations."""

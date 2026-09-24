@@ -282,8 +282,7 @@ def _code_to_encoder_circuit(code) -> zx.Circuit:
 
 
 def _stab_state_to_graph_state(tableau: np.ndarray, old_n: int, old_k: int) -> GSLC:
-    """Convert a stabilizer state into a graph state under local Clifford operations.
-    Returns the adjacency matrix of the graph state."""
+    """Convert a stabilizer state into a graph state under local Clifford operations."""
     n = tableau.shape[1] // 2
     local_clifords: list[list[str]] = [[] for _ in range(n)]
 

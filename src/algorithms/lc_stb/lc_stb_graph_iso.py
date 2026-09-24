@@ -59,11 +59,11 @@ def are_lceq_graph_iso(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     For each code, the following is done:
     1.) Convert the stabilizer code into a colored graph G = (V, E) enumerating all elements in the stabilizer group, thus:
     V = {x_i, y_i, z_i | i = 1, ..., n} union { S_i | S_i ∈ S }
-    E = { {S_i, a_j} ) | S_i has a on qubit j with a in {x, j, z} } union { {x_i, y_i}, {x_i, z_i}, {y_i, z_i} | i = 1, ..., n }
+    E = { {S_i, a_j} | S_i has a on qubit j with a in {x, y, z} }
 
     2.) Check if the resulting graphs are isomorphic.
 
-    The Pauli vertices for each physical qubit form their own color class, so graph isomorphism may rotate X/Y/Z locally but may not permute qubits.
+    The three Pauli vertices of each physical qubit form their own color class and all stabilizer vertices share one color, so graph isomorphism may rotate X/Y/Z locally but may not permute qubits.
 
     By creating a node for each element of the stabilizer group, this being independent from the generator basis, and by splitting the X, Y and Z contributions with the possibility of rotating the Paulis, we create a graph of an exponential size, which is not efficient.
     """

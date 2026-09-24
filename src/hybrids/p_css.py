@@ -121,7 +121,7 @@ def preserved_number_duplicate_columns(c1: CSSCode, c2: CSSCode) -> bool:
 
 def preserved_linear_dependencies(Hx1: np.ndarray, Hz1: np.ndarray, Hx2: np.ndarray, Hz2: np.ndarray) -> bool:
     """Check whether the linear dependencies between columns are preserved, which is a necessary condition for P-equivalence.
-    Similar to pm_css_matroid.py"""
+    Similar to p_css_matroid.py"""
 
     def _linear_dependencies(M: np.ndarray) -> tuple[list[int], list[int], list[int]]:
         n = M.shape[1] // 2
@@ -266,7 +266,7 @@ def _matroid_graph_iso(
     Hz2: np.ndarray,
     partition2: dict[int, list[int]],
 ) -> list[int] | None:
-    """pm_css_matroid.py + p_css_graph_iso.py"""
+    """p_css_matroid.py + p_css_graph_iso.py"""
 
     def _circuits_binary_matroid(A: npt.NDArray[np.int8]) -> list[int]:
         def _row_support_as_mask(row: npt.NDArray[np.uint8]) -> int:
@@ -415,7 +415,7 @@ def _sat(
     Hz2: np.ndarray,
     partition2: dict[int, list[int]],
 ) -> list[int] | None:
-    """pm_css_sat.py"""
+    """p_css_sat.py"""
 
     def _elementwise_map(normal_bool, variables):
         return z3.And([v if bit == 1 else z3.Not(v) for bit, v in zip(normal_bool, variables)])

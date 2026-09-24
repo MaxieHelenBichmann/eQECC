@@ -14,7 +14,7 @@ def _graph_from_code(code: StabilizerCode) -> Graph:
     r = code.n - code.k
     adj_dict = defaultdict(list)
 
-    # ISSUE: pynauty does no support colored edges, so we need to encode the edge colors into the vertex colors by splitting edges and introducing auxiliary vertices
+    # pynauty does not support colored edges, so the edge colors are encoded into vertex colors by subdividing each edge with an auxiliary vertex
 
     z_edges = set()
     x_edges = set()
@@ -81,11 +81,11 @@ def are_peq_stab_graph_iso(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     For each code, the following is done:
     1.) Convert the stabilizer code into a colored graph G = (V, E) enumerating all elements in the stabilizer group, thus:
     V = {1,...,n} union { S_i | S_i ∈ S } with color(S_i)
-    E = { (j, S_i, red) | S_i has X on qubit j } union { (j, S_i, green) | S_i has Z on qubit j }
+    E = { (j, S_i, red) | S_i has X or Y on qubit j } union { (j, S_i, green) | S_i has Z or Y on qubit j }
 
     2.) Check if the resulting graphs are isomorphic.
 
-    By creating a node for each element of the stabilizer group, this being independent from the generator basis, and by splitting the X and Z edges, we create a graph of an exponential size, which is not efficient.
+    By creating a node for each element of the stabilizer group, this being independent from the generator basis, and by subdividing the X and Z edges, we create a graph of an exponential size, which is not efficient.
     """
     graph_1 = _graph_from_code(c1)
     cert1 = certificate(graph_1)

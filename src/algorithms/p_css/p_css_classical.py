@@ -249,7 +249,7 @@ def are_peq_css_classical(c1: CSSCode, c2: CSSCode) -> bool:
 
     For each code, the following is done:
     1.) Partition the columns of Hx and Hz into equivalence classes according to the weight enumerator of Sendrier (we risk a complex computation O(2^k) for both Hx and Hz to have a better chance of a fine-grained partition).
-    2.) Canonicalize the generator matrices of Gx1 anf Gx2 using Feulner's algorithm, and check for equivalence of the canonical forms, pruning the search tree of possible permutations.
+    2.) Canonicalize the generator matrices of Gx1 and Gx2 using Feulner's algorithm, and check for equivalence of the canonical forms, pruning the search tree of possible permutations.
     3.) Check if the found permutation is valid for both Hx and Hz.
 
     This algorithm should be more efficient than the brute-force algorithm, since it avoids checking all permutations, BUT it is still not efficient in the worst case.

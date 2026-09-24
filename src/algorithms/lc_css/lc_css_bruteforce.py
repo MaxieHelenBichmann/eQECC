@@ -18,7 +18,7 @@ LOCAL_CLIFFORDS = ("I", "H", "S", "HS", "SH", "HSH")
 
 
 def is_lceq_css_bruteforce(code: StabilizerCode) -> bool:
-    """Check permutation equivalence by brute-force search over all possible actions Local Cliffords can have on the qubits.
+    """Check whether the code is Local-Clifford equivalent to a CSS code by brute-force search over all possible actions Local Cliffords can have on the qubits.
 
     Each action is checked by applying it to the qubits and checking whether the sum of the ranks of the X and Z part in the tableau [X | Z] is the rank of the full tableau, which is a sufficient and necessary condition for the resulting tableau being in CSS form.
 
@@ -30,7 +30,7 @@ def is_lceq_css_bruteforce(code: StabilizerCode) -> bool:
     SH: (x, z) -> (z, x + z)
     HSH: (x, z) -> (x + z, z)
 
-    Each row space check should be done in O(n^3) time, and there are O(n^6) Local Clifford actions on the tableau, so the overall runtime is O(n^6 * n^3) which is obviously not efficient at all.
+    Each rank check takes O(n^3) time, and there are 6^n Local Clifford actions on the tableau, so the overall runtime is O(6^n * n^3), which is obviously not efficient at all.
     """
 
     def _rank(matrix: np.ndarray) -> int:

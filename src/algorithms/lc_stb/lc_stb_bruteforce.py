@@ -1,4 +1,4 @@
-"""Graph-state machinery for local-Clifford equivalence checking."""
+"""Brute-force local-Clifford equivalence checking."""
 
 from __future__ import annotations
 from itertools import product
@@ -29,7 +29,7 @@ def are_lceq_bruteforce(c1: StabilizerCode, c2: StabilizerCode) -> bool:
     SH: (x, z) -> (z, x + z)
     HSH: (x, z) -> (x + z, z)
 
-    Each row space check should be done in O(n^3) time, and there are O(n^6) Local Clifford actions on the tableau, so the overall runtime is O(n^6 * n^3) which is obviously not efficient at all.
+    Each rank check takes O(n^3) time, and there are 6^n Local Clifford actions on the tableau, so the overall runtime is O(6^n * n^3), which is obviously not efficient at all.
     """
 
     def _rank(matrix: np.ndarray) -> int:

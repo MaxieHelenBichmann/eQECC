@@ -37,9 +37,9 @@ def is_lceq_css_sat(code: StabilizerCode) -> bool:
 
     n = code.n
     k = code.k
-    r = n - k  # assume that tableau is minimal and has no dependent rows, and both tableaus have the same rank
+    r = n - k  # assume that the tableau is minimal and has no dependent rows
 
-    # permutations
+    # local cliffords and row operations
     aux_tableau = [z3.Bool(f"aux_{row}_{col}") for row in range(r) for col in range(2 * n)]
     local_clifford_variables = [z3.Bool(f"c_{c}_{i}") for i in range(n) for c in range(6)]
 
