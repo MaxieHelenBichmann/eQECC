@@ -60,7 +60,7 @@ def _render_sweep(ax, rows) -> None:
         for _, style, marker, label in STYLES
     ]
     handles.append(Line2D([], [], color=COLOR_PAPER_GRAY_VERY_VERY_DARK, linestyle="-", label="Non-CSS codes"))
-    
+
     ax.legend(
         handles=handles,
         loc="upper center",

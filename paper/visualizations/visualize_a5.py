@@ -138,14 +138,22 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
     split_key = Patch(label="runner-up (bottom) within 5% of winner's (top) runtime")
     legends.append(
         figure.legend(
-            handles=[split_key], handler_map={split_key: SplitCellHandler()}, loc="lower left", frameon=False, fontsize=11
+            handles=[split_key],
+            handler_map={split_key: SplitCellHandler()},
+            loc="lower left",
+            frameon=False,
+            fontsize=11,
         )
     )
     figure.canvas.draw()
     extents = [legend.get_window_extent().transformed(figure.transFigure.inverted()) for legend in legends]
     x = 0.5 - (sum(extent.width for extent in extents) + LEGEND_GAP * (len(legends) - 1)) / 2
     for legend, extent in zip(legends, extents):
-        y = LEGEND_Y if legend.get_title().get_text() else LEGEND_Y + (max(e.height for e in extents) - extent.height) / 2
+        y = (
+            LEGEND_Y
+            if legend.get_title().get_text()
+            else LEGEND_Y + (max(e.height for e in extents) - extent.height) / 2
+        )
         legend.set_bbox_to_anchor((x, y), transform=figure.transFigure)
         x += extent.width + LEGEND_GAP
     return save_png(figure, output)

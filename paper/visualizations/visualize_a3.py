@@ -73,7 +73,9 @@ def render(input_file: Path = INPUT, output: Path = OUTPUT) -> Path:
             half_cell_key("right", gray, "CSS codes", size=8),
             Patch(facecolor=COLOR_PAPER_DARK_BLUE, edgecolor="none", label="Invariant is cheaper"),
             Patch(facecolor=COLOR_PAPER_DARK_RED, edgecolor="none", label="Invariant costs more"),
-            Patch(facecolor=COLOR_PAPER_WHITE, edgecolor=COLOR_BACKEND_TIMEOUT, linewidth=0.9, label="Backend timed out"),
+            Patch(
+                facecolor=COLOR_PAPER_WHITE, edgecolor=COLOR_BACKEND_TIMEOUT, linewidth=0.9, label="Backend timed out"
+            ),
             Patch(
                 facecolor=COLOR_PAPER_WHITE,
                 edgecolor=COLOR_INVARIANT_TIMEOUT,

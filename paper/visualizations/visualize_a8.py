@@ -31,7 +31,11 @@ from paper.visualizations.common import (
 INPUT = RESULTS_DIR / "a8" / "by_cell.csv"
 OUTPUT = RESULTS_DIR / "a8" / "a8.png"
 
-PROBLEM_LABELS = {"pm_stb": "Permutation eq.\nfor general stabilizer codes", "pm_css": "Permutation eq.\nfor CSS codes", "lc_stb": "Local-Clifford eq.\nfor general stabilizer codes"}
+PROBLEM_LABELS = {
+    "pm_stb": "Permutation eq.\nfor general stabilizer codes",
+    "pm_css": "Permutation eq.\nfor CSS codes",
+    "lc_stb": "Local-Clifford eq.\nfor general stabilizer codes",
+}
 LABELS = ((True, "equivalent"), (False, "inequivalent"))
 STAGE_LEGEND = (
     ("CI", "cheap invariants"),
@@ -149,7 +153,9 @@ def render(input_file: Path = INPUT, output_file: Path = OUTPUT) -> Path:
             if not lines:
                 lines = [_stage_line("\u2014", 0, total, WINNER_SIZES, text_color, bold=True)]
             if runtime:
-                lines.insert(0, TextArea(_runtime_text(runtime), textprops={"fontsize": RUNTIME_SIZE, "color": text_color}))
+                lines.insert(
+                    0, TextArea(_runtime_text(runtime), textprops={"fontsize": RUNTIME_SIZE, "color": text_color})
+                )
             ax.add_artist(
                 AnnotationBbox(
                     VPacker(children=lines, align="center", pad=0, sep=1.6),

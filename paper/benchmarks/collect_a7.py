@@ -1,14 +1,14 @@
 """Collect z3 decision counts of the SAT encodings on CSS codes with a pinned X/Z rank split (A7).
 
-Experiment 1: 
-rank_sweep solves CSS pairs with X-check rank rx in {0, 1, 2, r/2, r-2, r-1, r} in the 
-check-matrix encoding and general stabilizer pairs in the tableau encoding as reference. 
+Experiment 1:
+rank_sweep solves CSS pairs with X-check rank rx in {0, 1, 2, r/2, r-2, r-1, r} in the
+check-matrix encoding and general stabilizer pairs in the tableau encoding as reference.
 
 Experiment 2:
-row_mixing solves balanced CSS pairs (rx ≈ rz) in the tableau encoding, once as the clean 
-block-diagonal tableau and once after random row operations that mix X and Z generators. 
+row_mixing solves balanced CSS pairs (rx ≈ rz) in the tableau encoding, once as the clean
+block-diagonal tableau and once after random row operations that mix X and Z generators.
 
-The measure is the solver's decision count; the recorded times only serve as bookkeeping. 
+The measure is the solver's decision count; the recorded times only serve as bookkeeping.
 Rows are appended to sat_css_weakness.csv and existing keys are skipped on restart.
 """
 
