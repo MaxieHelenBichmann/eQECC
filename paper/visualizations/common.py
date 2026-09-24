@@ -18,7 +18,6 @@ from matplotlib.ticker import FixedFormatter, FixedLocator, FuncFormatter
 
 from paper.experiments.common import as_float, as_int
 
-# Thesis palette, mirrored from settings/commands.tex so figures and text match.
 COLOR_PAPER_ZX_GREEN = "#74D374"
 COLOR_PAPER_ZX_ORANGE = "#FFA404"
 COLOR_PAPER_ZX_GREEN_MUTED = "#CCFFBF"

@@ -36,7 +36,7 @@ def are_peq_stab(c1: StabilizerCode, c2: StabilizerCode) -> tuple[bool, str]:
     n = c1.n
 
     if n < 1:
-        return True, ""
+        return True, "CI"
 
     reduced_symplectic_1 = _row_basis(c1.symplectic)
     reduced_symplectic_2 = _row_basis(c2.symplectic)
