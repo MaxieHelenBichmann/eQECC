@@ -22,9 +22,9 @@ keywords:
   - permutation equivalence
 preferred-citation:
   type: unpublished
-  title: "Methods for Automated Equivalence Checking of Quantum Error-Correction Codes"
+  title: "Benchmarks for Equivalence Checking of Quantum Error-Correction Codes"
   authors:
     - family-names: "Bichmann"
       given-names: "Maxie"
   year: 2026
-  notes: "Based on the Bachelor's thesis \"Automated Equivalence Checking of Stabilizer Codes\"."
+  url: "https://github.com/MaxieHelenBichmann/eQECC"
